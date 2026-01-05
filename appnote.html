@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Management Portal - Web App Portfolio</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gray: #64748b;
+            --border: #e2e8f0;
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--dark);
+            background: #f1f5f9;
+            min-height: 100vh;
+            font-size: 14px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 15px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Navigation */
+        nav {
+            background: white;
+            padding: 10px 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            border-top: 1px solid var(--border);
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            justify-content: center;
+            flex-wrap: wrap;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 15px;
+            gap: 8px;
+        }
+
+        .nav-links li {
+            margin: 0;
+        }
+
+        .nav-links a {
+            color: var(--gray);
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        .nav-links a:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Main Content */
+        .content-wrapper {
+            background: white;
+            border-radius: 8px;
+            margin: 20px auto;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            width: 85%;
+            border: 1px solid var(--border);
+        }
+
+        section {
+            margin-bottom: 35px;
+            scroll-margin-top: 100px;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            color: var(--primary);
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--primary);
+            font-weight: 700;
+        }
+
+        h3 {
+            font-size: 1.3rem;
+            color: var(--primary);
+            margin: 25px 0 12px 0;
+            font-weight: 700;
+        }
+
+        h4 {
+            font-size: 1.05rem;
+            color: var(--dark);
+            margin: 15px 0 8px 0;
+            font-weight: 600;
+        }
+
+        p {
+            margin-bottom: 10px;
+            color: var(--gray);
+            line-height: 1.6;
+        }
+
+        ul, ol {
+            margin: 10px 0 10px 25px;
+            color: var(--gray);
+        }
+
+        li {
+            margin-bottom: 5px;
+        }
+
+        /* Feature Cards */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 18px;
+            margin: 25px 0;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: box-shadow 0.2s ease;
+        }
+
+        .feature-card:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .feature-card h4 {
+            color: var(--primary);
+            margin-top: 0;
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .feature-card .emoji {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .feature-card p {
+            font-size: 0.9rem;
+            color: var(--gray);
+            line-height: 1.6;
+        }
+
+        /* Code Blocks */
+        pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 12px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 15px 0;
+            border-left: 3px solid var(--primary);
+        }
+
+        code {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.8rem;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 20px 0;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+            border-radius: 12px;
+            overflow: hidden;
+            font-size: 0.9rem;
+            border: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--primary);
+            color: white;
+            padding: 14px 16px;
+            text-align: left;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover {
+            background: var(--light);
+        }
+
+        /* Info Boxes */
+        .info-box {
+            background: #eff6ff;
+            border-left: 4px solid var(--primary);
+            padding: 16px;
+            margin: 18px 0;
+            border-radius: 6px;
+            border: 1px solid #dbeafe;
+        }
+
+        .success-box {
+            background: #ecfdf5;
+            border-left: 4px solid var(--success);
+            padding: 16px;
+            margin: 18px 0;
+            border-radius: 6px;
+            border: 1px solid #d1fae5;
+        }
+
+        .warning-box {
+            background: #fffbeb;
+            border-left: 4px solid var(--warning);
+            padding: 16px;
+            margin: 18px 0;
+            border-radius: 6px;
+            border: 1px solid #fef3c7;
+        }
+
+        .info-box h4, .success-box h4, .warning-box h4 {
+            font-size: 1rem;
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 16px;
+            margin: 25px 0;
+        }
+
+        .stat-card {
+            background: var(--primary);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card .number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .stat-card .label {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        /* Architecture Diagram */
+        .diagram {
+            background: #f8fafc;
+            border: 2px dashed var(--border);
+            padding: 15px;
+            text-align: center;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-family: monospace;
+        }
+
+        /* Footer */
+        footer {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px 15px;
+            text-align: center;
+            margin-top: 30px;
+            border-top: 2px solid var(--primary);
+        }
+
+        footer p {
+            color: var(--gray);
+            margin: 3px 0;
+            font-size: 0.9rem;
+        }
+
+        footer h3 {
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 1.5rem;
+            }
+
+            .content-wrapper {
+                padding: 15px;
+                margin: 15px auto;
+            }
+
+            .nav-links {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+
+            section {
+                margin-bottom: 25px;
+            }
+
+            h2 {
+                font-size: 1.4rem;
+            }
+
+            h3 {
+                font-size: 1.1rem;
+            }
+        }
+
+        /* Scroll to Top */
+        .scroll-top {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            background: var(--primary);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: background 0.2s ease;
+            text-decoration: none;
+            font-size: 1.5rem;
+            z-index: 999;
+        }
+
+        .scroll-top:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Highlight */
+        .highlight {
+            background: #fef3c7;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <ul class="nav-links">
+            <li><a href="#overview">Overview</a></li>
+            <li><a href="#tech-stack">Tech Stack</a></li>
+            <li><a href="#database">Database</a></li>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#roles">User Roles</a></li>
+            <li><a href="#api">API Endpoints</a></li>
+            <li><a href="#components">Components</a></li>
+            <li><a href="#security">Security</a></li>
+            <li><a href="#setup">Setup</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <div class="content-wrapper">
+            
+            <!-- Overview Section -->
+            <section id="overview">
+                <h2>📋 Overview & Architecture</h2>
+                
+                <h3>System Purpose</h3>
+                <p>The Employee Management Portal is a comprehensive HR management system designed to handle all aspects of employee lifecycle management, from recruitment to payroll, attendance tracking, asset management, and more.</p>
+
+                <div class="info-box">
+                    <h4>🎯 Project Information</h4>
+                    <ul>
+                        <li><strong>Project:</strong> HR Management System (Employee Management Portal)</li>
+                        <li><strong>Tech Stack:</strong> React + TypeScript (Frontend) | Express.js + PostgreSQL (Backend)</li>
+                        <li><strong>Architecture:</strong> Full-Stack Web Application with REST API</li>
+                        <li><strong>Date:</strong> January 4, 2026</li>
+                    </ul>
+                </div>
+
+                <h3>Architecture Pattern</h3>
+                <ul>
+                    <li><strong>Frontend:</strong> Single Page Application (SPA) using React with TypeScript</li>
+                    <li><strong>Backend:</strong> RESTful API built with Express.js</li>
+                    <li><strong>Database:</strong> PostgreSQL with comprehensive schema including indexes and functions</li>
+                    <li><strong>State Management:</strong> React hooks with REST API integration</li>
+                    <li><strong>File Storage:</strong> Local filesystem for uploads (documents, receipts, attachments)</li>
+                </ul>
+
+                <div class="diagram">
+                    <h4>Data Flow Architecture</h4>
+                    <pre style="background: transparent; color: var(--dark); border: none; text-align: left;">
+┌─────────────────┐
+│  Frontend (React)│
+│  Components      │
+└────────┬─────────┘
+         │
+         │ HTTP Requests (REST API)
+         │
+         ▼
+┌─────────────────┐
+│ Backend (Express)│
+│  /api/*         │
+└────────┬─────────┘
+         │
+         │ SQL Queries (pg)
+         │
+         ▼
+┌─────────────────┐
+│ PostgreSQL DB   │
+│ Tables+Functions│
+└─────────────────┘</pre>
+                </div>
+
+                <h3>Key Design Principles</h3>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <span class="emoji">🔐</span>
+                        <h4>Role-Based Access Control</h4>
+                        <p>Different views and permissions based on user roles</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="emoji">🏢</span>
+                        <h4>Multi-Branch Support</h4>
+                        <p>Organization can have multiple branches with isolated data</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="emoji">⚡</span>
+                        <h4>Real-Time Updates</h4>
+                        <p>API-driven data refresh for live updates</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="emoji">📴</span>
+                        <h4>Offline/Demo Mode</h4>
+                        <p>Fallback mode when backend is unavailable</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="emoji">🧩</span>
+                        <h4>Modular Architecture</h4>
+                        <p>Each feature is a separate component/module</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tech Stack Section -->
+            <section id="tech-stack">
+                <h2>💻 Technology Stack</h2>
+
+                <h3>Frontend Technologies</h3>
+                <ul>
+                    <li><strong>Framework:</strong> React 18.3.1</li>
+                    <li><strong>Language:</strong> TypeScript 5.8.2</li>
+                    <li><strong>Build Tool:</strong> Vite 6.4.1</li>
+                    <li><strong>UI Components:</strong> Custom components with Lucide React icons</li>
+                    <li><strong>Charts:</strong> Recharts 2.12.3 for data visualization</li>
+                    <li><strong>Styling:</strong> Tailwind CSS (utility-first CSS framework)</li>
+                </ul>
+
+                <h3>Backend Technologies</h3>
+                <ul>
+                    <li><strong>Runtime:</strong> Node.js (ES Modules)</li>
+                    <li><strong>Framework:</strong> Express.js 5.2.1</li>
+                    <li><strong>Database Driver:</strong> pg (node-postgres) 8.16.3</li>
+                    <li><strong>Authentication:</strong> bcryptjs 2.4.3, jsonwebtoken 9.0.3, speakeasy 2.0.0 (for 2FA)</li>
+                    <li><strong>File Upload:</strong> Multer 2.0.2</li>
+                    <li><strong>Email:</strong> Nodemailer 7.0.12</li>
+                    <li><strong>Other:</strong> CORS, body-parser, dotenv</li>
+                </ul>
+
+                <h3>Database & External Services</h3>
+                <ul>
+                    <li><strong>DBMS:</strong> PostgreSQL (version 12+)</li>
+                    <li><strong>Schema:</strong> 20+ tables with proper indexing and foreign keys</li>
+                    <li><strong>Functions:</strong> Custom PL/pgSQL functions for calculations</li>
+                    <li><strong>AI Service:</strong> Google Gemini AI @google/genai 1.34.0</li>
+                </ul>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="number">23+</span>
+                        <span class="label">Database Tables</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="number">25+</span>
+                        <span class="label">React Components</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="number">17</span>
+                        <span class="label">Feature Modules</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="number">7</span>
+                        <span class="label">User Roles</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Database Section -->
+            <section id="database">
+                <h2>🗄️ Database Schema & Data Model</h2>
+                
+                <p>The application uses a comprehensive PostgreSQL database with 23+ tables covering all aspects of HR management:</p>
+
+                <h3>Core Tables</h3>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4>👥 users</h4>
+                        <p>System users, login credentials, roles, and access control</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>👤 employees</h4>
+                        <p>Complete employee master data with personal, contact, and bank details</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>🏢 branches</h4>
+                        <p>Multi-branch support for different office locations</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>📊 departments</h4>
+                        <p>Organizational structure and hierarchy</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>⏰ attendance</h4>
+                        <p>Daily attendance tracking with check-in/check-out</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>⏱️ timesheets</h4>
+                        <p>Detailed time tracking for projects and tasks</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>🏖️ leaves</h4>
+                        <p>Leave requests with approval workflow</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>💼 jobs</h4>
+                        <p>Job openings for recruitment module</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>👔 candidates</h4>
+                        <p>Applicant tracking through recruitment pipeline</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>💻 assets</h4>
+                        <p>IT assets and equipment management</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>💰 payroll</h4>
+                        <p>Monthly payroll processing and payment tracking</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>📝 tasks</h4>
+                        <p>Project and task management with assignments</p>
+                    </div>
+                </div>
+
+                <h3>Security & Audit Tables</h3>
+                <ul>
+                    <li><strong>user_security_settings:</strong> 2FA/MFA configuration</li>
+                    <li><strong>mfa_logs:</strong> Authentication attempt logging</li>
+                    <li><strong>logs:</strong> Complete audit trail of all system activities</li>
+                </ul>
+
+                <h3>Database Functions</h3>
+                <div class="info-box">
+                    <h4>Custom PL/pgSQL Functions</h4>
+                    <ul>
+                        <li><strong>get_employee_attendance():</strong> Calculates attendance summary for date range</li>
+                        <li><strong>calculate_payroll():</strong> Computes monthly payroll based on attendance and salary</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Features Section -->
+            <section id="features">
+                <h2>✨ Features & Modules</h2>
+
+                <div class="success-box">
+                    <h3>17 Comprehensive Modules</h3>
+                    <p>The application includes 17 feature-rich modules covering every aspect of HR operations</p>
+                </div>
+
+                <h3>1. Dashboard 📊</h3>
+                <p>Real-time overview with statistics, charts, and quick actions. Features attendance visualizations using Recharts, recent hires list, and task management board.</p>
+
+                <h3>2. Employee Management 👥</h3>
+                <p>Complete employee lifecycle management with searchable directory, multi-tab profile views (Personal, Professional, Bank, Compliance, Documents), and bulk operations support.</p>
+
+                <h3>3. Attendance Management ⏰</h3>
+                <p>Daily attendance marking, bulk entry, check-in/check-out tracking, work hours calculation, overtime tracking, and comprehensive attendance reports.</p>
+
+                <h3>4. Leave Management 🏖️</h3>
+                <p>Leave balance tracking, application workflow with approval/rejection, multiple leave types (Casual, Sick, Annual), and visual progress bars for utilization.</p>
+
+                <h3>5. Recruitment 🎯</h3>
+                <p>Complete ATS (Application Tracking System) with job posting management, candidate pipeline (Applied → Screening → Interview → Offered → Hired), resume storage, and offer letter generation.</p>
+
+                <h3>6. Asset Management 💻</h3>
+                <p>IT assets and equipment inventory with assignment tracking, lifecycle management (Available → Assigned → Under Repair → Retired), and maintenance schedules.</p>
+
+                <h3>7. Payroll Management 💰</h3>
+                <p>Monthly payroll processing with detailed salary structure breakdown, attendance-based calculation, reimbursement integration, payslip generation, and tax compliance.</p>
+
+                <h3>8. Timesheets ⏱️</h3>
+                <p>Detailed time entry for projects, clock in/out tracking, overtime identification, billable hours tracking, and manager approval workflow.</p>
+
+                <h3>9. Task Board 📋</h3>
+                <p>Kanban-style task management with drag-and-drop, priority levels, due date tracking, comments, attachments, and activity history.</p>
+
+                <h3>10. Team Management 👨‍👩‍👧‍👦</h3>
+                <p>Create and manage teams, assign leaders, team project assignments, performance metrics, and communication hub.</p>
+
+                <h3>11. File Manager 📁</h3>
+                <p>Centralized document repository with drag-and-drop upload, file preview, version control, access control, and folder structure.</p>
+
+                <h3>12. Handbook & Policies 📖</h3>
+                <p>Company policies repository with categories, versioning, effective date tracking, and employee acknowledgment.</p>
+
+                <h3>13. Holiday Calendar 📅</h3>
+                <p>Annual holiday calendar with public/national holidays, company-specific holidays, regional variations, and leave integration.</p>
+
+                <h3>14. Reports & Analytics 📈</h3>
+                <p>Comprehensive reporting system covering employees, attendance, leave, payroll, recruitment, and assets with export to Excel/PDF.</p>
+
+                <h3>15. Activity Logs 📝</h3>
+                <p>Complete audit trail with user actions, timestamps, IP addresses, device information, and compliance export capabilities.</p>
+
+                <h3>16. Settings ⚙️</h3>
+                <p>System configuration including company info, branch management, security settings, user management, email settings, and portal customization.</p>
+
+                <h3>17. Login & Authentication 🔐</h3>
+                <p>Password-based login with Two-Factor Authentication (2FA), TOTP support, QR code generation, backup codes, and comprehensive security features.</p>
+            </section>
+
+            <!-- User Roles Section -->
+            <section id="roles">
+                <h2>👥 User Roles & Permissions</h2>
+
+                <h3>Role Hierarchy (7 Roles)</h3>
+
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <span class="emoji">👑</span>
+                        <h4>Super Admin</h4>
+                        <p>Full system access including configuration, all modules, user management, multi-branch access, and security settings.</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="emoji">🔑</span>
+                        <h4>Admin</h4>
+                        <p>Organization-wide access to all modules except system config, limited user management, and comprehensive reporting.</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="emoji">👔</span>
+                        <h4>Manager</h4>
+                        <p>Department/team management with leave approval, timesheet approval, task assignment, and team reports.</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="emoji">👥</span>
+                        <h4>HR</h4>
+                        <p>Human resources operations including employee CRUD, recruitment, leave management, and document management.</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="emoji">💼</span>
+                        <h4>Finance</h4>
+                        <p>Financial operations covering payroll, reimbursements, salary revisions, and financial reporting.</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="emoji">📊</span>
+                        <h4>Team Lead</h4>
+                        <p>Team-level management with team member access, leave approval for team, and task assignment.</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="emoji">👤</span>
+                        <h4>Employee</h4>
+                        <p>Self-service portal for viewing profile, applying leave, marking attendance, and accessing payslips.</p>
+                    </div>
+                </div>
+
+                <h3>Permission Matrix</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Module</th>
+                            <th>Super Admin</th>
+                            <th>Admin</th>
+                            <th>Manager</th>
+                            <th>HR</th>
+                            <th>Finance</th>
+                            <th>Team Lead</th>
+                            <th>Employee</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Dashboard</td>
+                            <td>✅ Full</td>
+                            <td>✅ Full</td>
+                            <td>✅ Team</td>
+                            <td>✅ Full</td>
+                            <td>✅ Limited</td>
+                            <td>✅ Team</td>
+                            <td>✅ Self</td>
+                        </tr>
+                        <tr>
+                            <td>Employees</td>
+                            <td>✅ CRUD</td>
+                            <td>✅ CRUD</td>
+                            <td>✅ View</td>
+                            <td>✅ CRUD</td>
+                            <td>✅ View</td>
+                            <td>✅ Team View</td>
+                            <td>✅ Self View</td>
+                        </tr>
+                        <tr>
+                            <td>Attendance</td>
+                            <td>✅ CRUD</td>
+                            <td>✅ CRUD</td>
+                            <td>✅ Team CRUD</td>
+                            <td>✅ CRUD</td>
+                            <td>❌</td>
+                            <td>✅ Team View</td>
+                            <td>✅ Self Mark</td>
+                        </tr>
+                        <tr>
+                            <td>Leave</td>
+                            <td>✅ CRUD</td>
+                            <td>✅ CRUD</td>
+                            <td>✅ Approve</td>
+                            <td>✅ CRUD</td>
+                            <td>❌</td>
+                            <td>✅ Team Approve</td>
+                            <td>✅ Self Apply</td>
+                        </tr>
+                        <tr>
+                            <td>Payroll</td>
+                            <td>✅ CRUD</td>
+                            <td>✅ CRUD</td>
+                            <td>✅ View</td>
+                            <td>❌</td>
+                            <td>✅ CRUD</td>
+                            <td>❌</td>
+                            <td>✅ Self View</td>
+                        </tr>
+                        <tr>
+                            <td>Settings</td>
+                            <td>✅ Full</td>
+                            <td>✅ Limited</td>
+                            <td>❌</td>
+                            <td>❌</td>
+                            <td>❌</td>
+                            <td>❌</td>
+                            <td>❌</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- API Section -->
+            <section id="api">
+                <h2>🔌 API Endpoints</h2>
+
+                <div class="info-box">
+                    <h4>Base URLs</h4>
+                    <ul>
+                        <li><strong>Development:</strong> http://localhost:3001/api</li>
+                        <li><strong>Production:</strong> Configured via VITE_API_URL</li>
+                    </ul>
+                </div>
+
+                <h3>Generic CRUD Pattern</h3>
+                <p>The backend uses a generic table-based API pattern for all resources:</p>
+
+                <pre><code>// Fetch all records
+GET /api/:table
+
+// Fetch single record by ID
+GET /api/:table/:id
+
+// Create new record
+POST /api/:table
+
+// Update existing record
+PUT /api/:table/:id
+
+// Delete record
+DELETE /api/:table/:id</code></pre>
+
+                <h3>Specific Endpoints</h3>
+                <h4>Authentication</h4>
+                <ul>
+                    <li><code>POST /api/login</code> - User login with password</li>
+                    <li><code>POST /api/verify-mfa</code> - Verify 2FA code</li>
+                    <li><code>POST /api/users</code> - Create new user account</li>
+                </ul>
+
+                <h4>Security & 2FA</h4>
+                <ul>
+                    <li><code>POST /api/security/enable-totp</code> - Enable TOTP 2FA</li>
+                    <li><code>POST /api/security/verify-totp</code> - Verify TOTP setup</li>
+                    <li><code>POST /api/security/disable-totp</code> - Disable 2FA</li>
+                    <li><code>GET /api/security/settings/:userId</code> - Get security settings</li>
+                    <li><code>GET /api/security/mfa-logs/:userId</code> - Get MFA logs</li>
+                </ul>
+
+                <h4>Utility Endpoints</h4>
+                <ul>
+                    <li><code>GET /api/search?query=xyz</code> - Global search across tables</li>
+                    <li><code>POST /api/files/upload</code> - File upload (multipart/form-data)</li>
+                    <li><code>POST /api/reimbursements/upload</code> - Upload reimbursement receipts</li>
+                    <li><code>GET /api/health</code> - Server health check</li>
+                </ul>
+
+                <h3>Supported Tables</h3>
+                <p><span class="highlight">20+ tables</span> accessible via generic CRUD endpoints: employees, users, branches, departments, attendance, leaves, jobs, candidates, assets, tasks, payroll, reimbursements, timesheets, shifts, teams, groups, policies, holidays, files, logs</p>
+            </section>
+
+            <!-- Components Section -->
+            <section id="components">
+                <h2>🎨 Frontend Components</h2>
+
+                <p>The application consists of <span class="highlight">25+ React components</span> built with TypeScript, organized in a modular architecture.</p>
+
+                <h3>Core Components</h3>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4>App.tsx</h4>
+                        <p>Main application container with routing, state management, and API data fetching hooks</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>Header.tsx</h4>
+                        <p>Top navigation bar with user profile, notifications, and quick actions</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>Sidebar.tsx</h4>
+                        <p>Left navigation menu with module links and role-based visibility</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>Dashboard.tsx</h4>
+                        <p>Main dashboard with statistics, charts, and real-time data visualization</p>
+                    </div>
+                </div>
+
+                <h3>Custom Hooks</h3>
+                <div class="info-box">
+                    <h4>useApiData Hook</h4>
+                    <p>Custom React hook for API data fetching with offline support:</p>
+                    <pre><code>const [employees, refreshEmployees, loading] = useApiData&lt;Employee[]&gt;(
+  'employees',
+  [],
+  serverConnected
+);</code></pre>
+                    <p><strong>Features:</strong> Fetches data on mount, handles loading states, provides refresh function, falls back to defaults if server unavailable</p>
+                </div>
+
+                <h3>Component Patterns</h3>
+                <ul>
+                    <li><strong>StatCard:</strong> Reusable metric display component with icons and trends</li>
+                    <li><strong>ModalBackdrop:</strong> Consistent modal structure for forms and details</li>
+                    <li><strong>DataTable:</strong> Table component with search, filter, sort, and actions</li>
+                    <li><strong>FormInput:</strong> Standardized form inputs with validation</li>
+                </ul>
+            </section>
+
+            <!-- Security Section -->
+            <section id="security">
+                <h2>🔐 Security & Authentication</h2>
+
+                <h3>Authentication Methods</h3>
+                
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <span class="emoji">🔑</span>
+                        <h4>Password Authentication</h4>
+                        <p>Email + password with bcrypt hashing (salt rounds: 10), minimum 8 characters with complexity requirements</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="emoji">📱</span>
+                        <h4>Two-Factor Auth (2FA)</h4>
+                        <p>TOTP using speakeasy, compatible with Google Authenticator, 6-digit codes, QR code setup, backup codes</p>
+                    </div>
+                </div>
+
+                <h3>Security Features</h3>
+                <ul>
+                    <li><strong>Password Security:</strong> Bcrypt hashing, no plain text storage, password reset via email, lockout after 5 failed attempts</li>
+                    <li><strong>Session Management:</strong> Secure session tokens, configurable timeout, auto-logout on inactivity, device tracking</li>
+                    <li><strong>Data Protection:</strong> SQL injection prevention (parameterized queries), XSS protection, CSRF tokens, input validation</li>
+                    <li><strong>Access Control:</strong> Role-based access control (RBAC), module-level permissions, branch-level isolation</li>
+                    <li><strong>Audit & Compliance:</strong> Complete activity logging, IP address tracking, device info capture, login monitoring</li>
+                </ul>
+
+                <h3>Login Flow</h3>
+                <div class="diagram">
+                    <pre style="background: transparent; color: var(--dark); border: none;">
+1. Enter email & password
+   ↓
+2. Validate credentials
+   ↓
+3. Check if 2FA enabled
+   ├─ Yes → Request TOTP code → Verify → Login
+   └─ No  → Log in directly
+   ↓
+4. Log activity
+   ↓
+5. Create session
+   ↓
+6. Redirect to dashboard</pre>
+                </div>
+
+                <div class="warning-box">
+                    <h4>⚠️ Security Best Practices</h4>
+                    <ul>
+                        <li>Enable 2FA for admin and super admin accounts</li>
+                        <li>Use strong passwords with minimum 12 characters</li>
+                        <li>Regularly review activity logs for suspicious behavior</li>
+                        <li>Keep backup codes in a secure location</li>
+                        <li>Configure session timeout based on organizational policy</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Setup Section -->
+            <section id="setup">
+                <h2>⚙️ Setup & Deployment</h2>
+
+                <h3>Prerequisites</h3>
+                <ul>
+                    <li>Node.js 18+ (LTS recommended)</li>
+                    <li>PostgreSQL 12+</li>
+                    <li>npm or yarn</li>
+                    <li>Git</li>
+                </ul>
+
+                <h3>Installation Steps</h3>
+                <div class="info-box">
+                    <h4>1. Clone Repository</h4>
+                    <pre><code>git clone &lt;repository-url&gt;
+cd hr-portal</code></pre>
+                </div>
+
+                <div class="info-box">
+                    <h4>2. Install Dependencies</h4>
+                    <pre><code>npm install</code></pre>
+                </div>
+
+                <div class="info-box">
+                    <h4>3. Database Setup</h4>
+                    <pre><code># Create database
+createdb hr_portal
+
+# Run schema
+psql hr_portal &lt; database_schema_postgresql.sql
+
+# Seed initial data (optional)
+npm run seed</code></pre>
+                </div>
+
+                <div class="info-box">
+                    <h4>4. Configure Environment Variables</h4>
+                    <p>Create <code>.env</code> file in root:</p>
+                    <pre><code># Database
+DATABASE_URL=postgres://user:password@localhost:5432/hr_portal
+PGHOST=localhost
+PGPORT=5432
+PGDATABASE=hr_portal
+PGUSER=postgres
+PGPASSWORD=your_password
+
+# Backend
+PORT=3001
+NODE_ENV=development
+
+# Frontend
+VITE_API_URL=http://localhost:3001/api
+VITE_APP_NAME=Employee Management Portal</code></pre>
+                </div>
+
+                <div class="info-box">
+                    <h4>5. Start Development Servers</h4>
+                    <pre><code># Option 1: Run both frontend and backend together
+npm run dev
+
+# Option 2: Run separately
+# Terminal 1 - Frontend
+npm run dev:client
+
+# Terminal 2 - Backend
+npm run dev:server</code></pre>
+                </div>
+
+                <div class="success-box">
+                    <h4>✅ Access Application</h4>
+                    <ul>
+                        <li><strong>Frontend:</strong> http://localhost:5173</li>
+                        <li><strong>Backend:</strong> http://localhost:3001</li>
+                        <li><strong>Health Check:</strong> http://localhost:3001/api/health</li>
+                    </ul>
+                </div>
+
+                <h3>NPM Scripts</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Command</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>npm run dev</code></td>
+                            <td>Run both frontend and backend together</td>
+                        </tr>
+                        <tr>
+                            <td><code>npm run dev:client</code></td>
+                            <td>Vite dev server (port 5173)</td>
+                        </tr>
+                        <tr>
+                            <td><code>npm run dev:server</code></td>
+                            <td>Express server (port 3001)</td>
+                        </tr>
+                        <tr>
+                            <td><code>npm run build</code></td>
+                            <td>Production build for frontend</td>
+                        </tr>
+                        <tr>
+                            <td><code>npm run preview</code></td>
+                            <td>Preview production build</td>
+                        </tr>
+                        <tr>
+                            <td><code>npm run seed</code></td>
+                            <td>Seed database with sample data</td>
+                        </tr>
+                        <tr>
+                            <td><code>npm run setup</code></td>
+                            <td>Initialize database schema</td>
+                        </tr>
+                        <tr>
+                            <td><code>npm run check-db</code></td>
+                            <td>Check database connection</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Production Deployment</h3>
+                <ol>
+                    <li><strong>Build Frontend:</strong> <code>npm run build</code> (generates optimized build in <code>dist/</code>)</li>
+                    <li><strong>Configure Production Environment:</strong> Update <code>.env</code> with production database URL and API URL</li>
+                    <li><strong>Deploy Backend:</strong> Use PM2 for process management: <code>pm2 start server.js --name hr-portal-api</code></li>
+                    <li><strong>Deploy Frontend:</strong> Serve <code>dist/</code> folder using Nginx, Apache, Vercel, Netlify, or GitHub Pages</li>
+                    <li><strong>Database Migration:</strong> Run <code>npm run setup</code> on production database</li>
+                </ol>
+
+                <h3>Technical Specifications</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="number">&lt; 200ms</span>
+                        <span class="label">API Response Time</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="number">&lt; 2s</span>
+                        <span class="label">Page Load Time</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="number">1000+</span>
+                        <span class="label">Employee Support</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="number">100+</span>
+                        <span class="label">Concurrent Users</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Key Features Summary -->
+            <section id="summary">
+                <h2>🎯 Key Features Summary</h2>
+
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <span class="emoji">✅</span>
+                        <h4>Complete HR Operations</h4>
+                        <p>Employee lifecycle, attendance, leave, payroll, and recruitment</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="emoji">✅</span>
+                        <h4>Modern Architecture</h4>
+                        <p>React 18, TypeScript, REST API, PostgreSQL with proper indexing</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="emoji">✅</span>
+                        <h4>Security & Compliance</h4>
+                        <p>2FA/MFA, RBAC, complete audit trail, data encryption</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="emoji">✅</span>
+                        <h4>Multi-Branch Support</h4>
+                        <p>Multiple locations, branch-wise isolation, centralized reporting</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="emoji">✅</span>
+                        <h4>Self-Service Portal</h4>
+                        <p>Employee self-service, leave application, document access</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="emoji">✅</span>
+                        <h4>Analytics & Reporting</h4>
+                        <p>Real-time dashboards, customizable reports, visual charts</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="emoji">✅</span>
+                        <h4>Document Management</h4>
+                        <p>Centralized file storage, version control, access permissions</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="emoji">✅</span>
+                        <h4>Extensibility</h4>
+                        <p>Modular design, custom fields, API-first, easy integration</p>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <footer>
+        <h3 style="color: var(--primary); margin-bottom: 15px;">Employee Management Portal</h3>
+        <p><strong>Version:</strong> 1.0.0 | <strong>Last Updated:</strong> January 4, 2026</p>
+        <p style="margin-top: 10px;">A comprehensive HR management system built with modern web technologies</p>
+        <p style="margin-top: 10px; font-size: 0.9rem;">© 2026 Development Team. All rights reserved.</p>
+    </footer>
+
+    <a href="#" class="scroll-top" title="Scroll to top">↑</a>
+
+    <script>
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Show/hide scroll to top button
+        const scrollTopBtn = document.querySelector('.scroll-top');
+        window.addEventListener('scroll', () => {
+            if (window.pageYOffset > 300) {
+                scrollTopBtn.style.display = 'flex';
+            } else {
+                scrollTopBtn.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
