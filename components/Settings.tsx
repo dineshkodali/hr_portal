@@ -10,6 +10,7 @@ import { api } from '../services/api';
 import { User, UserRole, SettingsProps, Branch, Group, SystemConfig, EmailTemplate, RolePermission, Employee, Asset, LeaveRequest, Reimbursement } from '../types';
 import { defaultNotificationSettings } from '../constants/defaultNotificationSettings';
 import SecuritySettings from './SecuritySettings';
+import CopyrightPage from './CopyrightPage';
 
 export const Settings: React.FC<SettingsProps> = ({
   user,
@@ -660,6 +661,7 @@ export const Settings: React.FC<SettingsProps> = ({
             <SidebarItem id="email" label="Email & SMTP" icon={Mail} />
             <SidebarItem id="notifications" label="Notifications" icon={Bell} />
             <SidebarItem id="database" label="Database" icon={Database} />
+            <SidebarItem id="copyright" label="Copyright & Ownership" icon={ShieldCheck} />
             <button
               onClick={() => window.open("/appnote.html", "_blank")}
               className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors text-sm font-medium bg-gradient-to-r from-orange-50 to-amber-50 text-orange-600 border border-orange-200 hover:from-orange-100 hover:to-amber-100 hover:border-orange-300 shadow-sm"
@@ -1690,35 +1692,39 @@ export const Settings: React.FC<SettingsProps> = ({
                 </div>
             )}
 
-            {activeTab === 'database' && (
-                <div className="max-w-2xl mx-auto">
-                    <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2"><Database size={24} className="text-orange-500"/> Database Details</h2>
-                    <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm mb-6">
-                        <div className="mb-4 flex items-center gap-3">
-                            <span className={`inline-block w-3 h-3 rounded-full ${dbStatus === 'connected' ? 'bg-green-500' : dbStatus === 'checking' ? 'bg-yellow-400' : 'bg-red-500'}`}></span>
-                            <span className="font-bold text-slate-700">Status:</span>
-                            <span className="text-sm font-mono">{dbStatus.charAt(0).toUpperCase() + dbStatus.slice(1)}</span>
-                        </div>
-                        {dbInfo === null ? (
-                            <div className="text-slate-400 italic">Loading database info...</div>
-                        ) : dbInfo.error ? (
-                            <div className="text-red-500 font-bold">{dbInfo.error}</div>
-                        ) : (
-                            <>
-                                <div className="mb-2"><span className="font-bold text-slate-700">Database:</span> <span className="font-mono">{dbInfo.database}</span></div>
-                                <div className="mb-2"><span className="font-bold text-slate-700">User:</span> <span className="font-mono">{dbInfo.user}</span></div>
-                                <div className="mb-2"><span className="font-bold text-slate-700">Host:</span> <span className="font-mono">{dbInfo.host}</span></div>
-                                <div className="mb-2"><span className="font-bold text-slate-700">Port:</span> <span className="font-mono">{dbInfo.port}</span></div>
-                                <div className="mb-2"><span className="font-bold text-slate-700">Tables:</span></div>
-                                <ul className="list-disc pl-6 text-sm">
-                                    {dbInfo.tables && dbInfo.tables.length > 0 ? dbInfo.tables.map((t: string) => (
-                                        <li key={t} className="font-mono text-slate-700">{t}</li>
-                                    )) : <li className="text-slate-400 italic">No tables found</li>}
-                                </ul>
-                            </>
-                        )}
-                    </div>
+            {activeTab === "database" && (
+              <div className="max-w-2xl mx-auto">
+                <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2"><Database size={24} className="text-orange-500"/> Database Details</h2>
+                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm mb-6">
+                  <div className="mb-4 flex items-center gap-3">
+                    <span className={`inline-block w-3 h-3 rounded-full ${dbStatus === 'connected' ? 'bg-green-500' : dbStatus === 'checking' ? 'bg-yellow-400' : 'bg-red-500'}`}></span>
+                    <span className="font-bold text-slate-700">Status:</span>
+                    <span className="text-sm font-mono">{dbStatus.charAt(0).toUpperCase() + dbStatus.slice(1)}</span>
+                  </div>
+                  {dbInfo === null ? (
+                    <div className="text-slate-400 italic">Loading database info...</div>
+                  ) : dbInfo.error ? (
+                    <div className="text-red-500 font-bold">{dbInfo.error}</div>
+                  ) : (
+                    <>
+                      <div className="mb-2"><span className="font-bold text-slate-700">Database:</span> <span className="font-mono">{dbInfo.database}</span></div>
+                      <div className="mb-2"><span className="font-bold text-slate-700">User:</span> <span className="font-mono">{dbInfo.user}</span></div>
+                      <div className="mb-2"><span className="font-bold text-slate-700">Host:</span> <span className="font-mono">{dbInfo.host}</span></div>
+                      <div className="mb-2"><span className="font-bold text-slate-700">Port:</span> <span className="font-mono">{dbInfo.port}</span></div>
+                      <div className="mb-2"><span className="font-bold text-slate-700">Tables:</span></div>
+                      <ul className="list-disc pl-6 text-sm">
+                        {dbInfo.tables && dbInfo.tables.length > 0 ? dbInfo.tables.map((t: string) => (
+                          <li key={t} className="font-mono text-slate-700">{t}</li>
+                        )) : <li className="text-slate-400 italic">No tables found</li>}
+                      </ul>
+                    </>
+                  )}
                 </div>
+              </div>
+            )}
+
+            {activeTab === "copyright" && (
+              <CopyrightPage />
             )}
         {/* --- MODALS --- */}
     </div>

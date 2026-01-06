@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 SD Commercial. All rights reserved.
+ * This file and its contents are proprietary to SD Commercial.
+ * Unauthorized copying, distribution, or use is strictly prohibited.
+ */
 import React, { useState } from 'react';
 import { 
     BookOpen, Search, Plus, Edit, Trash2, Shield, Lock, DollarSign, 
