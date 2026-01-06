@@ -549,139 +549,72 @@ const checkDateFilter = (dateString: string) => {
 
        {/* Enhanced Apply Leave Modal with Balance Indicators */}
        {isLeaveModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-50 p-4">
-             <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in duration-200 flex flex-col max-h-[90vh]">
-                <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50 flex-shrink-0">
-                    <div>
-                        <h3 className="font-black text-slate-900 text-xl tracking-tight">Apply for Leave</h3>
-                        <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Request time off from work</p>
+        <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50 p-4">
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-xl border border-gray-100 overflow-hidden flex flex-col" style={{ minWidth: 340 }}>
+            <div className="px-6 pt-6 pb-2 flex justify-between items-center border-b border-gray-100">
+              <h2 className="text-xl font-bold text-gray-800">Apply Leave</h2>
+              <button onClick={() => setIsLeaveModalOpen(false)} className="text-gray-400 hover:text-gray-700"><X size={22}/></button>
+            </div>
+            {/* Leave Balance Summary */}
+            <div className="px-6 pt-4 pb-2">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Live Balance Summary</span>
+                <span className="text-xs font-bold text-orange-500 uppercase bg-orange-50 px-2 py-0.5 rounded-full border border-orange-100">FY 2024</span>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                {Object.entries(LEAVE_LIMITS).map(([type, limit]) => {
+                  const used = calculateUsedLeave(type);
+                  const colorClass = getBalanceColor(used, limit);
+                  return (
+                    <div key={type} className={`p-2 rounded-lg border text-xs transition-all ${colorClass} ${leaveFormData.type === type ? 'ring-2 ring-orange-400/20 shadow' : 'opacity-80'}`}>
+                      <p className="font-bold uppercase truncate mb-1" title={type}>{type.replace(' Leave', '')}</p>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-lg font-bold">{limit - used}</span>
+                        <span className="text-[10px] font-bold opacity-60">/ {limit}</span>
+                      </div>
                     </div>
-                    <button onClick={() => setIsLeaveModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-800 transition-colors bg-white shadow-sm border rounded-xl"><X size={20}/></button>
+                  );
+                })}
+              </div>
+            </div>
+            <form onSubmit={handleLeaveSubmit} className="px-6 py-4 flex flex-col gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Leave Type</label>
+                <select value={leaveFormData.type} onChange={e => setLeaveFormData({...leaveFormData, type: e.target.value})} className="w-full rounded-lg border border-gray-200 px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-100">
+                  {Object.keys(LEAVE_LIMITS).map(type => <option key={type}>{type}</option>)}
+                </select>
+              </div>
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Start Date</label>
+                  <input value={leaveFormData.startDate || ''} onChange={e => setLeaveFormData({...leaveFormData, startDate: e.target.value})} type="date" className="w-full rounded-lg border border-gray-200 px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-100" required />
                 </div>
-                
-                <form onSubmit={handleLeaveSubmit} className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-8">
-                    {/* Leave Balance Visualization */}
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Live Balance Summary</h4>
-                            <span className="text-[10px] font-black text-accent-500 uppercase bg-accent-50 px-2 py-0.5 rounded-full border border-accent-100">FY 2024</span>
-                        </div>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            {Object.entries(LEAVE_LIMITS).map(([type, limit]) => {
-                                const used = calculateUsedLeave(type);
-                                const colorClass = getBalanceColor(used, limit);
-                                return (
-                                    <div key={type} className={`p-3 rounded-2xl border transition-all ${colorClass} ${leaveFormData.type === type ? 'ring-2 ring-accent-500/20 shadow-md' : 'opacity-80'}`}>
-                                        <p className="text-[9px] font-black uppercase tracking-wider truncate mb-1" title={type}>{type.replace(' Leave', '')}</p>
-                                        <div className="flex items-baseline gap-1">
-                                            <span className="text-xl font-black">{limit - used}</span>
-                                            <span className="text-[10px] font-bold opacity-60">/ {limit}</span>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div>
-                            <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">Leave Type</label>
-                            <select 
-                                value={leaveFormData.type} 
-                                onChange={e => setLeaveFormData({...leaveFormData, type: e.target.value})} 
-                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-accent-500/20 focus:bg-white transition-all font-bold text-slate-700"
-                            >
-                                {Object.keys(LEAVE_LIMITS).map(type => <option key={type}>{type}</option>)}
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">Number of Days</label>
-                            <div className="flex items-center gap-2">
-                                <input 
-                                    value={leaveFormData.days} 
-                                    onChange={e => setLeaveFormData({...leaveFormData, days: Number(e.target.value)})} 
-                                    type="number" min="1" 
-                                    className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-accent-500/20 focus:bg-white transition-all font-black text-slate-700" 
-                                />
-                                <div className="p-3 bg-slate-100 rounded-2xl text-slate-400"><Calendar size={20}/></div>
-                            </div>
-                        </div>
-                        <div>
-                             <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">Start Date</label>
-                             <input value={leaveFormData.startDate || ''} onChange={e => setLeaveFormData({...leaveFormData, startDate: e.target.value})} type="date" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-accent-500/20 focus:bg-white transition-all font-bold" required />
-                        </div>
-                        <div>
-                             <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">End Date</label>
-                             <input value={leaveFormData.endDate || ''} onChange={e => setLeaveFormData({...leaveFormData, endDate: e.target.value})} type="date" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-accent-500/20 focus:bg-white transition-all font-bold" required />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">Reason for Absence</label>
-                        <textarea 
-                            value={leaveFormData.reason || ''} 
-                            onChange={e => setLeaveFormData({...leaveFormData, reason: e.target.value})} 
-                            className="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-accent-500/20 focus:bg-white transition-all text-sm font-medium leading-relaxed"
-                            rows={3}
-                            placeholder="Please provide a brief explanation..."
-                            required
-                        />
-                    </div>
-
-                    {/* File Upload UI */}
-                    <div className="space-y-4">
-                        <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest">Attachments (Medical Certificates/Documents)</label>
-                        <div className={`border-2 border-dashed rounded-[1.5rem] p-8 text-center transition-all cursor-pointer group ${selectedFile ? 'bg-orange-50/50 border-accent-500' : 'bg-slate-50 border-slate-200 hover:border-accent-400 hover:bg-slate-100/50'}`}>
-                            <input 
-                                type="file" 
-                                id="leave-file-upload"
-                                className="hidden" 
-                                onChange={(e) => {
-                                    if(e.target.files && e.target.files[0]) {
-                                        setSelectedFile(e.target.files[0]);
-                                    }
-                                }}
-                            />
-                            <label htmlFor="leave-file-upload" className="cursor-pointer">
-                                {selectedFile ? (
-                                    <div className="flex flex-col items-center">
-                                        <div className="w-16 h-16 bg-accent-500 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-orange-500/20 mb-3 animate-in bounce-in">
-                                            <FileText size={32}/>
-                                        </div>
-                                        <p className="text-sm font-black text-slate-800 truncate max-w-xs">{selectedFile.name}</p>
-                                        <p className="text-xs text-slate-500 font-bold mt-1">{(selectedFile.size / 1024).toFixed(1)} KB • Click to change</p>
-                                        <button type="button" onClick={(e) => { e.preventDefault(); setSelectedFile(null); }} className="mt-4 text-xs font-black text-red-500 uppercase tracking-widest hover:underline">Remove File</button>
-                                    </div>
-                                ) : (
-                                    <div className="flex flex-col items-center">
-                                        <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-slate-300 border border-slate-100 shadow-sm group-hover:scale-110 group-hover:text-accent-500 transition-all mb-3">
-                                            <Upload size={32}/>
-                                        </div>
-                                        <p className="text-sm font-black text-slate-700">Drop file here or click to browse</p>
-                                        <p className="text-xs text-slate-400 font-bold mt-1">PDF, JPG, PNG up to 10MB</p>
-                                    </div>
-                                )}
-                            </label>
-                        </div>
-                    </div>
-                </form>
-
-                <div className="p-8 bg-slate-900 flex justify-between items-center border-t flex-shrink-0">
-                    <div className="hidden sm:block">
-                        <div className="flex items-center gap-2 text-slate-400">
-                            <Info size={14} className="text-accent-500"/>
-                            <p className="text-[10px] font-bold uppercase tracking-widest">Policy: Approval takes 1-2 working days</p>
-                        </div>
-                    </div>
-                    <button 
-                        type="submit" 
-                        onClick={handleLeaveSubmit}
-                        className="w-full sm:w-auto bg-white text-slate-900 px-10 py-4 rounded-2xl font-black uppercase tracking-[0.2em] text-xs hover:bg-accent-500 hover:text-white transition-all shadow-xl shadow-white/5 active:scale-95"
-                    >
-                        Submit Request
-                    </button>
+                <div className="flex-1">
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">End Date</label>
+                  <input value={leaveFormData.endDate || ''} onChange={e => setLeaveFormData({...leaveFormData, endDate: e.target.value})} type="date" className="w-full rounded-lg border border-gray-200 px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-100" required />
                 </div>
-             </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Days</label>
+                <input value={leaveFormData.days} onChange={e => setLeaveFormData({...leaveFormData, days: Number(e.target.value)})} type="number" min="1" className="w-full rounded-lg border border-gray-200 px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-100" required />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Reason</label>
+                <textarea value={leaveFormData.reason || ''} onChange={e => setLeaveFormData({...leaveFormData, reason: e.target.value})} className="w-full rounded-lg border border-gray-200 px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-100" rows={2} required />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Attachment (optional)</label>
+                <input type="file" id="leave-file-upload" className="w-full rounded-lg border border-gray-200 px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-100" onChange={e => { if(e.target.files && e.target.files[0]) setSelectedFile(e.target.files[0]); }} />
+                {selectedFile && (
+                  <div className="mt-2 text-xs text-gray-600 flex items-center justify-between">
+                    <span>{selectedFile.name}</span>
+                    <button type="button" className="text-red-500 ml-2" onClick={() => setSelectedFile(null)}>Remove</button>
+                  </div>
+                )}
+              </div>
+              <button type="submit" className="w-full mt-2 bg-orange-500 text-white font-bold py-3 rounded-xl text-base shadow hover:bg-orange-600 transition-all">Confirm &amp; Save</button>
+            </form>
+          </div>
         </div>
       )}
     </div>

@@ -4,6 +4,15 @@ import { Calendar, CheckCircle, XCircle, Clock, Plus } from 'lucide-react';
 
 const LeaveManagement: React.FC = () => {
   const [leaves, setLeaves] = React.useState<any[]>([]);
+    const [showForm, setShowForm] = React.useState(false);
+    const [form, setForm] = React.useState({
+      type: '',
+      startDate: '',
+      endDate: '',
+      days: '',
+      reason: ''
+    });
+    const [formError, setFormError] = React.useState('');
 
   React.useEffect(() => {
     let mounted = true;
@@ -11,18 +20,133 @@ const LeaveManagement: React.FC = () => {
     return () => { mounted = false; };
   }, []);
 
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError('');
+    // Basic validation
+    if (!form.type || !form.startDate || !form.endDate || !form.days || !form.reason) {
+      setFormError('Please fill all fields.');
+      return;
+    }
+    try {
+      await api.create('leaves', form);
+      setShowForm(false);
+      setForm({ type: '', startDate: '', endDate: '', days: '', reason: '' });
+      api.get('leaves').then(setLeaves);
+    } catch {
+      setFormError('Failed to apply for leave.');
+    }
+  };
+
   return (
-    <div className="p-6 space-y-6">
-       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="p-6 space-y-6 relative">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Leave Management</h1>
           <p className="text-gray-500 mt-1">Track balances and manage leave requests.</p>
         </div>
-        <button className="bg-accent-500 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-accent-600 shadow-sm transition-colors">
-            <Plus size={18} />
-            <span>Apply for Leave</span>
+        <button
+          className="bg-blue-500 text-white px-4 py-2 rounded-md flex items-center space-x-2 hover:bg-blue-600 shadow transition-colors"
+          onClick={() => setShowForm(true)}
+        >
+          <Plus size={18} />
+          <span>Apply for Leave</span>
         </button>
       </div>
+
+      {/* Apply Leave Modal */}
+      {showForm && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-md p-6 rounded-lg shadow-xl border border-gray-200" style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.12)' }}>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold text-gray-800">Apply for Leave</h2>
+              <button className="text-gray-400 hover:text-gray-600" onClick={() => setShowForm(false)}>
+                <XCircle size={20} />
+              </button>
+            </div>
+            <form className="space-y-4" onSubmit={handleFormSubmit}>
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">Type</label>
+                <select
+                  name="type"
+                  value={form.type}
+                  onChange={handleFormChange}
+                  className="w-full border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:ring focus:ring-blue-100 bg-gray-50"
+                  required
+                >
+                  <option value="">Select type</option>
+                  <option value="Casual">Casual Leave</option>
+                  <option value="Sick">Sick Leave</option>
+                  <option value="Earned">Earned Leave</option>
+                </select>
+              </div>
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <label className="block text-sm text-gray-600 mb-1">Start Date</label>
+                  <input
+                    type="date"
+                    name="startDate"
+                    value={form.startDate}
+                    onChange={handleFormChange}
+                    className="w-full border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:ring focus:ring-blue-100 bg-gray-50"
+                    required
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm text-gray-600 mb-1">End Date</label>
+                  <input
+                    type="date"
+                    name="endDate"
+                    value={form.endDate}
+                    onChange={handleFormChange}
+                    className="w-full border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:ring focus:ring-blue-100 bg-gray-50"
+                    required
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">Days</label>
+                <input
+                  type="number"
+                  name="days"
+                  min="1"
+                  value={form.days}
+                  onChange={handleFormChange}
+                  className="w-full border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:ring focus:ring-blue-100 bg-gray-50"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">Reason</label>
+                <textarea
+                  name="reason"
+                  value={form.reason}
+                  onChange={handleFormChange}
+                  className="w-full border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:ring focus:ring-blue-100 bg-gray-50 resize-none"
+                  rows={2}
+                  required
+                />
+              </div>
+              {formError && <div className="text-red-500 text-sm">{formError}</div>}
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+                  onClick={() => setShowForm(false)}
+                >Cancel</button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 shadow"
+                >Submit</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Balance Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
