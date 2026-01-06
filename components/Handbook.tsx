@@ -1,8 +1,3 @@
-/**
- * Copyright (c) 2026 SD Commercial. All rights reserved.
- * This file and its contents are proprietary to SD Commercial.
- * Unauthorized copying, distribution, or use is strictly prohibited.
- */
 import React, { useState } from 'react';
 import { 
     BookOpen, Search, Plus, Edit, Trash2, Shield, Lock, DollarSign, 
@@ -23,101 +18,27 @@ const SummaryCard: React.FC<{ title: string; count: number; icon: React.ReactNod
     </div>
 );
 
-// Default categories and sample policies for SD Commercial
-const defaultCategories: PolicyCategory[] = [
-    { id: 'cat-conduct', name: 'Code of Conduct', description: 'Guidelines for professional behavior and ethics.', icon: 'BookOpen' },
-    { id: 'cat-attendance', name: 'Attendance & Leave', description: 'Rules for attendance, leave, and time-off.', icon: 'Clock' },
-    { id: 'cat-payroll', name: 'Payroll & Compensation', description: 'Salary, overtime, and compensation policies.', icon: 'DollarSign' },
-    { id: 'cat-harassment', name: 'Anti-Harassment & Equal Opportunity', description: 'Policies for workplace safety and equality.', icon: 'Shield' },
-    { id: 'cat-it', name: 'IT & Data Security', description: 'Guidelines for technology and data protection.', icon: 'Lock' },
-    { id: 'cat-health', name: 'Health, Safety & Environment', description: 'Workplace health and safety standards.', icon: 'LifeBuoy' },
-    { id: 'cat-remote', name: 'Remote Work & Flexibility', description: 'Remote work and flexible hours policies.', icon: 'BookOpen' },
-    { id: 'cat-benefits', name: 'Employee Benefits', description: 'Benefits and perks for employees.', icon: 'Star' },
-    { id: 'cat-disciplinary', name: 'Disciplinary Procedures', description: 'Rules for discipline and termination.', icon: 'Info' },
-    { id: 'cat-recruitment', name: 'Recruitment & Onboarding', description: 'Hiring and onboarding processes.', icon: 'BookOpen' },
-    { id: 'cat-grievance', name: 'Grievance Redressal', description: 'How to raise and resolve complaints.', icon: 'LifeBuoy' },
-    { id: 'cat-confidentiality', name: 'Confidentiality & NDA', description: 'Confidentiality and non-disclosure policies.', icon: 'Lock' },
-];
-
-const defaultPolicies: PolicyDocument[] = [
-    // Code of Conduct
-    { id: 'pol-conduct-1', categoryId: 'cat-conduct', title: 'Employee Code of Conduct', content: 'All employees must adhere to the highest standards of professional behavior and ethics.', version: '1', lastUpdated: '2026-01-01' },
-    { id: 'pol-conduct-2', categoryId: 'cat-conduct', title: 'Dress Code Policy', content: 'Employees are expected to dress appropriately for the workplace.', version: '1', lastUpdated: '2026-01-01' },
-    // Attendance & Leave
-    { id: 'pol-attendance-1', categoryId: 'cat-attendance', title: 'Attendance Policy', content: 'Regular attendance is mandatory. Absences must be reported in advance.', version: '1', lastUpdated: '2026-01-01' },
-    { id: 'pol-attendance-2', categoryId: 'cat-attendance', title: 'Annual Leave Policy', content: 'Employees are entitled to annual paid leave as per company guidelines.', version: '1', lastUpdated: '2026-01-01' },
-    { id: 'pol-attendance-3', categoryId: 'cat-attendance', title: 'Sick Leave Policy', content: 'Sick leave is available for health-related absences.', version: '1', lastUpdated: '2026-01-01' },
-    // Payroll & Compensation
-    { id: 'pol-payroll-1', categoryId: 'cat-payroll', title: 'Payroll Schedule', content: 'Salaries are paid on the last working day of each month.', version: '1', lastUpdated: '2026-01-01' },
-    { id: 'pol-payroll-2', categoryId: 'cat-payroll', title: 'Overtime Policy', content: 'Overtime is compensated as per statutory requirements.', version: '1', lastUpdated: '2026-01-01' },
-    // Anti-Harassment & Equal Opportunity
-    { id: 'pol-harassment-1', categoryId: 'cat-harassment', title: 'Anti-Harassment Policy', content: 'Harassment of any kind is strictly prohibited.', version: '1', lastUpdated: '2026-01-01' },
-    { id: 'pol-harassment-2', categoryId: 'cat-harassment', title: 'Equal Opportunity Statement', content: 'SD Commercial is an equal opportunity employer.', version: '1', lastUpdated: '2026-01-01' },
-    // IT & Data Security
-    { id: 'pol-it-1', categoryId: 'cat-it', title: 'Acceptable Use Policy', content: 'Company IT resources must be used responsibly.', version: '1', lastUpdated: '2026-01-01' },
-    { id: 'pol-it-2', categoryId: 'cat-it', title: 'Data Protection Policy', content: 'All personal and company data must be protected.', version: '1', lastUpdated: '2026-01-01' },
-    // Health, Safety & Environment
-    { id: 'pol-health-1', categoryId: 'cat-health', title: 'Workplace Safety Policy', content: 'Safety procedures must be followed at all times.', version: '1', lastUpdated: '2026-01-01' },
-    // Remote Work & Flexibility
-    { id: 'pol-remote-1', categoryId: 'cat-remote', title: 'Remote Work Policy', content: 'Remote work is permitted as per company guidelines.', version: '1', lastUpdated: '2026-01-01' },
-    // Employee Benefits
-    { id: 'pol-benefits-1', categoryId: 'cat-benefits', title: 'Health Insurance Policy', content: 'Health insurance is provided to all eligible employees.', version: '1', lastUpdated: '2026-01-01' },
-    // Disciplinary Procedures
-    { id: 'pol-disciplinary-1', categoryId: 'cat-disciplinary', title: 'Disciplinary Action Policy', content: 'Disciplinary actions will be taken for violations of company policy.', version: '1', lastUpdated: '2026-01-01' },
-    // Recruitment & Onboarding
-    { id: 'pol-recruitment-1', categoryId: 'cat-recruitment', title: 'Recruitment Policy', content: 'Recruitment is conducted in a fair and transparent manner.', version: '1', lastUpdated: '2026-01-01' },
-    // Grievance Redressal
-    { id: 'pol-grievance-1', categoryId: 'cat-grievance', title: 'Grievance Policy', content: 'Employees may raise grievances through the official process.', version: '1', lastUpdated: '2026-01-01' },
-    // Confidentiality & NDA
-    { id: 'pol-confidentiality-1', categoryId: 'cat-confidentiality', title: 'Confidentiality Agreement', content: 'All employees must sign a confidentiality agreement.', version: '1', lastUpdated: '2026-01-01' },
-];
-
-const Handbook: React.FC<HandbookProps> = (props) => {
-    // Use local state for categories and policies
-    const [categories, setCategories] = useState<PolicyCategory[]>(defaultCategories);
-    const [policies, setPolicies] = useState<PolicyDocument[]>(defaultPolicies);
-
-    // Handlers to update state
-    const onAddCategory = (c: PolicyCategory) => {
-        setCategories(prev => [...prev, c]);
-    };
-    const onUpdateCategory = (c: PolicyCategory) => {
-        setCategories(prev => prev.map(cat => cat.id === c.id ? c : cat));
-    };
-    const onDeleteCategory = (id: string) => {
-        setCategories(prev => prev.filter(cat => cat.id !== id));
-        setPolicies(prev => prev.filter(pol => pol.categoryId !== id)); // Remove policies in deleted category
-        setSelectedCategory(null);
-    };
-    const onAddPolicy = (p: PolicyDocument) => {
-        setPolicies(prev => [...prev, p]);
-    };
-    const onUpdatePolicy = (p: PolicyDocument) => {
-        setPolicies(prev => prev.map(pol => pol.id === p.id ? p : pol));
-        setViewPolicy(null);
-    };
-    const onDeletePolicy = (id: string) => {
-        setPolicies(prev => prev.filter(pol => pol.id !== id));
-        setViewPolicy(null);
-    };
-    // Use state for effective data
-    const effectiveCategories = categories;
-    const effectivePolicies = policies;
-    // For real use, set isHR based on user role. For now, set to true to test admin/HR UI.
-    const isHR = true;
+const Handbook: React.FC<HandbookProps> = ({ 
+    user = {} as any, categories = [], policies = [], 
+    onAddCategory = (c: PolicyCategory) => {}, onUpdateCategory = (c: PolicyCategory) => {}, onDeleteCategory = (id: string) => {},
+    onAddPolicy = (p: PolicyDocument) => {}, onUpdatePolicy = (p: PolicyDocument) => {}, onDeletePolicy = (id: string) => {}
+}) => {
+    const isHR = user?.role === 'admin' || user?.role === 'super_admin' || user?.role === 'hr';
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [viewPolicy, setViewPolicy] = useState<PolicyDocument | null>(null);
 
     const [isCatModalOpen, setIsCatModalOpen] = useState(false);
     const [editingCat, setEditingCat] = useState<PolicyCategory | null>(null);
-    const [catForm, setCatForm] = useState<Partial<PolicyCategory>>({ name: '', description: '' });
+    const [catForm, setCatForm] = useState<Partial<PolicyCategory>>({ name: '', description: ''
+        // , icon: 'BookOpen'
+     });
 
     const [isPolModalOpen, setIsPolModalOpen] = useState(false);
     const [editingPol, setEditingPol] = useState<PolicyDocument | null>(null);
-    const [polForm, setPolForm] = useState<Partial<PolicyDocument>>({ title: '', content: '', version: '1.0', fileUrl: '' });
+    const [polForm, setPolForm] = useState<Partial<PolicyDocument>>({ title: '', content: '', version: '1.0' });
 
-    const filteredCategories = effectiveCategories.filter(c => 
+    const filteredCategories = categories.filter(c => 
         c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
         c.description.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -153,10 +74,10 @@ const Handbook: React.FC<HandbookProps> = (props) => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <SummaryCard title="Total Policies" count={effectivePolicies.length} icon={<FileText size={20} />} color="bg-blue-500" />
-                <SummaryCard title="Categories" count={effectiveCategories.length} icon={<BookOpen size={20} />} color="bg-purple-500" />
+                <SummaryCard title="Total Policies" count={policies.length} icon={<FileText size={20} />} color="bg-blue-500" />
+                <SummaryCard title="Categories" count={categories.length} icon={<BookOpen size={20} />} color="bg-purple-500" />
                 <SummaryCard title="Compliance" count={100} icon={<Shield size={20} />} color="bg-[#94a3b8]" />
-                <SummaryCard title="Updates" count={effectivePolicies.length > 0 ? 2 : 0} icon={<Clock size={20} />} color="bg-[#22c55e]" />
+                <SummaryCard title="Updates" count={policies.length > 0 ? 2 : 0} icon={<Clock size={20} />} color="bg-[#22c55e]" />
             </div>
 
             <div className="bg-white rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-[#f1f5f9] overflow-hidden">
@@ -169,14 +90,14 @@ const Handbook: React.FC<HandbookProps> = (props) => {
 
                 <div className="p-8">
                     {!selectedCategory ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {filteredCategories.map(cat => (
-                                <div key={cat.id} onClick={() => setSelectedCategory(cat.id)} className="bg-white p-3 rounded-xl border border-[#f1f5f9] hover:border-[#f97316]/20 shadow-sm hover:shadow-md transition-all cursor-pointer group min-h-[170px] flex flex-col justify-between">
-                                    <div className="w-10 h-10 bg-[#f8fafc] text-[#94a3b8] rounded-lg flex items-center justify-center mb-3 group-hover:bg-[#f97316] group-hover:text-white transition-all">{getIcon(cat.icon)}</div>
-                                    <h3 className="text-base font-bold text-[#1e293b] mb-1">{cat.name}</h3>
-                                    <p className="text-xs text-[#64748b] leading-snug mb-2 line-clamp-2">{cat.description}</p>
-                                    <div className="flex items-center justify-between border-t border-[#f1f5f9] pt-2">
-                                        <div className="flex items-center gap-1 text-[11px] font-bold text-[#f97316] uppercase tracking-wider"><span>{effectivePolicies.filter(p => p.categoryId === cat.id).length} Docs</span><ChevronRight size={14} /></div>
+                                <div key={cat.id} onClick={() => setSelectedCategory(cat.id)} className="bg-white p-6 rounded-2xl border border-[#f1f5f9] hover:border-[#f97316]/20 shadow-sm hover:shadow-md transition-all cursor-pointer group">
+                                    <div className="w-12 h-12 bg-[#f8fafc] text-[#94a3b8] rounded-xl flex items-center justify-center mb-5 group-hover:bg-[#f97316] group-hover:text-white transition-all">{getIcon(cat.icon)}</div>
+                                    <h3 className="text-lg font-bold text-[#1e293b] mb-2">{cat.name}</h3>
+                                    <p className="text-sm text-[#64748b] leading-relaxed mb-6 line-clamp-2">{cat.description}</p>
+                                    <div className="flex items-center justify-between border-t border-[#f1f5f9] pt-4">
+                                        <div className="flex items-center gap-1 text-[11px] font-bold text-[#f97316] uppercase tracking-wider"><span>{policies.filter(p => p.categoryid === cat.id).length} Docs</span><ChevronRight size={14} /></div>
                                         {isHR && (
                                             <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                                                 <button onClick={() => { setEditingCat(cat); setCatForm(cat); setIsCatModalOpen(true); }} className="p-1.5 text-[#94a3b8] hover:text-[#1e293b]"><Edit size={16}/></button>
@@ -193,34 +114,25 @@ const Handbook: React.FC<HandbookProps> = (props) => {
                                 <button onClick={() => setSelectedCategory(null)} className="flex items-center gap-2 text-sm font-bold text-[#64748b] hover:text-[#1e293b]"><ChevronLeft size={18} /> Back to Categories</button>
                                 {isHR && <button onClick={() => { setEditingPol(null); setPolForm({ title: '', content: '', version: '1.0' }); setIsPolModalOpen(true); }} className="bg-[#1e293b] text-white px-5 py-2 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-black transition-all"><Plus size={16}/> New Policy</button>}
                             </div>
-                            <h2 className="text-xl font-bold text-[#1e293b] mb-6 px-2">{effectiveCategories.find(c => c.id === selectedCategory)?.name}</h2>
+                            <h2 className="text-xl font-bold text-[#1e293b] mb-6 px-2">{categories.find(c => c.id === selectedCategory)?.name}</h2>
                             <div className="overflow-x-auto rounded-xl border border-[#f1f5f9]">
                                 <table className="w-full text-left">
                                     <thead className="bg-[#f8fafc] text-[11px] font-bold text-[#64748b] uppercase tracking-wider">
-                                        <tr>
-                                            <th className="px-4 py-3">Title</th>
-                                            <th className="px-4 py-3">Version</th>
-                                            <th className="px-4 py-3">Updated</th>
-                                            <th className="px-4 py-3 text-right">Actions</th>
-                                        </tr>
+                                        <tr><th className="px-6 py-4">POLICY DOCUMENT</th><th className="px-6 py-4">VERSION</th><th className="px-6 py-4">LAST UPDATED</th><th className="px-6 py-4 text-right">ACTIONS</th></tr>
                                     </thead>
                                     <tbody className="divide-y divide-[#f1f5f9]">
-                                        {effectivePolicies.filter(p => p.categoryId === selectedCategory).map(pol => (
+                                        {policies.filter(p => p.categoryid === selectedCategory).map(pol => (
                                             <tr key={pol.id} className="hover:bg-[#fcfdfe] transition-colors cursor-pointer group" onClick={() => setViewPolicy(pol)}>
-                                                <td className="px-4 py-3">
-                                                    <div className="flex items-center gap-2">
-                                                        <FileText size={16}/>
-                                                        <span className="text-sm font-bold text-[#334155] group-hover:text-[#f97316] transition-colors">{pol.title}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-4 py-3 text-sm font-medium text-[#64748b]">v{pol.version}</td>
-                                                <td className="px-4 py-3 text-sm font-medium text-[#64748b]">{pol.lastUpdated}</td>
-                                                <td className="px-4 py-3 text-right" onClick={e => e.stopPropagation()}>
+                                                <td className="px-6 py-4"><div className="flex items-center gap-4"><div className="p-2 bg-blue-50 text-blue-500 rounded-lg"><FileText size={18}/></div><span className="text-sm font-bold text-[#334155] group-hover:text-[#f97316] transition-colors">{pol.title}</span></div></td>
+                                                <td className="px-6 py-4 text-sm font-medium text-[#64748b]">v{pol.version}</td>
+                                                <td className="px-6 py-4 text-sm font-medium text-[#64748b]">{pol?.updated_at}</td>
+                                                <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                                                     <div className="flex justify-end gap-1">
+                                                        <button className="p-2 text-[#94a3b8] hover:text-[#1e293b]"><Download size={18}/></button>
                                                         {isHR && (
                                                             <>
-                                                                <button onClick={() => { setEditingPol(pol); setPolForm(pol); setIsPolModalOpen(true); }} className="p-2 text-[#94a3b8] hover:text-blue-600"><Edit size={16}/></button>
-                                                                <button onClick={() => { if(window.confirm('Delete policy?')) onDeletePolicy(pol.id); }} className="p-2 text-[#94a3b8] hover:text-red-500"><Trash2 size={16}/></button>
+                                                                <button onClick={() => { setEditingPol(pol); setPolForm(pol); setIsPolModalOpen(true); }} className="p-2 text-[#94a3b8] hover:text-blue-600"><Edit size={18}/></button>
+                                                                <button onClick={() => { if(window.confirm('Delete policy?')) onDeletePolicy(pol.id); }} className="p-2 text-[#94a3b8] hover:text-red-500"><Trash2 size={18}/></button>
                                                             </>
                                                         )}
                                                     </div>
@@ -254,7 +166,7 @@ const Handbook: React.FC<HandbookProps> = (props) => {
   setIsCatModalOpen(false);
 }}
 >
-                            <div><label className="block text-xs font-bold text-[#64748b] mb-1.5 uppercase tracking-wider">Name</label><input value={catForm.name} onChange={e => setCatForm({...catForm, name: e.target.value})} className="w-full px-4 py-2.5 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl text-sm font-medium" required /></div>
+                            <div><label className="block text-xs font-bold text-[#64748b] mb-1.5 uppercase tracking-wider">Name</label><input value={catForm.name} onChange={e => setCatForm({...catForm, name: e.target.value})} className="w-full px-4 py-2.5 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl text-sm font-medium outline-none" required /></div>
                             <div><label className="block text-xs font-bold text-[#64748b] mb-1.5 uppercase tracking-wider">Description</label><textarea value={catForm.description} onChange={e => setCatForm({...catForm, description: e.target.value})} className="w-full px-4 py-2.5 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl text-sm font-medium outline-none h-24" /></div>
                             <button type="submit" className="w-full py-3.5 bg-[#f97316] text-white rounded-xl font-bold shadow-lg">Save Category</button>
                         </form>
@@ -266,52 +178,33 @@ const Handbook: React.FC<HandbookProps> = (props) => {
                 <div className="fixed inset-0 bg-[#0f172a]/60 backdrop-blur-[2px] flex items-center justify-center z-[100] p-4">
                     <div className="bg-white rounded-[24px] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in duration-200">
                         <div className="p-6 border-b border-[#f1f5f9] flex justify-between items-center bg-white"><h3 className="text-xl font-bold text-[#1e293b]">{editingPol ? 'Edit Policy' : 'Create Policy'}</h3><button onClick={() => setIsPolModalOpen(false)} className="text-[#94a3b8] hover:text-[#1e293b]"><X size={24}/></button></div>
-                                                <form
-    className="p-8 space-y-5"
-    onSubmit={(e) => {
-        e.preventDefault();
+                        <form
+  className="p-8 space-y-5"
+  onSubmit={(e) => {
+    e.preventDefault();
 
-        // Remove DB-managed fields (VERY IMPORTANT)
-        const {
-            created_at,
-            updated_at,
-            lastUpdated,
-            ...safePol
-        } = polForm as any;
+    // Remove DB-managed fields (VERY IMPORTANT)
+    const {
+      created_at,
+      updated_at,
+      lastUpdated,
+      ...safePol
+    } = polForm as any;
 
-        const data: PolicyDocument = {
-            ...safePol,
-            id: editingPol ? editingPol.id : `pol-${Date.now()}`,
-            categoryId: selectedCategory!, // use correct field
-            version: String(safePol.version || '1'),
-            fileUrl: polForm.fileUrl || ''
-        };
+    const data: PolicyDocument = {
+      ...safePol,
+      id: editingPol ? editingPol.id : `pol-${Date.now()}`,
+      categoryid: selectedCategory!,   //  backend expects categoryid
+      version: Number(safePol.version) || 1
+    };
 
-        editingPol ? onUpdatePolicy(data) : onAddPolicy(data);
-        setIsPolModalOpen(false);
-    }}
+    editingPol ? onUpdatePolicy(data) : onAddPolicy(data);
+    setIsPolModalOpen(false);
+  }}
 >
 
                             <div className="grid grid-cols-2 gap-4"><div className="col-span-2"><label className="block text-xs font-bold text-[#64748b] mb-1.5 uppercase tracking-wider">Title</label><input value={polForm.title} onChange={e => setPolForm({...polForm, title: e.target.value})} className="w-full px-4 py-2.5 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl text-sm font-medium" required /></div><div><label className="block text-xs font-bold text-[#64748b] mb-1.5 uppercase tracking-wider">Version</label><input value={polForm.version} onChange={e => setPolForm({...polForm, version: e.target.value})} className="w-full px-4 py-2.5 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl text-sm font-medium" /></div></div>
-                                                        <div><label className="block text-xs font-bold text-[#64748b] mb-1.5 uppercase tracking-wider">Content</label><textarea value={polForm.content} onChange={e => setPolForm({...polForm, content: e.target.value})} className="w-full px-4 py-2.5 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl text-sm font-medium outline-none h-64" required /></div>
-                                                        {isHR && (
-                                                            <div>
-                                                                <label className="block text-xs font-bold text-[#64748b] mb-1.5 uppercase tracking-wider">Upload PDF/DOCX</label>
-                                                                <input
-                                                                    type="file"
-                                                                    accept=".pdf,.doc,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword"
-                                                                    onChange={e => {
-                                                                        const file = e.target.files?.[0];
-                                                                        if (file) {
-                                                                            // For now, just store the file name as a placeholder. Real upload would use backend.
-                                                                            setPolForm({ ...polForm, fileUrl: file.name });
-                                                                        }
-                                                                    }}
-                                                                    className="w-full px-4 py-2.5 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl text-sm font-medium"
-                                                                />
-                                                                {polForm.fileUrl && <div className="text-xs text-[#64748b] mt-1">Selected: {polForm.fileUrl}</div>}
-                                                            </div>
-                                                        )}
+                            <div><label className="block text-xs font-bold text-[#64748b] mb-1.5 uppercase tracking-wider">Content</label><textarea value={polForm.content} onChange={e => setPolForm({...polForm, content: e.target.value})} className="w-full px-4 py-2.5 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl text-sm font-medium outline-none h-64" required /></div>
                             <button type="submit" className="w-full py-4 bg-[#f97316] text-white rounded-xl font-bold">Publish Policy</button>
                         </form>
                     </div>
@@ -325,28 +218,8 @@ const Handbook: React.FC<HandbookProps> = (props) => {
                             <div><h2 className="text-2xl font-bold text-[#1e293b] tracking-tight">{viewPolicy.title}</h2><div className="flex gap-3 mt-1.5"><span className="text-[10px] font-bold uppercase text-[#f97316] bg-orange-50 px-2.5 py-0.5 rounded-lg border border-orange-100">VERSION {viewPolicy.version}</span><span className="text-[10px] font-bold uppercase text-[#94a3b8]">UPDATED: {viewPolicy.lastUpdated}</span></div></div>
                             <button onClick={() => setViewPolicy(null)} className="p-1.5 text-[#94a3b8] hover:text-[#1e293b]"><X size={24}/></button>
                         </div>
-                                                <div className="flex-1 p-10 overflow-y-auto bg-white">
-                                                    <div className="max-w-2xl mx-auto text-[#475569] leading-relaxed whitespace-pre-line text-base font-medium">
-                                                        {viewPolicy.fileUrl ? (
-                                                            viewPolicy.fileUrl.endsWith('.pdf') ? (
-                                                                <iframe
-                                                                    src={viewPolicy.fileUrl}
-                                                                    title="Policy PDF"
-                                                                    width="100%"
-                                                                    height="600px"
-                                                                    style={{ border: 'none' }}
-                                                                />
-                                                            ) : viewPolicy.fileUrl.endsWith('.doc') || viewPolicy.fileUrl.endsWith('.docx') ? (
-                                                                <a href={viewPolicy.fileUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">View Document</a>
-                                                            ) : (
-                                                                <span>File: {viewPolicy.fileUrl}</span>
-                                                            )
-                                                        ) : (
-                                                            viewPolicy.content
-                                                        )}
-                                                    </div>
-                                                </div>
-                        <div className="px-8 py-6 border-t border-[#f1f5f9] flex justify-between items-center bg-[#f8fafc]"><div className="flex items-center gap-2 text-[#94a3b8]"><Shield size={16} /><p className="text-[10px] font-bold uppercase tracking-wider">Internal Document</p></div></div>
+                        <div className="flex-1 p-10 overflow-y-auto bg-white"><div className="max-w-2xl mx-auto text-[#475569] leading-relaxed whitespace-pre-line text-base font-medium">{viewPolicy.content}</div></div>
+                        <div className="px-8 py-6 border-t border-[#f1f5f9] flex justify-between items-center bg-[#f8fafc]"><div className="flex items-center gap-2 text-[#94a3b8]"><Shield size={16} /><p className="text-[10px] font-bold uppercase tracking-wider">Internal Document</p></div><button className="px-6 py-2.5 bg-[#1e293b] text-white rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-black transition-all"><Download size={16}/> Download PDF</button></div>
                     </div>
                 </div>
             )}
