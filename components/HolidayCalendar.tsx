@@ -205,12 +205,12 @@ const HolidayCalendar: React.FC<HolidayCalendarProps> = ({ user = {} as User, ho
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
                     {filteredHolidays.map(h => (
-                        <div key={h.id} className="bg-white p-6 rounded-2xl border border-[#f1f5f9] hover:border-[#f97316]/30 transition-all group">
+                        <div key={h.id} className="bg-white p-3 rounded-xl border border-[#f1f5f9] hover:border-[#f97316]/30 transition-all group min-h-[170px] flex flex-col justify-between">
                             <div className="flex justify-between items-start mb-5">
-                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${h.type === 'Public' ? 'bg-blue-50 text-blue-500' : 'bg-purple-50 text-purple-500'}`}>
-                                    <Palmtree size={24}/>
+                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${h.type === 'Public' ? 'bg-blue-50 text-blue-500' : 'bg-purple-50 text-purple-500'}`}>
+                                    <Palmtree size={20}/>
                                 </div>
                                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                     {isHR && (
@@ -225,10 +225,10 @@ const HolidayCalendar: React.FC<HolidayCalendarProps> = ({ user = {} as User, ho
                                 <span className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${h.type === 'Public' ? 'bg-orange-50 text-orange-700 border-orange-100' : 'bg-purple-50 text-purple-700 border-purple-100'}`}>
                                     {h.type}
                                 </span>
-                                <h3 className="text-lg font-bold text-[#1e293b] pt-2">{h.name}</h3>
-                                <p className="text-sm font-medium text-[#64748b]">{new Date(h.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', weekday: 'short' })}</p>
+                                <h3 className="text-base font-bold text-[#1e293b] pt-1">{h.name}</h3>
+                                <p className="text-xs font-medium text-[#64748b]">{new Date(h.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', weekday: 'short' })}</p>
                             </div>
-                            <p className="text-sm text-[#94a3b8] mt-4 line-clamp-2 leading-relaxed">{h.description}</p>
+                            <p className="text-xs text-[#94a3b8] mt-2 line-clamp-2 leading-snug">{h.description}</p>
                         </div>
                     ))}
                 </div>

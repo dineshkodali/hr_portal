@@ -144,13 +144,13 @@ const Handbook: React.FC<HandbookProps> = (props) => {
 
                 <div className="p-8">
                     {!selectedCategory ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                             {filteredCategories.map(cat => (
-                                <div key={cat.id} onClick={() => setSelectedCategory(cat.id)} className="bg-white p-6 rounded-2xl border border-[#f1f5f9] hover:border-[#f97316]/20 shadow-sm hover:shadow-md transition-all cursor-pointer group">
-                                    <div className="w-12 h-12 bg-[#f8fafc] text-[#94a3b8] rounded-xl flex items-center justify-center mb-5 group-hover:bg-[#f97316] group-hover:text-white transition-all">{getIcon(cat.icon)}</div>
-                                    <h3 className="text-lg font-bold text-[#1e293b] mb-2">{cat.name}</h3>
-                                    <p className="text-sm text-[#64748b] leading-relaxed mb-6 line-clamp-2">{cat.description}</p>
-                                    <div className="flex items-center justify-between border-t border-[#f1f5f9] pt-4">
+                                <div key={cat.id} onClick={() => setSelectedCategory(cat.id)} className="bg-white p-3 rounded-xl border border-[#f1f5f9] hover:border-[#f97316]/20 shadow-sm hover:shadow-md transition-all cursor-pointer group min-h-[170px] flex flex-col justify-between">
+                                    <div className="w-10 h-10 bg-[#f8fafc] text-[#94a3b8] rounded-lg flex items-center justify-center mb-3 group-hover:bg-[#f97316] group-hover:text-white transition-all">{getIcon(cat.icon)}</div>
+                                    <h3 className="text-base font-bold text-[#1e293b] mb-1">{cat.name}</h3>
+                                    <p className="text-xs text-[#64748b] leading-snug mb-2 line-clamp-2">{cat.description}</p>
+                                    <div className="flex items-center justify-between border-t border-[#f1f5f9] pt-2">
                                         <div className="flex items-center gap-1 text-[11px] font-bold text-[#f97316] uppercase tracking-wider"><span>{effectivePolicies.filter(p => p.categoryId === cat.id).length} Docs</span><ChevronRight size={14} /></div>
                                         {isHR && (
                                             <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
@@ -172,21 +172,30 @@ const Handbook: React.FC<HandbookProps> = (props) => {
                             <div className="overflow-x-auto rounded-xl border border-[#f1f5f9]">
                                 <table className="w-full text-left">
                                     <thead className="bg-[#f8fafc] text-[11px] font-bold text-[#64748b] uppercase tracking-wider">
-                                        <tr><th className="px-6 py-4">POLICY DOCUMENT</th><th className="px-6 py-4">VERSION</th><th className="px-6 py-4">LAST UPDATED</th><th className="px-6 py-4 text-right">ACTIONS</th></tr>
+                                        <tr>
+                                            <th className="px-4 py-3">Title</th>
+                                            <th className="px-4 py-3">Version</th>
+                                            <th className="px-4 py-3">Updated</th>
+                                            <th className="px-4 py-3 text-right">Actions</th>
+                                        </tr>
                                     </thead>
                                     <tbody className="divide-y divide-[#f1f5f9]">
                                         {effectivePolicies.filter(p => p.categoryId === selectedCategory).map(pol => (
                                             <tr key={pol.id} className="hover:bg-[#fcfdfe] transition-colors cursor-pointer group" onClick={() => setViewPolicy(pol)}>
-                                                <td className="px-6 py-4"><div className="flex items-center gap-4"><div className="p-2 bg-blue-50 text-blue-500 rounded-lg"><FileText size={18}/></div><span className="text-sm font-bold text-[#334155] group-hover:text-[#f97316] transition-colors">{pol.title}</span></div></td>
-                                                <td className="px-6 py-4 text-sm font-medium text-[#64748b]">v{pol.version}</td>
-                                                <td className="px-6 py-4 text-sm font-medium text-[#64748b]">{pol?.lastUpdated}</td>
-                                                <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
+                                                <td className="px-4 py-3">
+                                                    <div className="flex items-center gap-2">
+                                                        <FileText size={16}/>
+                                                        <span className="text-sm font-bold text-[#334155] group-hover:text-[#f97316] transition-colors">{pol.title}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-3 text-sm font-medium text-[#64748b]">v{pol.version}</td>
+                                                <td className="px-4 py-3 text-sm font-medium text-[#64748b]">{pol.lastUpdated}</td>
+                                                <td className="px-4 py-3 text-right" onClick={e => e.stopPropagation()}>
                                                     <div className="flex justify-end gap-1">
-                                                        {/* Download removed for all users */}
                                                         {isHR && (
                                                             <>
-                                                                <button onClick={() => { setEditingPol(pol); setPolForm(pol); setIsPolModalOpen(true); }} className="p-2 text-[#94a3b8] hover:text-blue-600"><Edit size={18}/></button>
-                                                                <button onClick={() => { if(window.confirm('Delete policy?')) onDeletePolicy(pol.id); }} className="p-2 text-[#94a3b8] hover:text-red-500"><Trash2 size={18}/></button>
+                                                                <button onClick={() => { setEditingPol(pol); setPolForm(pol); setIsPolModalOpen(true); }} className="p-2 text-[#94a3b8] hover:text-blue-600"><Edit size={16}/></button>
+                                                                <button onClick={() => { if(window.confirm('Delete policy?')) onDeletePolicy(pol.id); }} className="p-2 text-[#94a3b8] hover:text-red-500"><Trash2 size={16}/></button>
                                                             </>
                                                         )}
                                                     </div>
@@ -291,7 +300,27 @@ const Handbook: React.FC<HandbookProps> = (props) => {
                             <div><h2 className="text-2xl font-bold text-[#1e293b] tracking-tight">{viewPolicy.title}</h2><div className="flex gap-3 mt-1.5"><span className="text-[10px] font-bold uppercase text-[#f97316] bg-orange-50 px-2.5 py-0.5 rounded-lg border border-orange-100">VERSION {viewPolicy.version}</span><span className="text-[10px] font-bold uppercase text-[#94a3b8]">UPDATED: {viewPolicy.lastUpdated}</span></div></div>
                             <button onClick={() => setViewPolicy(null)} className="p-1.5 text-[#94a3b8] hover:text-[#1e293b]"><X size={24}/></button>
                         </div>
-                        <div className="flex-1 p-10 overflow-y-auto bg-white"><div className="max-w-2xl mx-auto text-[#475569] leading-relaxed whitespace-pre-line text-base font-medium">{viewPolicy.content}</div></div>
+                                                <div className="flex-1 p-10 overflow-y-auto bg-white">
+                                                    <div className="max-w-2xl mx-auto text-[#475569] leading-relaxed whitespace-pre-line text-base font-medium">
+                                                        {viewPolicy.fileUrl ? (
+                                                            viewPolicy.fileUrl.endsWith('.pdf') ? (
+                                                                <iframe
+                                                                    src={viewPolicy.fileUrl}
+                                                                    title="Policy PDF"
+                                                                    width="100%"
+                                                                    height="600px"
+                                                                    style={{ border: 'none' }}
+                                                                />
+                                                            ) : viewPolicy.fileUrl.endsWith('.doc') || viewPolicy.fileUrl.endsWith('.docx') ? (
+                                                                <a href={viewPolicy.fileUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">View Document</a>
+                                                            ) : (
+                                                                <span>File: {viewPolicy.fileUrl}</span>
+                                                            )
+                                                        ) : (
+                                                            viewPolicy.content
+                                                        )}
+                                                    </div>
+                                                </div>
                         <div className="px-8 py-6 border-t border-[#f1f5f9] flex justify-between items-center bg-[#f8fafc]"><div className="flex items-center gap-2 text-[#94a3b8]"><Shield size={16} /><p className="text-[10px] font-bold uppercase tracking-wider">Internal Document</p></div></div>
                     </div>
                 </div>
