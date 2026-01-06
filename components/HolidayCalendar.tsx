@@ -20,7 +20,7 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, icon, color }) => (
     </div>
 );
 
-const HolidayCalendar: React.FC<HolidayCalendarProps> = ({ user = {} as User, holidays = [], onAddHoliday = (h: Holiday) => {}, onUpdateHoliday = (h: Holiday) => {}, onDeleteHoliday = (id: string) => {}, onApplyLeave }) => {
+const HolidayCalendar: React.FC<HolidayCalendarProps> = ({ user = {} as User, holidays = [], onAddHoliday, onUpdateHoliday, onDeleteHoliday, onApplyLeave }) => {
     const isHR = (user?.role === 'admin' || user?.role === 'super_admin' || user?.role === 'hr');
     const fileInputRef = useRef<HTMLInputElement>(null);
     
@@ -35,63 +35,66 @@ const HolidayCalendar: React.FC<HolidayCalendarProps> = ({ user = {} as User, ho
     // 2026 Holiday Data
     const holidays2026 = {
         Indian: [
-            { id: 'ind-1', name: 'Republic Day', date: '2026-01-26', type: 'Public', description: 'Celebrates the adoption of the Constitution of India', country: 'Indian' },
-            { id: 'ind-2', name: 'Maha Shivaratri', date: '2026-02-17', type: 'Public', description: 'Hindu festival dedicated to Lord Shiva', country: 'Indian' },
-            { id: 'ind-3', name: 'Holi', date: '2026-03-06', type: 'Public', description: 'Festival of Colors celebrating spring and victory of good over evil', country: 'Indian' },
-            { id: 'ind-4', name: 'Good Friday', date: '2026-04-03', type: 'Public', description: 'Christian observance of Jesus Christ\'s crucifixion', country: 'Indian' },
-            { id: 'ind-5', name: 'Ram Navami', date: '2026-04-02', type: 'Public', description: 'Hindu festival celebrating the birth of Lord Rama', country: 'Indian' },
-            { id: 'ind-6', name: 'Mahavir Jayanti', date: '2026-04-06', type: 'Public', description: 'Jain festival celebrating the birth of Lord Mahavira', country: 'Indian' },
-            { id: 'ind-7', name: 'Eid-ul-Fitr', date: '2026-04-21', type: 'Public', description: 'Islamic festival marking the end of Ramadan', country: 'Indian' },
-            { id: 'ind-8', name: 'Buddha Purnima', date: '2026-05-04', type: 'Public', description: 'Buddhist festival celebrating the birth of Gautama Buddha', country: 'Indian' },
-            { id: 'ind-9', name: 'Eid-ul-Adha', date: '2026-06-28', type: 'Public', description: 'Islamic festival of sacrifice', country: 'Indian' },
-            { id: 'ind-10', name: 'Muharram', date: '2026-07-17', type: 'Public', description: 'Islamic New Year and day of mourning', country: 'Indian' },
-            { id: 'ind-11', name: 'Independence Day', date: '2026-08-15', type: 'Public', description: 'Celebrates India\'s independence from British rule', country: 'Indian' },
-            { id: 'ind-12', name: 'Janmashtami', date: '2026-08-25', type: 'Public', description: 'Hindu festival celebrating the birth of Lord Krishna', country: 'Indian' },
-            { id: 'ind-13', name: 'Ganesh Chaturthi', date: '2026-09-05', type: 'Public', description: 'Hindu festival celebrating Lord Ganesha', country: 'Indian' },
-            { id: 'ind-14', name: 'Milad-un-Nabi', date: '2026-09-26', type: 'Public', description: 'Birthday of Prophet Muhammad', country: 'Indian' },
-            { id: 'ind-15', name: 'Mahatma Gandhi Jayanti', date: '2026-10-02', type: 'Public', description: 'Birthday of Mahatma Gandhi, Father of the Nation', country: 'Indian' },
-            { id: 'ind-16', name: 'Dussehra', date: '2026-10-12', type: 'Public', description: 'Hindu festival celebrating victory of good over evil', country: 'Indian' },
-            { id: 'ind-17', name: 'Diwali', date: '2026-10-29', type: 'Public', description: 'Festival of Lights celebrating the victory of light over darkness', country: 'Indian' },
-            { id: 'ind-18', name: 'Guru Nanak Jayanti', date: '2026-11-16', type: 'Public', description: 'Birthday of Guru Nanak Dev Ji, founder of Sikhism', country: 'Indian' },
-            { id: 'ind-19', name: 'Christmas', date: '2026-12-25', type: 'Public', description: 'Christian festival celebrating the birth of Jesus Christ', country: 'Indian' }
+            { id: 'ind-1', name: 'Republic Day', date: '2026-01-26', type: 'Public', description: 'Celebrates the adoption of the Constitution of India' },
+            { id: 'ind-2', name: 'Maha Shivaratri', date: '2026-02-17', type: 'Public', description: 'Hindu festival dedicated to Lord Shiva' },
+            { id: 'ind-3', name: 'Holi', date: '2026-03-06', type: 'Public', description: 'Festival of Colors celebrating spring and victory of good over evil' },
+            { id: 'ind-4', name: 'Good Friday', date: '2026-04-03', type: 'Public', description: 'Christian observance of Jesus Christ\'s crucifixion' },
+            { id: 'ind-5', name: 'Ram Navami', date: '2026-04-02', type: 'Public', description: 'Hindu festival celebrating the birth of Lord Rama' },
+            { id: 'ind-6', name: 'Mahavir Jayanti', date: '2026-04-06', type: 'Public', description: 'Jain festival celebrating the birth of Lord Mahavira' },
+            { id: 'ind-7', name: 'Eid-ul-Fitr', date: '2026-04-21', type: 'Public', description: 'Islamic festival marking the end of Ramadan' },
+            { id: 'ind-8', name: 'Buddha Purnima', date: '2026-05-04', type: 'Public', description: 'Buddhist festival celebrating the birth of Gautama Buddha' },
+            { id: 'ind-9', name: 'Eid-ul-Adha', date: '2026-06-28', type: 'Public', description: 'Islamic festival of sacrifice' },
+            { id: 'ind-10', name: 'Muharram', date: '2026-07-17', type: 'Public', description: 'Islamic New Year and day of mourning' },
+            { id: 'ind-11', name: 'Independence Day', date: '2026-08-15', type: 'Public', description: 'Celebrates India\'s independence from British rule' },
+            { id: 'ind-12', name: 'Janmashtami', date: '2026-08-25', type: 'Public', description: 'Hindu festival celebrating the birth of Lord Krishna' },
+            { id: 'ind-13', name: 'Ganesh Chaturthi', date: '2026-09-05', type: 'Public', description: 'Hindu festival celebrating Lord Ganesha' },
+            { id: 'ind-14', name: 'Milad-un-Nabi', date: '2026-09-26', type: 'Public', description: 'Birthday of Prophet Muhammad' },
+            { id: 'ind-15', name: 'Mahatma Gandhi Jayanti', date: '2026-10-02', type: 'Public', description: 'Birthday of Mahatma Gandhi, Father of the Nation' },
+            { id: 'ind-16', name: 'Dussehra', date: '2026-10-12', type: 'Public', description: 'Hindu festival celebrating victory of good over evil' },
+            { id: 'ind-17', name: 'Diwali', date: '2026-10-29', type: 'Public', description: 'Festival of Lights celebrating the victory of light over darkness' },
+            { id: 'ind-18', name: 'Guru Nanak Jayanti', date: '2026-11-16', type: 'Public', description: 'Birthday of Guru Nanak Dev Ji, founder of Sikhism' },
+            { id: 'ind-19', name: 'Christmas', date: '2026-12-25', type: 'Public', description: 'Christian festival celebrating the birth of Jesus Christ' }
         ],
         American: [
-            { id: 'usa-1', name: 'New Year\'s Day', date: '2026-01-01', type: 'Public', description: 'First day of the year', country: 'American' },
-            { id: 'usa-2', name: 'Martin Luther King Jr. Day', date: '2026-01-19', type: 'Public', description: 'Honors civil rights leader Martin Luther King Jr.', country: 'American' },
-            { id: 'usa-3', name: 'Presidents\' Day', date: '2026-02-16', type: 'Public', description: 'Honors all U.S. presidents', country: 'American' },
-            { id: 'usa-4', name: 'Memorial Day', date: '2026-05-25', type: 'Public', description: 'Honors military personnel who died in service', country: 'American' },
-            { id: 'usa-5', name: 'Juneteenth', date: '2026-06-19', type: 'Public', description: 'Commemorates the end of slavery in the United States', country: 'American' },
-            { id: 'usa-6', name: 'Independence Day', date: '2026-07-04', type: 'Public', description: 'Celebrates U.S. independence from Britain', country: 'American' },
-            { id: 'usa-7', name: 'Labor Day', date: '2026-09-07', type: 'Public', description: 'Honors American workers and labor movement', country: 'American' },
-            { id: 'usa-8', name: 'Columbus Day', date: '2026-10-12', type: 'Public', description: 'Commemorates Christopher Columbus\'s arrival in Americas', country: 'American' },
-            { id: 'usa-9', name: 'Veterans Day', date: '2026-11-11', type: 'Public', description: 'Honors all military veterans', country: 'American' },
-            { id: 'usa-10', name: 'Thanksgiving', date: '2026-11-26', type: 'Public', description: 'National day of thanksgiving and harvest celebration', country: 'American' },
-            { id: 'usa-11', name: 'Christmas', date: '2026-12-25', type: 'Public', description: 'Christian festival celebrating the birth of Jesus Christ', country: 'American' }
+            { id: 'usa-1', name: 'New Year\'s Day', date: '2026-01-01', type: 'Public', description: 'First day of the year' },
+            { id: 'usa-2', name: 'Martin Luther King Jr. Day', date: '2026-01-19', type: 'Public', description: 'Honors civil rights leader Martin Luther King Jr.' },
+            { id: 'usa-3', name: 'Presidents\' Day', date: '2026-02-16', type: 'Public', description: 'Honors all U.S. presidents' },
+            { id: 'usa-4', name: 'Memorial Day', date: '2026-05-25', type: 'Public', description: 'Honors military personnel who died in service' },
+            { id: 'usa-5', name: 'Juneteenth', date: '2026-06-19', type: 'Public', description: 'Commemorates the end of slavery in the United States' },
+            { id: 'usa-6', name: 'Independence Day', date: '2026-07-04', type: 'Public', description: 'Celebrates U.S. independence from Britain' },
+            { id: 'usa-7', name: 'Labor Day', date: '2026-09-07', type: 'Public', description: 'Honors American workers and labor movement' },
+            { id: 'usa-8', name: 'Columbus Day', date: '2026-10-12', type: 'Public', description: 'Commemorates Christopher Columbus\'s arrival in Americas' },
+            { id: 'usa-9', name: 'Veterans Day', date: '2026-11-11', type: 'Public', description: 'Honors all military veterans' },
+            { id: 'usa-10', name: 'Thanksgiving', date: '2026-11-26', type: 'Public', description: 'National day of thanksgiving and harvest celebration' },
+            { id: 'usa-11', name: 'Christmas', date: '2026-12-25', type: 'Public', description: 'Christian festival celebrating the birth of Jesus Christ' }
         ],
         British: [
-            { id: 'uk-1', name: 'New Year\'s Day', date: '2026-01-01', type: 'Public', description: 'First day of the year', country: 'British' },
-            { id: 'uk-2', name: 'Good Friday', date: '2026-04-03', type: 'Public', description: 'Christian observance of Jesus Christ\'s crucifixion', country: 'British' },
-            { id: 'uk-3', name: 'Easter Monday', date: '2026-04-06', type: 'Public', description: 'Day after Easter Sunday', country: 'British' },
-            { id: 'uk-4', name: 'Early May Bank Holiday', date: '2026-05-04', type: 'Public', description: 'First Monday in May bank holiday', country: 'British' },
-            { id: 'uk-5', name: 'Spring Bank Holiday', date: '2026-05-25', type: 'Public', description: 'Last Monday in May bank holiday', country: 'British' },
-            { id: 'uk-6', name: 'Summer Bank Holiday', date: '2026-08-31', type: 'Public', description: 'Last Monday in August bank holiday', country: 'British' },
-            { id: 'uk-7', name: 'Christmas Day', date: '2026-12-25', type: 'Public', description: 'Christian festival celebrating the birth of Jesus Christ', country: 'British' },
-            { id: 'uk-8', name: 'Boxing Day', date: '2026-12-26', type: 'Public', description: 'Day after Christmas', country: 'British' }
+            { id: 'uk-1', name: 'New Year\'s Day', date: '2026-01-01', type: 'Public', description: 'First day of the year' },
+            { id: 'uk-2', name: 'Good Friday', date: '2026-04-03', type: 'Public', description: 'Christian observance of Jesus Christ\'s crucifixion' },
+            { id: 'uk-3', name: 'Easter Monday', date: '2026-04-06', type: 'Public', description: 'Day after Easter Sunday' },
+            { id: 'uk-4', name: 'Early May Bank Holiday', date: '2026-05-04', type: 'Public', description: 'First Monday in May bank holiday' },
+            { id: 'uk-5', name: 'Spring Bank Holiday', date: '2026-05-25', type: 'Public', description: 'Last Monday in May bank holiday' },
+            { id: 'uk-6', name: 'Summer Bank Holiday', date: '2026-08-31', type: 'Public', description: 'Last Monday in August bank holiday' },
+            { id: 'uk-7', name: 'Christmas Day', date: '2026-12-25', type: 'Public', description: 'Christian festival celebrating the birth of Jesus Christ' },
+            { id: 'uk-8', name: 'Boxing Day', date: '2026-12-26', type: 'Public', description: 'Day after Christmas' }
         ]
     };
 
+    // Use local state for holidays
+    const [localHolidays, setLocalHolidays] = useState<Holiday[]>(holidays);
+
     // Merge predefined holidays with user-added holidays
-    const allHolidays = [...holidays];
+    const allHolidays = [...localHolidays];
     if (calendarType === 'Indian') {
-        allHolidays.push(...holidays2026.Indian.filter(h => !holidays.find(existing => existing.name === h.name && existing.date === h.date)));
+        allHolidays.push(...holidays2026.Indian.filter(h => !localHolidays.find(existing => existing.name === h.name && existing.date === h.date)));
     } else if (calendarType === 'American') {
-        allHolidays.push(...holidays2026.American.filter(h => !holidays.find(existing => existing.name === h.name && existing.date === h.date)));
+        allHolidays.push(...holidays2026.American.filter(h => !localHolidays.find(existing => existing.name === h.name && existing.date === h.date)));
     } else if (calendarType === 'British') {
-        allHolidays.push(...holidays2026.British.filter(h => !holidays.find(existing => existing.name === h.name && existing.date === h.date)));
+        allHolidays.push(...holidays2026.British.filter(h => !localHolidays.find(existing => existing.name === h.name && existing.date === h.date)));
     } else if (calendarType === 'All') {
-        allHolidays.push(...holidays2026.Indian.filter(h => !holidays.find(existing => existing.name === h.name && existing.date === h.date)));
-        allHolidays.push(...holidays2026.American.filter(h => !holidays.find(existing => existing.name === h.name && existing.date === h.date)));
-        allHolidays.push(...holidays2026.British.filter(h => !holidays.find(existing => existing.name === h.name && existing.date === h.date)));
+        allHolidays.push(...holidays2026.Indian.filter(h => !localHolidays.find(existing => existing.name === h.name && existing.date === h.date)));
+        allHolidays.push(...holidays2026.American.filter(h => !localHolidays.find(existing => existing.name === h.name && existing.date === h.date)));
+        allHolidays.push(...holidays2026.British.filter(h => !localHolidays.find(existing => existing.name === h.name && existing.date === h.date)));
     }
 
     const filteredHolidays = allHolidays.filter(h => {
@@ -108,8 +111,21 @@ const HolidayCalendar: React.FC<HolidayCalendarProps> = ({ user = {} as User, ho
             return;
         }
         if (form.name && form.date) {
-            const data = { ...form as Holiday, id: editingHoliday ? editingHoliday.id : `h-${Date.now()}` };
-            editingHoliday ? onUpdateHoliday(data) : onAddHoliday(data);
+            // Only send valid fields
+            const data = {
+                id: editingHoliday ? editingHoliday.id : `h-${Date.now()}`,
+                name: form.name,
+                date: form.date,
+                type: form.type || 'Public',
+                description: form.description || ''
+            };
+            if (editingHoliday) {
+                setLocalHolidays(prev => prev.map(h => h.id === data.id ? data : h));
+                if (onUpdateHoliday) onUpdateHoliday(data);
+            } else {
+                setLocalHolidays(prev => [...prev, data]);
+                if (onAddHoliday) onAddHoliday(data);
+            }
             setIsModalOpen(false);
         }
     };
@@ -216,7 +232,7 @@ const HolidayCalendar: React.FC<HolidayCalendarProps> = ({ user = {} as User, ho
                                     {isHR && (
                                         <>
                                             <button onClick={() => { setEditingHoliday(h); setForm(h); setIsModalOpen(true); }} className="p-2 text-[#94a3b8] hover:text-[#1e293b]"><Edit size={16}/></button>
-                                            <button onClick={() => { if (window.confirm('Are you sure you want to delete this holiday?')) { onDeleteHoliday(h.id); } }} className="p-2 text-[#94a3b8] hover:text-red-500"><Trash2 size={16}/></button>
+                                            <button onClick={() => { if (window.confirm('Are you sure you want to delete this holiday?')) { setLocalHolidays(prev => prev.filter(hol => hol.id !== h.id)); if (onDeleteHoliday) onDeleteHoliday(h.id); } }} className="p-2 text-[#94a3b8] hover:text-red-500"><Trash2 size={16}/></button>
                                         </>
                                     )}
                                 </div>
