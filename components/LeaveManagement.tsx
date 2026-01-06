@@ -1,8 +1,13 @@
 import React from 'react';
 import { api } from '../services/api';
 import { Calendar, CheckCircle, XCircle, Clock, Plus } from 'lucide-react';
+import { User } from '../types';
 
-const LeaveManagement: React.FC = () => {
+interface LeaveManagementProps {
+  user: User;
+}
+
+const LeaveManagement: React.FC<LeaveManagementProps> = ({ user }) => {
   const [leaves, setLeaves] = React.useState<any[]>([]);
     const [showForm, setShowForm] = React.useState(false);
     const [form, setForm] = React.useState({
@@ -33,7 +38,13 @@ const LeaveManagement: React.FC = () => {
       return;
     }
     try {
-      await api.create('leaves', form);
+      // Use linkedEmployeeId if available, else fallback to user.id
+      const employeeId = user.linkedEmployeeId || user.id;
+      await api.create('leaves', {
+        ...form,
+        employeeId,
+        status: 'Pending'
+      });
       setShowForm(false);
       setForm({ type: '', startDate: '', endDate: '', days: '', reason: '' });
       api.get('leaves').then(setLeaves);
