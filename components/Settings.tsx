@@ -675,9 +675,9 @@ export const Settings: React.FC<SettingsProps> = ({
       </div>
 
       {/* MAIN CONTENT AREA */}
-      <div className="flex-1 overflow-y-auto bg-slate-50/50 p-6 md:p-8">
+      <div className="flex-1 overflow-y-auto bg-slate-50/50 p-6 md:p-8 flex justify-center">
         {activeTab === "profile" && (
-          <div className="max-w-2xl mx-auto">
+          <div className="w-[98%] mx-auto max-w-4xl">
             <h2 className="text-2xl font-bold text-slate-800 mb-6">
               My Profile
             </h2>
@@ -945,7 +945,7 @@ export const Settings: React.FC<SettingsProps> = ({
         )}
 
         {activeTab === "security" && (
-          <div className="max-w-4xl mx-auto">
+          <div className="w-[98%] mx-auto max-w-4xl">
             <h2 className="text-2xl font-bold text-slate-800 mb-6">
               Security & 2FA Settings
             </h2>
@@ -954,7 +954,7 @@ export const Settings: React.FC<SettingsProps> = ({
         )}
 
         {activeTab === "users" && (
-          <div className="space-y-6">
+          <div className="w-[98%] mx-auto max-w-4xl space-y-6">
             <div className="space-y-6">
               <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-bold text-slate-800">
@@ -1142,7 +1142,7 @@ export const Settings: React.FC<SettingsProps> = ({
         )}
 
         {activeTab === "groups" && (
-          <div className="space-y-6">
+          <div className="w-[98%] mx-auto max-w-4xl space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold text-slate-800">
                 Permission Groups
@@ -1289,7 +1289,7 @@ export const Settings: React.FC<SettingsProps> = ({
         )}
 
         {activeTab === "config" && (
-          <div className="space-y-6">
+          <div className="w-[98%] mx-auto max-w-4xl space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold text-slate-800">
                 System Configurations
@@ -1576,7 +1576,7 @@ export const Settings: React.FC<SettingsProps> = ({
         )}
 
             {activeTab === 'notifications' && (
-                <div className="space-y-8">
+                <div className="w-[98%] mx-auto max-w-4xl space-y-8">
                     <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2"><Bell size={24} className="text-orange-500"/> Notification Settings</h3>
@@ -1664,7 +1664,7 @@ export const Settings: React.FC<SettingsProps> = ({
                 </div>
             )}
             {activeTab === 'email' && (
-                <div className="space-y-8">
+                <div className="w-[98%] mx-auto max-w-4xl space-y-8">
                     <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
                         <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2"><Mail size={24} className="text-orange-500"/> SMTP Settings</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1693,7 +1693,7 @@ export const Settings: React.FC<SettingsProps> = ({
             )}
 
             {activeTab === "database" && (
-              <div className="max-w-2xl mx-auto">
+              <div className="w-[98%] mx-auto max-w-4xl">
                 <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2"><Database size={24} className="text-orange-500"/> Database Details</h2>
                 <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm mb-6">
                   <div className="mb-4 flex items-center gap-3">
@@ -1724,7 +1724,9 @@ export const Settings: React.FC<SettingsProps> = ({
             )}
 
             {activeTab === "copyright" && (
-              <CopyrightPage />
+              <div className="w-[98%] mx-auto max-w-4xl">
+                <CopyrightPage />
+              </div>
             )}
         {/* --- MODALS --- */}
     </div>

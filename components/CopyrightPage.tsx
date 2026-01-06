@@ -4,9 +4,9 @@
  * Unauthorized copying, distribution, or use is strictly prohibited.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 
-const copyrightText = `
+const defaultCopyrightText = `
 SD Commercial Employee Management Portal
 
 Copyright (c) 2026 SD Commercial. All rights reserved.
@@ -27,13 +27,38 @@ legal@sdcommercial.com
 SD Commercial reserves all rights to update, modify, or restrict access to this portal at any time.
 `;
 
-const CopyrightPage: React.FC = () => (
-  <div className="max-w-2xl mx-auto p-8 bg-white rounded-2xl shadow-lg border border-[#f1f5f9] mt-10">
-    <h1 className="text-3xl font-bold text-[#1e293b] mb-6">Copyright & Ownership Notice</h1>
-    <pre className="whitespace-pre-wrap text-[#475569] text-base leading-relaxed bg-[#f8fafc] p-6 rounded-xl border border-[#e2e8f0]">
-      {copyrightText}
-    </pre>
-  </div>
-);
+const CopyrightPage: React.FC = () => {
+  // Simulate admin check (replace with real logic if available)
+  const isAdmin = true;
+  const [editing, setEditing] = useState(false);
+  const [copyrightText, setCopyrightText] = useState(defaultCopyrightText);
+
+  return (
+    <div className="w-[90%] mx-auto p-8 bg-white rounded-2xl shadow-lg border border-[#f1f5f9] mt-10">
+      <h1 className="text-3xl font-bold text-[#1e293b] mb-6">Copyright & Ownership Notice</h1>
+      {editing ? (
+        <textarea
+          className="whitespace-pre-wrap text-[#475569] text-base leading-relaxed bg-[#f8fafc] p-6 rounded-xl border border-[#e2e8f0] w-full min-h-[300px]"
+          value={copyrightText}
+          onChange={e => setCopyrightText(e.target.value)}
+        />
+      ) : (
+        <pre className="whitespace-pre-wrap text-[#475569] text-base leading-relaxed bg-[#f8fafc] p-6 rounded-xl border border-[#e2e8f0]">
+          {copyrightText}
+        </pre>
+      )}
+      {isAdmin && (
+        <div className="mt-6 flex justify-end">
+          <button
+            className={`px-4 py-2 rounded-lg font-bold text-white ${editing ? 'bg-green-600 hover:bg-green-700' : 'bg-orange-500 hover:bg-orange-600'} transition-all`}
+            onClick={() => setEditing(editing ? false : true)}
+          >
+            {editing ? 'Save' : 'Edit'}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default CopyrightPage;
