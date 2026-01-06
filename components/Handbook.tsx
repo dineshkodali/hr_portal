@@ -73,16 +73,36 @@ const defaultPolicies: PolicyDocument[] = [
 ];
 
 const Handbook: React.FC<HandbookProps> = (props) => {
-        // No-op handlers for testing
-        const onAddCategory = (c: PolicyCategory) => {};
-        const onUpdateCategory = (c: PolicyCategory) => {};
-        const onDeleteCategory = (id: string) => {};
-        const onAddPolicy = (p: PolicyDocument) => {};
-        const onUpdatePolicy = (p: PolicyDocument) => {};
-        const onDeletePolicy = (id: string) => {};
-    // Force use of default data for testing
-    const effectiveCategories = defaultCategories;
-    const effectivePolicies = defaultPolicies;
+    // Use local state for categories and policies
+    const [categories, setCategories] = useState<PolicyCategory[]>(defaultCategories);
+    const [policies, setPolicies] = useState<PolicyDocument[]>(defaultPolicies);
+
+    // Handlers to update state
+    const onAddCategory = (c: PolicyCategory) => {
+        setCategories(prev => [...prev, c]);
+    };
+    const onUpdateCategory = (c: PolicyCategory) => {
+        setCategories(prev => prev.map(cat => cat.id === c.id ? c : cat));
+    };
+    const onDeleteCategory = (id: string) => {
+        setCategories(prev => prev.filter(cat => cat.id !== id));
+        setPolicies(prev => prev.filter(pol => pol.categoryId !== id)); // Remove policies in deleted category
+        setSelectedCategory(null);
+    };
+    const onAddPolicy = (p: PolicyDocument) => {
+        setPolicies(prev => [...prev, p]);
+    };
+    const onUpdatePolicy = (p: PolicyDocument) => {
+        setPolicies(prev => prev.map(pol => pol.id === p.id ? p : pol));
+        setViewPolicy(null);
+    };
+    const onDeletePolicy = (id: string) => {
+        setPolicies(prev => prev.filter(pol => pol.id !== id));
+        setViewPolicy(null);
+    };
+    // Use state for effective data
+    const effectiveCategories = categories;
+    const effectivePolicies = policies;
     // For real use, set isHR based on user role. For now, set to true to test admin/HR UI.
     const isHR = true;
     const [searchTerm, setSearchTerm] = useState('');
