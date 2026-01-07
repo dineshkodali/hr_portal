@@ -1,17 +1,17 @@
 
 import React, { useState, useEffect } from 'react';
-import { 
-    User as UserIcon, Shield, Lock, Save, Bell, Plus, Users, Trash2, X, 
-    Database, Mail, Check, Building, Edit, MapPin, Phone, Globe, Hash, 
-    Eye, Monitor, FileText, Upload, Wallet, Server, Wifi, WifiOff, List,
-    ToggleLeft, ToggleRight, CheckCircle, AlertCircle, ArrowRight, ClipboardList, Receipt, Download, ShieldCheck, ShieldOff
+import {
+  User as UserIcon, Shield, Lock, Save, Bell, Plus, Users, Trash2, X,
+  Database, Mail, Check, Building, Edit, MapPin, Phone, Globe, Hash,
+  Eye, Monitor, FileText, Upload, Wallet, Server, Wifi, WifiOff, List,
+  ToggleLeft, ToggleRight, CheckCircle, AlertCircle, ArrowRight, ClipboardList, Receipt, Download, ShieldCheck, ShieldOff, Bot
 } from 'lucide-react';
 import { api } from '../services/api';
 import { User, UserRole, SettingsProps, Branch, Group, SystemConfig, EmailTemplate, RolePermission, Employee, Asset, LeaveRequest, Reimbursement } from '../types';
 import { defaultNotificationSettings } from '../constants/defaultNotificationSettings';
+import { defaultFeatureToggles, FeatureToggle } from '../constants/featureToggles';
 import SecuritySettings from './SecuritySettings';
 import CopyrightPage from './CopyrightPage';
-
 import AIHRSettings from '../AI/AIHRAssistant/AIHRSettings';
 
 export const Settings: React.FC<SettingsProps> = ({
@@ -48,7 +48,30 @@ export const Settings: React.FC<SettingsProps> = ({
   reimbursements = [],
 }) => {
   const isAdmin = user.role === "admin" || user.role === "super_admin";
+  const isSuperAdmin = user.role === "super_admin";
   const isEmployee = user.role === "employee";
+  // --- FEATURE TOGGLES (Super Admin Only) ---
+  const [featureToggles, setFeatureToggles] = useState<FeatureToggle[]>(defaultFeatureToggles);
+
+  // --- AI Model Selection (shared with AIHRSettings) ---
+  const [aiModel, setAiModel] = useState(() => {
+    // Try to load from localStorage
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('aiModel') || 'default';
+    }
+    return 'default';
+  });
+
+  // Persist to localStorage whenever aiModel changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('aiModel', aiModel);
+    }
+  }, [aiModel]);
+  const handleToggleFeature = (key: string) => {
+    setFeatureToggles(prev => prev.map(f => f.key === key ? { ...f, enabled: !f.enabled } : f));
+    // TODO: Optionally persist to backend
+  };
 
   const [activeTab, setActiveTab] = useState<string>(
     isEmployee ? "profile" : "users"
@@ -75,30 +98,30 @@ export const Settings: React.FC<SettingsProps> = ({
     }
   };
 
-    useEffect(() => {
-        if (activeTab === 'users') fetchUsers();
-        if (activeTab === 'groups') fetchGroups();
-        // Initialize notification settings if empty
-        if (activeTab === 'notifications' && notificationSettings && notificationSettings.length === 0) {
-            // Attach userId and type to each default notification setting
-            const userId = user.id;
-            const settingsWithUser = defaultNotificationSettings.map(s => ({
-                ...s,
-                userId,
-                type: s.type || s.module || 'general', // fallback if type missing
-            }));
-            setNotificationSettings(settingsWithUser);
-            // Optionally, persist to backend
-            settingsWithUser.forEach(async (setting) => {
-                try {
-                    await api.createNotificationSetting(setting);
-                } catch (e) {
-                    // Optionally handle error
-                    // console.error('Failed to create notification setting', e);
-                }
-            });
+  useEffect(() => {
+    if (activeTab === 'users') fetchUsers();
+    if (activeTab === 'groups') fetchGroups();
+    // Initialize notification settings if empty
+    if (activeTab === 'notifications' && notificationSettings && notificationSettings.length === 0) {
+      // Attach userId and type to each default notification setting
+      const userId = user.id;
+      const settingsWithUser = defaultNotificationSettings.map(s => ({
+        ...s,
+        userId,
+        type: s.type || s.module || 'general', // fallback if type missing
+      }));
+      setNotificationSettings(settingsWithUser);
+      // Optionally, persist to backend
+      settingsWithUser.forEach(async (setting) => {
+        try {
+          await api.createNotificationSetting(setting);
+        } catch (e) {
+          // Optionally handle error
+          // console.error('Failed to create notification setting', e);
         }
-    }, [activeTab]);
+      });
+    }
+  }, [activeTab]);
 
   // After user creation/update, refresh list
   // const handleUserSubmit = async (e: React.FormEvent) => {
@@ -213,14 +236,11 @@ export const Settings: React.FC<SettingsProps> = ({
 
   const [isBranchModalOpen, setIsBranchModalOpen] = useState(false);
   const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
-   const [branchForm, setBranchForm] = useState<Partial<Branch>>({
+  const [branchForm, setBranchForm] = useState<Partial<Branch>>({
     name: "",
     city: "",
-    // currency: "USD",
-    // managerIds: [],
-    location: "",
-    country: "",
-    managerids: [],
+    currency: "USD",
+    managerIds: [],
   });
 
   const [viewBranch, setViewBranch] = useState<Branch | null>(null);
@@ -244,8 +264,8 @@ export const Settings: React.FC<SettingsProps> = ({
   const [branchDocName, setBranchDocName] = useState("");
 
   const [profileForm, setProfileForm] = useState<Partial<User>>({ name: user.name, email: user.email, phone: user.phone || '', address: user.address || '' });
-    const [dbStatus, setDbStatus] = useState<'connected' | 'disconnected' | 'checking'>('disconnected');
-    const [dbInfo, setDbInfo] = useState<any>(null);
+  const [dbStatus, setDbStatus] = useState<'connected' | 'disconnected' | 'checking'>('disconnected');
+  const [dbInfo, setDbInfo] = useState<any>(null);
 
   const roles: UserRole[] = [
     "super_admin",
@@ -257,30 +277,30 @@ export const Settings: React.FC<SettingsProps> = ({
     "employee",
   ];
 
-    useEffect(() => {
-            if (isAdmin) checkDbConnection();
-    }, [isAdmin]);
+  useEffect(() => {
+    if (isAdmin) checkDbConnection();
+  }, [isAdmin]);
 
-    useEffect(() => {
-        if (activeTab === 'database') {
-            fetchDbInfo();
-        }
-    }, [activeTab]);
+  useEffect(() => {
+    if (activeTab === 'database') {
+      fetchDbInfo();
+    }
+  }, [activeTab]);
 
-    const fetchDbInfo = async () => {
-        setDbInfo(null);
-        try {
-            const res = await fetch('/api/dbinfo');
-            if (res.ok) {
-                const info = await res.json();
-                setDbInfo(info);
-            } else {
-                setDbInfo({ error: 'Failed to fetch database info' });
-            }
-        } catch (e) {
-            setDbInfo({ error: 'Failed to fetch database info' });
-        }
-    };
+  const fetchDbInfo = async () => {
+    setDbInfo(null);
+    try {
+      const res = await fetch('/api/dbinfo');
+      if (res.ok) {
+        const info = await res.json();
+        setDbInfo(info);
+      } else {
+        setDbInfo({ error: 'Failed to fetch database info' });
+      }
+    } catch (e) {
+      setDbInfo({ error: 'Failed to fetch database info' });
+    }
+  };
 
   useEffect(() => {
     // Only sync from props if localGroups is empty
@@ -341,16 +361,16 @@ export const Settings: React.FC<SettingsProps> = ({
     }
     if (groupForm.name) {
       const {
-       id: _ignoredId,
-       created_at,
-       updated_at,
-       ...safeGroupForm
-    } = groupForm as any;
+        id: _ignoredId,
+        created_at,
+        updated_at,
+        ...safeGroupForm
+      } = groupForm as any;
 
-    const groupData: Group = {
-      ...safeGroupForm,
-      id: editingGroup ? editingGroup.id : `g-${Date.now()}`,
-    };
+      const groupData: Group = {
+        ...safeGroupForm,
+        id: editingGroup ? editingGroup.id : `g-${Date.now()}`,
+      };
       console.log("📤 Sending group data to API:", groupData);
       try {
         let result;
@@ -359,11 +379,11 @@ export const Settings: React.FC<SettingsProps> = ({
           result = await api.update("permission_groups", groupData.id, groupData);
           console.log("✅ Update response:", result);
           onUpdatePermissionGroup?.(groupData);
-         setLocalGroups(prev =>
-           prev.map(g => (g.id === groupData.id ? groupData : g))
-         );
-         //  optional external sync (permission-only)
-        onUpdatePermissionGroup?.(groupData);
+          setLocalGroups(prev =>
+            prev.map(g => (g.id === groupData.id ? groupData : g))
+          );
+          //  optional external sync (permission-only)
+          onUpdatePermissionGroup?.(groupData);
         } else {
           console.log("➕ Creating new group");
           result = await api.create("permission_groups", groupData);
@@ -383,8 +403,7 @@ export const Settings: React.FC<SettingsProps> = ({
           stack: error.stack,
         });
         alert(
-          `Failed to save group to database: ${
-            error.message || "Please try again."
+          `Failed to save group to database: ${error.message || "Please try again."
           }`
         );
       }
@@ -392,125 +411,125 @@ export const Settings: React.FC<SettingsProps> = ({
   };
 
   const handleDeletePermissionGroup = async (groupId: string) => {
-  if (!window.confirm("Are you sure you want to delete this permission group?")) {
-    return;
-  }
+    if (!window.confirm("Are you sure you want to delete this permission group?")) {
+      return;
+    }
 
-  await api.delete("permission_groups", groupId);
-  setLocalGroups(prev => prev.filter(g => g.id !== groupId));
-  onDeletePermissionGroup?.(groupId);
-};
+    await api.delete("permission_groups", groupId);
+    setLocalGroups(prev => prev.filter(g => g.id !== groupId));
+    onDeletePermissionGroup?.(groupId);
+  };
 
   const populateDefaultGroups = async () => {
-      const defaultGroups: Group[] = [
-          {
-              id: 'g-super-admin',
-              name: 'Super Admin Group',
-              description: 'Full system access with all permissions',
-              permissions: [
-                  { id: 'p-1', module: 'dashboard', read: true, create: true, update: true, delete: true },
-                  { id: 'p-2', module: 'employees', read: true, create: true, update: true, delete: true },
-                  { id: 'p-3', module: 'teams', read: true, create: true, update: true, delete: true },
-                  { id: 'p-4', module: 'assets', read: true, create: true, update: true, delete: true },
-                  { id: 'p-5', module: 'payroll', read: true, create: true, update: true, delete: true },
-                  { id: 'p-6', module: 'attendance', read: true, create: true, update: true, delete: true },
-                  { id: 'p-7', module: 'recruitment', read: true, create: true, update: true, delete: true },
-                  { id: 'p-8', module: 'tasks', read: true, create: true, update: true, delete: true },
-                  { id: 'p-9', module: 'files', read: true, create: true, update: true, delete: true },
-                  { id: 'p-10', module: 'settings', read: true, create: true, update: true, delete: true }
-              ],
-              memberIds: []
-          },
-          {
-              id: 'g-hr-manager',
-              name: 'HR Manager Group',
-              description: 'HR operations with employee, recruitment, and leave management',
-              permissions: [
-                  { id: 'p-11', module: 'dashboard', read: true, create: false, update: false, delete: false },
-                  { id: 'p-12', module: 'employees', read: true, create: true, update: true, delete: false },
-                  { id: 'p-13', module: 'teams', read: true, create: true, update: true, delete: false },
-                  { id: 'p-14', module: 'assets', read: true, create: false, update: false, delete: false },
-                  { id: 'p-15', module: 'payroll', read: true, create: false, update: false, delete: false },
-                  { id: 'p-16', module: 'attendance', read: true, create: true, update: true, delete: false },
-                  { id: 'p-17', module: 'recruitment', read: true, create: true, update: true, delete: true },
-                  { id: 'p-18', module: 'tasks', read: true, create: true, update: true, delete: false },
-                  { id: 'p-19', module: 'files', read: true, create: true, update: true, delete: false },
-                  { id: 'p-20', module: 'settings', read: true, create: false, update: false, delete: false }
-              ],
-              memberIds: []
-          },
-          {
-              id: 'g-finance',
-              name: 'Finance Group',
-              description: 'Financial operations including payroll and reimbursements',
-              permissions: [
-                  { id: 'p-21', module: 'dashboard', read: true, create: false, update: false, delete: false },
-                  { id: 'p-22', module: 'employees', read: true, create: false, update: false, delete: false },
-                  { id: 'p-23', module: 'teams', read: true, create: false, update: false, delete: false },
-                  { id: 'p-24', module: 'assets', read: true, create: false, update: false, delete: false },
-                  { id: 'p-25', module: 'payroll', read: true, create: true, update: true, delete: false },
-                  { id: 'p-26', module: 'attendance', read: true, create: false, update: false, delete: false },
-                  { id: 'p-27', module: 'recruitment', read: false, create: false, update: false, delete: false },
-                  { id: 'p-28', module: 'tasks', read: true, create: false, update: false, delete: false },
-                  { id: 'p-29', module: 'files', read: true, create: true, update: true, delete: false },
-                  { id: 'p-30', module: 'settings', read: false, create: false, update: false, delete: false }
-              ],
-              memberIds: []
-          },
-          {
-              id: 'g-manager',
-              name: 'Manager Group',
-              description: 'Team management with approval permissions',
-              permissions: [
-                  { id: 'p-31', module: 'dashboard', read: true, create: false, update: false, delete: false },
-                  { id: 'p-32', module: 'employees', read: true, create: false, update: true, delete: false },
-                  { id: 'p-33', module: 'teams', read: true, create: true, update: true, delete: false },
-                  { id: 'p-34', module: 'assets', read: true, create: false, update: false, delete: false },
-                  { id: 'p-35', module: 'payroll', read: true, create: false, update: false, delete: false },
-                  { id: 'p-36', module: 'attendance', read: true, create: true, update: true, delete: false },
-                  { id: 'p-37', module: 'recruitment', read: true, create: false, update: true, delete: false },
-                  { id: 'p-38', module: 'tasks', read: true, create: true, update: true, delete: true },
-                  { id: 'p-39', module: 'files', read: true, create: true, update: true, delete: false },
-                  { id: 'p-40', module: 'settings', read: false, create: false, update: false, delete: false }
-              ],
-              memberIds: []
-          },
-          {
-              id: 'g-employee',
-              name: 'Employee Group',
-              description: 'Self-service access for regular employees',
-              permissions: [
-                  { id: 'p-41', module: 'dashboard', read: true, create: false, update: false, delete: false },
-                  { id: 'p-42', module: 'employees', read: true, create: false, update: false, delete: false },
-                  { id: 'p-43', module: 'teams', read: true, create: false, update: false, delete: false },
-                  { id: 'p-44', module: 'assets', read: true, create: false, update: false, delete: false },
-                  { id: 'p-45', module: 'payroll', read: true, create: false, update: false, delete: false },
-                  { id: 'p-46', module: 'attendance', read: true, create: true, update: false, delete: false },
-                  { id: 'p-47', module: 'recruitment', read: false, create: false, update: false, delete: false },
-                  { id: 'p-48', module: 'tasks', read: true, create: false, update: true, delete: false },
-                  { id: 'p-49', module: 'files', read: true, create: false, update: false, delete: false },
-                  { id: 'p-50', module: 'settings', read: false, create: false, update: false, delete: false }
-              ],
-              memberIds: []
-          }
-      ];
-      
-      // Update local state immediately to show the groups
-      setLocalGroups(defaultGroups);
-      
-      // Save each group to backend for persistence
-      try {
-          for (const group of defaultGroups) {
-              await api.create('permission_groups', group);
-              if (onAddGroup) {
-                  onAddGroup(group);
-              }
-          }
-          alert('Default permission groups loaded successfully!');
-      } catch (error) {
-          console.error('Error saving groups:', error);
-          alert('Groups displayed but may not persist. Check database connection.');
+    const defaultGroups: Group[] = [
+      {
+        id: 'g-super-admin',
+        name: 'Super Admin Group',
+        description: 'Full system access with all permissions',
+        permissions: [
+          { id: 'p-1', module: 'dashboard', read: true, create: true, update: true, delete: true },
+          { id: 'p-2', module: 'employees', read: true, create: true, update: true, delete: true },
+          { id: 'p-3', module: 'teams', read: true, create: true, update: true, delete: true },
+          { id: 'p-4', module: 'assets', read: true, create: true, update: true, delete: true },
+          { id: 'p-5', module: 'payroll', read: true, create: true, update: true, delete: true },
+          { id: 'p-6', module: 'attendance', read: true, create: true, update: true, delete: true },
+          { id: 'p-7', module: 'recruitment', read: true, create: true, update: true, delete: true },
+          { id: 'p-8', module: 'tasks', read: true, create: true, update: true, delete: true },
+          { id: 'p-9', module: 'files', read: true, create: true, update: true, delete: true },
+          { id: 'p-10', module: 'settings', read: true, create: true, update: true, delete: true }
+        ],
+        memberIds: []
+      },
+      {
+        id: 'g-hr-manager',
+        name: 'HR Manager Group',
+        description: 'HR operations with employee, recruitment, and leave management',
+        permissions: [
+          { id: 'p-11', module: 'dashboard', read: true, create: false, update: false, delete: false },
+          { id: 'p-12', module: 'employees', read: true, create: true, update: true, delete: false },
+          { id: 'p-13', module: 'teams', read: true, create: true, update: true, delete: false },
+          { id: 'p-14', module: 'assets', read: true, create: false, update: false, delete: false },
+          { id: 'p-15', module: 'payroll', read: true, create: false, update: false, delete: false },
+          { id: 'p-16', module: 'attendance', read: true, create: true, update: true, delete: false },
+          { id: 'p-17', module: 'recruitment', read: true, create: true, update: true, delete: true },
+          { id: 'p-18', module: 'tasks', read: true, create: true, update: true, delete: false },
+          { id: 'p-19', module: 'files', read: true, create: true, update: true, delete: false },
+          { id: 'p-20', module: 'settings', read: true, create: false, update: false, delete: false }
+        ],
+        memberIds: []
+      },
+      {
+        id: 'g-finance',
+        name: 'Finance Group',
+        description: 'Financial operations including payroll and reimbursements',
+        permissions: [
+          { id: 'p-21', module: 'dashboard', read: true, create: false, update: false, delete: false },
+          { id: 'p-22', module: 'employees', read: true, create: false, update: false, delete: false },
+          { id: 'p-23', module: 'teams', read: true, create: false, update: false, delete: false },
+          { id: 'p-24', module: 'assets', read: true, create: false, update: false, delete: false },
+          { id: 'p-25', module: 'payroll', read: true, create: true, update: true, delete: false },
+          { id: 'p-26', module: 'attendance', read: true, create: false, update: false, delete: false },
+          { id: 'p-27', module: 'recruitment', read: false, create: false, update: false, delete: false },
+          { id: 'p-28', module: 'tasks', read: true, create: false, update: false, delete: false },
+          { id: 'p-29', module: 'files', read: true, create: true, update: true, delete: false },
+          { id: 'p-30', module: 'settings', read: false, create: false, update: false, delete: false }
+        ],
+        memberIds: []
+      },
+      {
+        id: 'g-manager',
+        name: 'Manager Group',
+        description: 'Team management with approval permissions',
+        permissions: [
+          { id: 'p-31', module: 'dashboard', read: true, create: false, update: false, delete: false },
+          { id: 'p-32', module: 'employees', read: true, create: false, update: true, delete: false },
+          { id: 'p-33', module: 'teams', read: true, create: true, update: true, delete: false },
+          { id: 'p-34', module: 'assets', read: true, create: false, update: false, delete: false },
+          { id: 'p-35', module: 'payroll', read: true, create: false, update: false, delete: false },
+          { id: 'p-36', module: 'attendance', read: true, create: true, update: true, delete: false },
+          { id: 'p-37', module: 'recruitment', read: true, create: false, update: true, delete: false },
+          { id: 'p-38', module: 'tasks', read: true, create: true, update: true, delete: true },
+          { id: 'p-39', module: 'files', read: true, create: true, update: true, delete: false },
+          { id: 'p-40', module: 'settings', read: false, create: false, update: false, delete: false }
+        ],
+        memberIds: []
+      },
+      {
+        id: 'g-employee',
+        name: 'Employee Group',
+        description: 'Self-service access for regular employees',
+        permissions: [
+          { id: 'p-41', module: 'dashboard', read: true, create: false, update: false, delete: false },
+          { id: 'p-42', module: 'employees', read: true, create: false, update: false, delete: false },
+          { id: 'p-43', module: 'teams', read: true, create: false, update: false, delete: false },
+          { id: 'p-44', module: 'assets', read: true, create: false, update: false, delete: false },
+          { id: 'p-45', module: 'payroll', read: true, create: false, update: false, delete: false },
+          { id: 'p-46', module: 'attendance', read: true, create: true, update: false, delete: false },
+          { id: 'p-47', module: 'recruitment', read: false, create: false, update: false, delete: false },
+          { id: 'p-48', module: 'tasks', read: true, create: false, update: true, delete: false },
+          { id: 'p-49', module: 'files', read: true, create: false, update: false, delete: false },
+          { id: 'p-50', module: 'settings', read: false, create: false, update: false, delete: false }
+        ],
+        memberIds: []
       }
+    ];
+
+    // Update local state immediately to show the groups
+    setLocalGroups(defaultGroups);
+
+    // Save each group to backend for persistence
+    try {
+      for (const group of defaultGroups) {
+        await api.create('permission_groups', group);
+        if (onAddGroup) {
+          onAddGroup(group);
+        }
+      }
+      alert('Default permission groups loaded successfully!');
+    } catch (error) {
+      console.error('Error saving groups:', error);
+      alert('Groups displayed but may not persist. Check database connection.');
+    }
   };
 
   const togglePermission = (
@@ -544,64 +563,47 @@ export const Settings: React.FC<SettingsProps> = ({
     setIsBranchModalOpen(true);
   };
 
-   const handleBranchSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-
-  if (
-    !window.confirm(
-      editingBranch
-        ? "Are you sure you want to update this branch?"
-        : "Are you sure you want to create this new branch?"
-    )
-  ) {
-    return;
-  }
-
-  if (!branchForm.name) {
-    alert("Branch name is required");
-    return;
-  }
-
-  const payload = {
-  id: editingBranch ? editingBranch.id : `b-${Date.now()}`,
-  name: branchForm.name?.trim(),
-  city: branchForm.city?.trim(),
-  location: branchForm.location?.trim(),
-  country: branchForm.country?.trim(),
-
-  //  IMPORTANT FIX
-  managerids:
-    Array.isArray(branchForm.managerids) &&
-    branchForm.managerids.length > 0
-      ? branchForm.managerids
-      : null, //  send null instead of []
-};
-
-  try {
-    if (editingBranch) {
-      await onUpdateBranch?.(payload as Branch);
-    } else {
-      await onAddBranch?.(payload as Branch);
+  const handleBranchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (
+      !window.confirm(
+        editingBranch
+          ? "Are you sure you want to update this branch?"
+          : "Are you sure you want to create this new branch?"
+      )
+    ) {
+      return;
     }
-    setIsBranchModalOpen(false);
-  } catch (err) {
-    console.error("Failed to save branch", err);
-    alert("Failed to save branch");
-  }
-};
+    if (branchForm.name) {
+      // Remove any accidental updated_at from branchForm
+      const { updated_at, ...branchFormSafe } = branchForm as any;
+      const branchData = {
+        ...branchFormSafe,
+        id: editingBranch ? editingBranch.id : `b-${Date.now()}`,
+      };
+      if (editingBranch) onUpdateBranch(branchData);
+      else onAddBranch(branchData);
+      setIsBranchModalOpen(false);
+    }
+  };
+
   const handleAddStaffToBranch = (employeeId: string) => {
     if (!viewBranch) return;
     const emp = employees.find((e) => e.id === employeeId);
     if (emp && onUpdateEmployee) {
-      onUpdateEmployee({ ...emp, branchId: viewBranch.id });
+      // Remove any accidental 'branchid' (lowercase) property to avoid SQL error
+      const { branchid, ...rest } = emp as any;
+      onUpdateEmployee({ ...rest, branchId: viewBranch.id });
     }
   };
 
   const handleUploadBranchDoc = () => {
     if (branchDocName && viewBranch) {
       const updatedDocs = [...(viewBranch.documents || []), branchDocName];
-      onUpdateBranch({ ...viewBranch, documents: updatedDocs });
-      setViewBranch({ ...viewBranch, documents: updatedDocs });
+      // Remove any accidental updated_at from viewBranch
+      const { updated_at, ...viewBranchSafe } = viewBranch as any;
+      onUpdateBranch({ ...viewBranchSafe, documents: updatedDocs });
+      setViewBranch({ ...viewBranchSafe, documents: updatedDocs });
       setBranchDocName("");
     }
   };
@@ -614,8 +616,10 @@ export const Settings: React.FC<SettingsProps> = ({
       const updatedDocs = (viewBranch.documents || []).filter(
         (d) => d !== docName
       );
-      onUpdateBranch({ ...viewBranch, documents: updatedDocs });
-      setViewBranch({ ...viewBranch, documents: updatedDocs });
+      // Remove any accidental updated_at from viewBranch
+      const { updated_at, ...viewBranchSafe } = viewBranch as any;
+      onUpdateBranch({ ...viewBranchSafe, documents: updatedDocs });
+      setViewBranch({ ...viewBranchSafe, documents: updatedDocs });
     }
   };
 
@@ -639,11 +643,10 @@ export const Settings: React.FC<SettingsProps> = ({
   }) => (
     <button
       onClick={() => setActiveTab(id)}
-      className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors text-sm font-medium ${
-        activeTab === id
-          ? "bg-orange-50 text-orange-600"
-          : "text-slate-600 hover:bg-slate-50"
-      }`}
+      className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors text-sm font-medium ${activeTab === id
+        ? "bg-orange-50 text-orange-600"
+        : "text-slate-600 hover:bg-slate-50"
+        }`}
     >
       <Icon size={18} />
       <span>{label}</span>
@@ -667,11 +670,9 @@ export const Settings: React.FC<SettingsProps> = ({
 
         {isAdmin && (
           <>
-            <div className="mt-6 mb-2 px-4 pt-4 pb-2 border-t border-slate-100">
-              <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Administration
-              </h2>
-            </div>
+            {isSuperAdmin && (
+              <SidebarItem id="features" label="Features" icon={ToggleLeft} />
+            )}
             <SidebarItem id="users" label="Users & Roles" icon={Users} />
             <SidebarItem id="groups" label="Permission Groups" icon={Shield} />
             <SidebarItem
@@ -679,7 +680,6 @@ export const Settings: React.FC<SettingsProps> = ({
               label="Branch Management"
               icon={Building}
             />
-
             <div className="mt-6 mb-2 px-4 pt-4 pb-2 border-t border-slate-100">
               <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                 System
@@ -688,6 +688,7 @@ export const Settings: React.FC<SettingsProps> = ({
             <SidebarItem id="config" label="Configurations" icon={List} />
             <SidebarItem id="email" label="Email & SMTP" icon={Mail} />
             <SidebarItem id="notifications" label="Notifications" icon={Bell} />
+            <SidebarItem id="ai-assistant" label="AI Assistant" icon={Bot} />
             <SidebarItem id="database" label="Database" icon={Database} />
             <SidebarItem id="copyright" label="Copyright & Ownership" icon={ShieldCheck} />
             <button
@@ -704,6 +705,32 @@ export const Settings: React.FC<SettingsProps> = ({
 
       {/* MAIN CONTENT AREA */}
       <div className="flex-1 overflow-y-auto bg-slate-50/50 p-6 md:p-8 flex justify-center">
+                {activeTab === 'features' && isSuperAdmin && (
+                  <div className="w-[98%] mx-auto max-w-4xl space-y-8">
+                    <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+                      <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                        <ToggleLeft size={24} className="text-orange-500" /> Feature Toggles
+                      </h3>
+                      <div className="space-y-4">
+                        {featureToggles.map((feature) => (
+                          <div key={feature.key} className="flex items-center justify-between p-4 border rounded-lg">
+                            <div>
+                              <div className="text-sm font-bold text-slate-700">{feature.label}</div>
+                              <div className="text-xs text-slate-400">{feature.description}</div>
+                            </div>
+                            <button
+                              onClick={() => handleToggleFeature(feature.key)}
+                              className={`px-3 py-1 rounded-lg ${feature.enabled ? 'bg-orange-500 text-white' : 'bg-slate-100 text-slate-600'}`}
+                            >
+                              {feature.enabled ? 'Enabled' : 'Disabled'}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="text-xs text-slate-400 mt-6">Only super admins can change feature/module access for security and compliance.</div>
+                    </div>
+                  </div>
+                )}
         {activeTab === "profile" && (
           <div className="w-[98%] mx-auto max-w-4xl">
             <h2 className="text-2xl font-bold text-slate-800 mb-6">
@@ -981,6 +1008,15 @@ export const Settings: React.FC<SettingsProps> = ({
           </div>
         )}
 
+        {activeTab === "ai-assistant" && (
+          <div className="w-[98%] mx-auto max-w-4xl">
+            <AIHRSettings user={user} aiModel={aiModel} setAiModel={setAiModel} />
+          </div>
+        )}
+
+        {/* Pass aiModel to AIHRChat if used elsewhere in this file */}
+        {/* Example usage: <AIHRChat currentUser={user} aiModel={aiModel} /> */}
+
         {activeTab === "users" && (
           <div className="w-[98%] mx-auto max-w-4xl space-y-6">
             <div className="space-y-6">
@@ -1040,16 +1076,15 @@ export const Settings: React.FC<SettingsProps> = ({
                         <td className="p-4 text-sm text-slate-600">
                           {u.branchIds && u.branchIds.length > 0
                             ? branches.find((b) => b.id === u.branchIds[0])
-                                ?.name
+                              ?.name
                             : "-"}
                         </td>
                         <td className="p-4">
                           <span
-                            className={`px-2 py-1 rounded-full text-xs border ${
-                              u.status === "Active"
-                                ? "bg-orange-50 text-orange-700 border-orange-200"
-                                : "bg-slate-100 text-slate-600 border-slate-200"
-                            }`}
+                            className={`px-2 py-1 rounded-full text-xs border ${u.status === "Active"
+                              ? "bg-orange-50 text-orange-700 border-orange-200"
+                              : "bg-slate-100 text-slate-600 border-slate-200"
+                              }`}
                           >
                             {u.status}
                           </span>
@@ -1144,13 +1179,13 @@ export const Settings: React.FC<SettingsProps> = ({
                     <div className="flex justify-between">
                       <span>Staff Count:</span>{" "}
                       <span className="font-medium">
-                        {employees.filter((e) => e.branchid === b.id).length}
+                        {employees.filter((e) => e.branchId === b.id).length}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Assets:</span>{" "}
                       <span className="font-medium">
-                        {assets.filter((a) => a.branchid === b.id).length}
+                        {assets.filter((a) => a.branchId === b.id).length}
                       </span>
                     </div>
                   </div>
@@ -1238,10 +1273,10 @@ export const Settings: React.FC<SettingsProps> = ({
                           <Edit size={16} />
                         </button>
                         <button
-                             onClick={() => handleDeletePermissionGroup(group.id)}
-                             className="p-2 text-slate-400 hover:text-red-600 bg-slate-50 rounded-lg"
-                           >
-                             <Trash2 size={16} />
+                          onClick={() => handleDeletePermissionGroup(group.id)}
+                          className="p-2 text-slate-400 hover:text-red-600 bg-slate-50 rounded-lg"
+                        >
+                          <Trash2 size={16} />
                         </button>
 
                       </div>
@@ -1276,7 +1311,7 @@ export const Settings: React.FC<SettingsProps> = ({
                                     No Access
                                   </span>
                                 ) : hasFullAccess ? (
-                                  <span className="px-2 py-1 bg-green-50 text-green-600 text-[10px] font-bold rounded border border-green-200">
+                                  <span className="px-2 py-1 bg-orange-50 text-orange-600 text-[10px] font-bold rounded border border-orange-200">
                                     Full Access
                                   </span>
                                 ) : (
@@ -1287,7 +1322,7 @@ export const Settings: React.FC<SettingsProps> = ({
                                       </span>
                                     )}
                                     {p.create && (
-                                      <span className="px-1.5 py-0.5 bg-green-50 text-green-600 text-[9px] font-bold rounded border border-green-200">
+                                      <span className="px-1.5 py-0.5 bg-orange-50 text-orange-600 text-[9px] font-bold rounded border border-orange-200">
                                         C
                                       </span>
                                     )}
@@ -1329,39 +1364,39 @@ export const Settings: React.FC<SettingsProps> = ({
                       ...systemConfig,
                       departments:
                         systemConfig.departments &&
-                        systemConfig.departments.length > 0
+                          systemConfig.departments.length > 0
                           ? systemConfig.departments
                           : [
-                              "Human Resources",
-                              "Engineering",
-                              "Sales",
-                              "Operations",
-                            ],
+                            "Human Resources",
+                            "Engineering",
+                            "Sales",
+                            "Operations",
+                          ],
                       assetCategories:
                         systemConfig.assetCategories &&
-                        systemConfig.assetCategories.length > 0
+                          systemConfig.assetCategories.length > 0
                           ? systemConfig.assetCategories
                           : ["Laptop", "Monitor", "Phone", "Furniture"],
                       jobTypes:
                         systemConfig.jobTypes &&
-                        systemConfig.jobTypes.length > 0
+                          systemConfig.jobTypes.length > 0
                           ? systemConfig.jobTypes
                           : ["Full Time", "Part Time", "Contract"],
                       leaveTypes:
                         systemConfig.leaveTypes &&
-                        systemConfig.leaveTypes.length > 0
+                          systemConfig.leaveTypes.length > 0
                           ? systemConfig.leaveTypes
                           : ["Sick Leave", "Paid Time Off", "Casual Leave"],
                       designations:
                         systemConfig.designations &&
-                        systemConfig.designations.length > 0
+                          systemConfig.designations.length > 0
                           ? systemConfig.designations
                           : [
-                              "Manager",
-                              "Team Lead",
-                              "Software Engineer",
-                              "Intern",
-                            ],
+                            "Manager",
+                            "Team Lead",
+                            "Software Engineer",
+                            "Intern",
+                          ],
                       portalSettings: {
                         ...(systemConfig.portalSettings || {}),
                         allowEmployeeProfileEdit: true,
@@ -1482,11 +1517,10 @@ export const Settings: React.FC<SettingsProps> = ({
                             },
                           })
                         }
-                        className={`px-3 py-1 rounded-lg ${
-                          systemConfig.portalSettings?.allowEmployeeProfileEdit
-                            ? "bg-orange-500 text-white"
-                            : "bg-slate-100 text-slate-600"
-                        }`}
+                        className={`px-3 py-1 rounded-lg ${systemConfig.portalSettings?.allowEmployeeProfileEdit
+                          ? "bg-orange-500 text-white"
+                          : "bg-slate-100 text-slate-600"
+                          }`}
                       >
                         {systemConfig.portalSettings?.allowEmployeeProfileEdit
                           ? "Enabled"
@@ -1517,11 +1551,10 @@ export const Settings: React.FC<SettingsProps> = ({
                             },
                           })
                         }
-                        className={`px-3 py-1 rounded-lg ${
-                          systemConfig.portalSettings?.allowEmployeePhotoUpload
-                            ? "bg-orange-500 text-white"
-                            : "bg-slate-100 text-slate-600"
-                        }`}
+                        className={`px-3 py-1 rounded-lg ${systemConfig.portalSettings?.allowEmployeePhotoUpload
+                          ? "bg-orange-500 text-white"
+                          : "bg-slate-100 text-slate-600"
+                          }`}
                       >
                         {systemConfig.portalSettings?.allowEmployeePhotoUpload
                           ? "Enabled"
@@ -1552,11 +1585,10 @@ export const Settings: React.FC<SettingsProps> = ({
                             },
                           })
                         }
-                        className={`px-3 py-1 rounded-lg ${
-                          systemConfig.portalSettings?.allowEmployeeAddressEdit
-                            ? "bg-orange-500 text-white"
-                            : "bg-slate-100 text-slate-600"
-                        }`}
+                        className={`px-3 py-1 rounded-lg ${systemConfig.portalSettings?.allowEmployeeAddressEdit
+                          ? "bg-orange-500 text-white"
+                          : "bg-slate-100 text-slate-600"
+                          }`}
                       >
                         {systemConfig.portalSettings?.allowEmployeeAddressEdit
                           ? "Enabled"
@@ -1585,11 +1617,10 @@ export const Settings: React.FC<SettingsProps> = ({
                             },
                           })
                         }
-                        className={`px-3 py-1 rounded-lg ${
-                          systemConfig.portalSettings?.allowEmployeeBankEdit
-                            ? "bg-orange-500 text-white"
-                            : "bg-slate-100 text-slate-600"
-                        }`}
+                        className={`px-3 py-1 rounded-lg ${systemConfig.portalSettings?.allowEmployeeBankEdit
+                          ? "bg-orange-500 text-white"
+                          : "bg-slate-100 text-slate-600"
+                          }`}
                       >
                         {systemConfig.portalSettings?.allowEmployeeBankEdit
                           ? "Enabled"
@@ -1603,161 +1634,161 @@ export const Settings: React.FC<SettingsProps> = ({
           </div>
         )}
 
-            {activeTab === 'notifications' && (
-                <div className="w-[98%] mx-auto max-w-4xl space-y-8">
-                    <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2"><Bell size={24} className="text-orange-500"/> Notification Settings</h3>
-                            <button
-                                className="bg-orange-500 text-white px-4 py-2 rounded-lg font-bold hover:bg-orange-600 transition-all"
-                                onClick={async () => {
-                                    const userId = user.id;
-                                    const updatedSettings = notificationSettings.map(s => ({
-                                        ...s,
-                                        userId: userId,
-                                        type: s.type || s.module || 'general',
-                                    }));
-                                    setNotificationSettings(updatedSettings);
-                                    for (const setting of updatedSettings) {
-                                        try {
-                                            const payload = {
-                                                ...setting,
-                                                userId: userId,
-                                                type: setting.type || setting.module || 'general',
-                                            };
-                                            if (payload.id) {
-                                                await api.updateNotificationSetting(payload.id, payload);
-                                            } else {
-                                                await api.createNotificationSetting(payload);
-                                            }
-                                        } catch (e) {
-                                            // Optionally handle error
-                                        }
-                                    }
-                                    alert('Notification settings saved!');
-                                }}
-                            >
-                                Save All
-                            </button>
-                        </div>
-                        {notificationSettings && notificationSettings.length > 0 ? (
-                            <div className="space-y-4">
-                                {notificationSettings.map((setting, idx) => (
-                                    <div key={setting.id || idx} className="flex items-center justify-between p-4 border rounded-lg">
-                                        <div>
-                                            <div className="text-sm font-bold text-slate-700">{setting.module} - {setting.action}</div>
-                                            <div className="text-xs text-slate-400">{setting.description}</div>
-                                        </div>
-                                        <button
-                                            onClick={async () => {
-                                                const userId = user.id;
-                                                const updated = notificationSettings.map((s, i) =>
-                                                    i === idx
-                                                        ? {
-                                                            ...s,
-                                                            enabled: !s.enabled,
-                                                            userId: userId,
-                                                            type: s.type || s.module || 'general',
-                                                        }
-                                                        : s
-                                                );
-                                                setNotificationSettings(updated);
-                                                // Persist the change to backend
-                                                const changed = {
-                                                    ...updated[idx],
-                                                    userId: userId,
-                                                    type: updated[idx].type || updated[idx].module || 'general',
-                                                };
-                                                try {
-                                                    if (changed.id) {
-                                                        await api.updateNotificationSetting(changed.id, changed);
-                                                    } else {
-                                                        await api.createNotificationSetting(changed);
-                                                    }
-                                                } catch (e) {
-                                                    // Optionally handle error
-                                                }
-                                            }}
-                                            className={`px-3 py-1 rounded-lg ${setting.enabled ? 'bg-orange-500 text-white' : 'bg-slate-100 text-slate-600'}`}
-                                        >
-                                            {setting.enabled ? 'Enabled' : 'Disabled'}
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="text-center text-slate-400 italic">No notification settings found.</div>
-                        )}
+        {activeTab === 'notifications' && (
+          <div className="w-[98%] mx-auto max-w-4xl space-y-8">
+            <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2"><Bell size={24} className="text-orange-500" /> Notification Settings</h3>
+                <button
+                  className="bg-orange-500 text-white px-4 py-2 rounded-lg font-bold hover:bg-orange-600 transition-all"
+                  onClick={async () => {
+                    const userId = user.id;
+                    const updatedSettings = notificationSettings.map(s => ({
+                      ...s,
+                      userId: userId,
+                      type: s.type || s.module || 'general',
+                    }));
+                    setNotificationSettings(updatedSettings);
+                    for (const setting of updatedSettings) {
+                      try {
+                        const payload = {
+                          ...setting,
+                          userId: userId,
+                          type: setting.type || setting.module || 'general',
+                        };
+                        if (payload.id) {
+                          await api.updateNotificationSetting(payload.id, payload);
+                        } else {
+                          await api.createNotificationSetting(payload);
+                        }
+                      } catch (e) {
+                        // Optionally handle error
+                      }
+                    }
+                    alert('Notification settings saved!');
+                  }}
+                >
+                  Save All
+                </button>
+              </div>
+              {notificationSettings && notificationSettings.length > 0 ? (
+                <div className="space-y-4">
+                  {notificationSettings.map((setting, idx) => (
+                    <div key={setting.id || idx} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div>
+                        <div className="text-sm font-bold text-slate-700">{setting.module} - {setting.action}</div>
+                        <div className="text-xs text-slate-400">{setting.description}</div>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          const userId = user.id;
+                          const updated = notificationSettings.map((s, i) =>
+                            i === idx
+                              ? {
+                                ...s,
+                                enabled: !s.enabled,
+                                userId: userId,
+                                type: s.type || s.module || 'general',
+                              }
+                              : s
+                          );
+                          setNotificationSettings(updated);
+                          // Persist the change to backend
+                          const changed = {
+                            ...updated[idx],
+                            userId: userId,
+                            type: updated[idx].type || updated[idx].module || 'general',
+                          };
+                          try {
+                            if (changed.id) {
+                              await api.updateNotificationSetting(changed.id, changed);
+                            } else {
+                              await api.createNotificationSetting(changed);
+                            }
+                          } catch (e) {
+                            // Optionally handle error
+                          }
+                        }}
+                        className={`px-3 py-1 rounded-lg ${setting.enabled ? 'bg-orange-500 text-white' : 'bg-slate-100 text-slate-600'}`}
+                      >
+                        {setting.enabled ? 'Enabled' : 'Disabled'}
+                      </button>
                     </div>
+                  ))}
                 </div>
-            )}
-            {activeTab === 'email' && (
-                <div className="w-[98%] mx-auto max-w-4xl space-y-8">
-                    <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
-                        <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2"><Mail size={24} className="text-orange-500"/> SMTP Settings</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div><label className="block text-sm font-bold text-slate-600 mb-1">SMTP Host</label><input type="text" value={smtpSettings.host} onChange={e => setSmtpSettings({...smtpSettings, host: e.target.value})} className="w-full border p-2.5 rounded-xl text-sm" /></div>
-                            <div><label className="block text-sm font-bold text-slate-600 mb-1">SMTP Port</label><input type="text" value={smtpSettings.port} onChange={e => setSmtpSettings({...smtpSettings, port: e.target.value})} className="w-full border p-2.5 rounded-xl text-sm" /></div>
-                            <div><label className="block text-sm font-bold text-slate-600 mb-1">User / Email</label><input type="text" value={smtpSettings.user} onChange={e => setSmtpSettings({...smtpSettings, user: e.target.value})} className="w-full border p-2.5 rounded-xl text-sm" /></div>
-                            <div><label className="block text-sm font-bold text-slate-600 mb-1">Password</label><input type="password" value={smtpSettings.pass} onChange={e => setSmtpSettings({...smtpSettings, pass: e.target.value})} className="w-full border p-2.5 rounded-xl text-sm" /></div>
-                        </div>
-                        <button onClick={() => alert('Settings Saved')} className="mt-6 bg-slate-900 text-white px-8 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-black transition-all"><Save size={18}/> Save SMTP Configuration</button>
-                    </div>
-                    <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl font-bold text-slate-800">Email Templates</h3>
-                            <button onClick={() => { setEditingTemplate(null); setTemplateForm({ name: '', subject: '', body: '' }); setIsTemplateModalOpen(true); }} className="text-orange-600 font-bold hover:underline flex items-center gap-1 text-sm"><Plus size={16}/> New Template</button>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {emailTemplates.map(template => (
-                                <div key={template.id} className="p-4 border rounded-2xl hover:border-orange-200 transition-all cursor-pointer group flex justify-between items-center" onClick={() => { setEditingTemplate(template); setTemplateForm(template); setIsTemplateModalOpen(true); }}>
-                                    <div><p className="font-bold text-slate-800">{template.name}</p><p className="text-xs text-slate-500 truncate max-w-[200px]">{template.subject}</p></div>
-                                    <Edit size={16} className="text-slate-300 group-hover:text-orange-500"/>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {activeTab === "database" && (
-              <div className="w-[98%] mx-auto max-w-4xl">
-                <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2"><Database size={24} className="text-orange-500"/> Database Details</h2>
-                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm mb-6">
-                  <div className="mb-4 flex items-center gap-3">
-                    <span className={`inline-block w-3 h-3 rounded-full ${dbStatus === 'connected' ? 'bg-green-500' : dbStatus === 'checking' ? 'bg-yellow-400' : 'bg-red-500'}`}></span>
-                    <span className="font-bold text-slate-700">Status:</span>
-                    <span className="text-sm font-mono">{dbStatus.charAt(0).toUpperCase() + dbStatus.slice(1)}</span>
+              ) : (
+                <div className="text-center text-slate-400 italic">No notification settings found.</div>
+              )}
+            </div>
+          </div>
+        )}
+        {activeTab === 'email' && (
+          <div className="w-[98%] mx-auto max-w-4xl space-y-8">
+            <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+              <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2"><Mail size={24} className="text-orange-500" /> SMTP Settings</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div><label className="block text-sm font-bold text-slate-600 mb-1">SMTP Host</label><input type="text" value={smtpSettings.host} onChange={e => setSmtpSettings({ ...smtpSettings, host: e.target.value })} className="w-full border p-2.5 rounded-xl text-sm" /></div>
+                <div><label className="block text-sm font-bold text-slate-600 mb-1">SMTP Port</label><input type="text" value={smtpSettings.port} onChange={e => setSmtpSettings({ ...smtpSettings, port: e.target.value })} className="w-full border p-2.5 rounded-xl text-sm" /></div>
+                <div><label className="block text-sm font-bold text-slate-600 mb-1">User / Email</label><input type="text" value={smtpSettings.user} onChange={e => setSmtpSettings({ ...smtpSettings, user: e.target.value })} className="w-full border p-2.5 rounded-xl text-sm" /></div>
+                <div><label className="block text-sm font-bold text-slate-600 mb-1">Password</label><input type="password" value={smtpSettings.pass} onChange={e => setSmtpSettings({ ...smtpSettings, pass: e.target.value })} className="w-full border p-2.5 rounded-xl text-sm" /></div>
+              </div>
+              <button onClick={() => alert('Settings Saved')} className="mt-6 bg-slate-900 text-white px-8 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-black transition-all"><Save size={18} /> Save SMTP Configuration</button>
+            </div>
+            <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-slate-800">Email Templates</h3>
+                <button onClick={() => { setEditingTemplate(null); setTemplateForm({ name: '', subject: '', body: '' }); setIsTemplateModalOpen(true); }} className="text-orange-600 font-bold hover:underline flex items-center gap-1 text-sm"><Plus size={16} /> New Template</button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {emailTemplates.map(template => (
+                  <div key={template.id} className="p-4 border rounded-2xl hover:border-orange-200 transition-all cursor-pointer group flex justify-between items-center" onClick={() => { setEditingTemplate(template); setTemplateForm(template); setIsTemplateModalOpen(true); }}>
+                    <div><p className="font-bold text-slate-800">{template.name}</p><p className="text-xs text-slate-500 truncate max-w-[200px]">{template.subject}</p></div>
+                    <Edit size={16} className="text-slate-300 group-hover:text-orange-500" />
                   </div>
-                  {dbInfo === null ? (
-                    <div className="text-slate-400 italic">Loading database info...</div>
-                  ) : dbInfo.error ? (
-                    <div className="text-red-500 font-bold">{dbInfo.error}</div>
-                  ) : (
-                    <>
-                      <div className="mb-2"><span className="font-bold text-slate-700">Database:</span> <span className="font-mono">{dbInfo.database}</span></div>
-                      <div className="mb-2"><span className="font-bold text-slate-700">User:</span> <span className="font-mono">{dbInfo.user}</span></div>
-                      <div className="mb-2"><span className="font-bold text-slate-700">Host:</span> <span className="font-mono">{dbInfo.host}</span></div>
-                      <div className="mb-2"><span className="font-bold text-slate-700">Port:</span> <span className="font-mono">{dbInfo.port}</span></div>
-                      <div className="mb-2"><span className="font-bold text-slate-700">Tables:</span></div>
-                      <ul className="list-disc pl-6 text-sm">
-                        {dbInfo.tables && dbInfo.tables.length > 0 ? dbInfo.tables.map((t: string) => (
-                          <li key={t} className="font-mono text-slate-700">{t}</li>
-                        )) : <li className="text-slate-400 italic">No tables found</li>}
-                      </ul>
-                    </>
-                  )}
-                </div>
+                ))}
               </div>
-            )}
+            </div>
+          </div>
+        )}
 
-            {activeTab === "copyright" && (
-              <div className="w-[98%] mx-auto max-w-4xl">
-                <CopyrightPage />
+        {activeTab === "database" && (
+          <div className="w-[98%] mx-auto max-w-4xl">
+            <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2"><Database size={24} className="text-orange-500" /> Database Details</h2>
+            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm mb-6">
+              <div className="mb-4 flex items-center gap-3">
+                <span className={`inline-block w-3 h-3 rounded-full ${dbStatus === 'connected' ? 'bg-orange-500' : dbStatus === 'checking' ? 'bg-yellow-400' : 'bg-red-500'}`}></span>
+                <span className="font-bold text-slate-700">Status:</span>
+                <span className="text-sm font-mono">{dbStatus.charAt(0).toUpperCase() + dbStatus.slice(1)}</span>
               </div>
-            )}
+              {dbInfo === null ? (
+                <div className="text-slate-400 italic">Loading database info...</div>
+              ) : dbInfo.error ? (
+                <div className="text-red-500 font-bold">{dbInfo.error}</div>
+              ) : (
+                <>
+                  <div className="mb-2"><span className="font-bold text-slate-700">Database:</span> <span className="font-mono">{dbInfo.database}</span></div>
+                  <div className="mb-2"><span className="font-bold text-slate-700">User:</span> <span className="font-mono">{dbInfo.user}</span></div>
+                  <div className="mb-2"><span className="font-bold text-slate-700">Host:</span> <span className="font-mono">{dbInfo.host}</span></div>
+                  <div className="mb-2"><span className="font-bold text-slate-700">Port:</span> <span className="font-mono">{dbInfo.port}</span></div>
+                  <div className="mb-2"><span className="font-bold text-slate-700">Tables:</span></div>
+                  <ul className="list-disc pl-6 text-sm">
+                    {dbInfo.tables && dbInfo.tables.length > 0 ? dbInfo.tables.map((t: string) => (
+                      <li key={t} className="font-mono text-slate-700">{t}</li>
+                    )) : <li className="text-slate-400 italic">No tables found</li>}
+                  </ul>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === "copyright" && (
+          <div className="w-[98%] mx-auto max-w-4xl">
+            <CopyrightPage />
+          </div>
+        )}
         {/* --- MODALS --- */}
-    </div>
+      </div>
 
       {/* User Modal */}
       {isUserModalOpen && (
@@ -2095,11 +2126,10 @@ export const Settings: React.FC<SettingsProps> = ({
                 <button
                   key={tab}
                   onClick={() => setBranchDetailTab(tab as any)}
-                  className={`py-4 text-sm font-bold capitalize border-b-2 transition-all whitespace-nowrap ${
-                    branchDetailTab === tab
-                      ? "border-orange-500 text-orange-600"
-                      : "border-transparent text-slate-400 hover:text-slate-600"
-                  }`}
+                  className={`py-4 text-sm font-bold capitalize border-b-2 transition-all whitespace-nowrap ${branchDetailTab === tab
+                    ? "border-orange-500 text-orange-600"
+                    : "border-transparent text-slate-400 hover:text-slate-600"
+                    }`}
                 >
                   {tab}
                 </button>
@@ -2190,33 +2220,33 @@ export const Settings: React.FC<SettingsProps> = ({
                 </div>
               )}
 
-                        {branchDetailTab === 'people' && (
-                            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2">
-                                <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm">
-                                    <div className="p-4 border-b bg-white flex justify-between items-center">
-                                        <h4 className="text-sm font-bold text-slate-800">Managers</h4>
-                                        <button className="text-[10px] font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-lg border border-blue-100 flex items-center gap-1 hover:bg-blue-100">+ Add Manager</button>
-                                    </div>
-                                    <div className="p-4 space-y-3">
-                                        {/* Manager list and controls go here */}
-                                    </div>
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full text-left">
-                                            <thead className="bg-white border-b border-slate-50 text-[10px] font-bold text-slate-400 uppercase"><tr><th className="p-4">Name</th><th className="p-4">Role</th><th className="p-4 text-right">Actions</th></tr></thead>
-                                            <tbody className="divide-y divide-slate-50">
-                                                {employees.filter(e => e.branchid === viewBranch.id).map(emp => (
-                                                    <tr key={emp.id} className="hover:bg-slate-50 transition-colors">
-                                                        <td className="p-4"><div className="flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-[10px] text-slate-600 border border-slate-200">{emp.name.split(' ').map(n => n[0]).join('')}</div><span className="font-bold text-slate-700 text-xs">{emp.name}</span></div></td>
-                                                        <td className="p-4 text-xs font-medium text-slate-400">{emp.designation}</td>
-                                                        <td className="p-4 text-right"><button onClick={() => handleAddStaffToBranch(emp.id)} className="p-1.5 text-slate-300 hover:text-red-500 transition-colors" title="Remove from Branch"><X size={16}/></button></td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
+              {branchDetailTab === 'people' && (
+                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2">
+                  <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm">
+                    <div className="p-4 border-b bg-white flex justify-between items-center">
+                      <h4 className="text-sm font-bold text-slate-800">Managers</h4>
+                      <button className="text-[10px] font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-lg border border-blue-100 flex items-center gap-1 hover:bg-blue-100">+ Add Manager</button>
+                    </div>
+                    <div className="p-4 space-y-3">
+                      {/* Manager list and controls go here */}
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left">
+                        <thead className="bg-white border-b border-slate-50 text-[10px] font-bold text-slate-400 uppercase"><tr><th className="p-4">Name</th><th className="p-4">Role</th><th className="p-4 text-right">Actions</th></tr></thead>
+                        <tbody className="divide-y divide-slate-50">
+                          {employees.filter(e => e.branchId === viewBranch.id).map(emp => (
+                            <tr key={emp.id} className="hover:bg-slate-50 transition-colors">
+                              <td className="p-4"><div className="flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-[10px] text-slate-600 border border-slate-200">{emp.name.split(' ').map(n => n[0]).join('')}</div><span className="font-bold text-slate-700 text-xs">{emp.name}</span></div></td>
+                              <td className="p-4 text-xs font-medium text-slate-400">{emp.designation}</td>
+                              <td className="p-4 text-right"><button onClick={() => handleAddStaffToBranch(emp.id)} className="p-1.5 text-slate-300 hover:text-red-500 transition-colors" title="Remove from Branch"><X size={16} /></button></td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {branchDetailTab === "documents" && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
@@ -2245,7 +2275,7 @@ export const Settings: React.FC<SettingsProps> = ({
                     </div>
                     <div className="p-4 space-y-2">
                       {viewBranch.documents &&
-                      viewBranch.documents.length > 0 ? (
+                        viewBranch.documents.length > 0 ? (
                         viewBranch.documents.map((doc, idx) => (
                           <div
                             key={idx}
@@ -2325,10 +2355,10 @@ export const Settings: React.FC<SettingsProps> = ({
                       ))}
                     {assets.filter((a) => a.branchId === viewBranch.id)
                       .length === 0 && (
-                      <div className="col-span-2 text-center py-12 text-slate-400 font-medium italic">
-                        No assets assigned to this branch.
-                      </div>
-                    )}
+                        <div className="col-span-2 text-center py-12 text-slate-400 font-medium italic">
+                          No assets assigned to this branch.
+                        </div>
+                      )}
                   </div>
                 </div>
               )}
@@ -2337,191 +2367,190 @@ export const Settings: React.FC<SettingsProps> = ({
         </div>
       )}
 
-        {/* Branch Add Modal */}
+      {/* Branch Add Modal */}
       {isBranchModalOpen && (
-  <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-    <div className="bg-white rounded-2xl p-8 w-full max-w-2xl shadow-2xl animate-in zoom-in duration-200">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-black text-slate-900">
-          {editingBranch ? "Edit Branch" : "Add Branch"}
-        </h3>
-        <button
-          onClick={() => setIsBranchModalOpen(false)}
-          className="p-2 text-slate-400 hover:text-slate-600"
-        >
-          <X size={24} />
-        </button>
-      </div>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-2xl p-8 w-full max-w-2xl shadow-2xl animate-in zoom-in duration-200">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-black text-slate-900">
+                {editingBranch ? "Edit Branch" : "Add Branch"}
+              </h3>
+              <button
+                onClick={() => setIsBranchModalOpen(false)}
+                className="p-2 text-slate-400 hover:text-slate-600"
+              >
+                <X size={24} />
+              </button>
+            </div>
 
-      {/* Form */}
-      <form onSubmit={handleBranchSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Branch Name */}
-          <div>
-            <label className="block text-xs font-black uppercase text-slate-400 mb-1">
-              Branch Name *
-            </label>
-            <input
-              value={branchForm.name || ""}
-              onChange={(e) =>
-                setBranchForm({ ...branchForm, name: e.target.value })
-              }
-              required
-              className="w-full border p-2.5 rounded-xl text-sm"
-            />
-          </div>
+            {/* Form */}
+            <form onSubmit={handleBranchSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Branch Name */}
+                <div>
+                  <label className="block text-xs font-black uppercase text-slate-400 mb-1">
+                    Branch Name *
+                  </label>
+                  <input
+                    value={branchForm.name || ""}
+                    onChange={(e) =>
+                      setBranchForm({ ...branchForm, name: e.target.value })
+                    }
+                    required
+                    className="w-full border p-2.5 rounded-xl text-sm"
+                  />
+                </div>
 
-          {/* Location */}
-          <div>
-            <label className="block text-xs font-black uppercase text-slate-400 mb-1">
-              Location
-            </label>
-            <input
-              value={branchForm.location || ""}
-              onChange={(e) =>
-                setBranchForm({ ...branchForm, location: e.target.value })
-              }
-              className="w-full border p-2.5 rounded-xl text-sm"
-            />
-          </div>
+                {/* Location */}
+                <div>
+                  <label className="block text-xs font-black uppercase text-slate-400 mb-1">
+                    Location
+                  </label>
+                  <input
+                    value={branchForm.location || ""}
+                    onChange={(e) =>
+                      setBranchForm({ ...branchForm, location: e.target.value })
+                    }
+                    className="w-full border p-2.5 rounded-xl text-sm"
+                  />
+                </div>
 
-          {/* City */}
-          <div>
-            <label className="block text-xs font-black uppercase text-slate-400 mb-1">
-              City
-            </label>
-            <input
-              value={branchForm.city || ""}
-              onChange={(e) =>
-                setBranchForm({ ...branchForm, city: e.target.value })
-              }
-              className="w-full border p-2.5 rounded-xl text-sm"
-            />
-          </div>
+                {/* City */}
+                <div>
+                  <label className="block text-xs font-black uppercase text-slate-400 mb-1">
+                    City
+                  </label>
+                  <input
+                    value={branchForm.city || ""}
+                    onChange={(e) =>
+                      setBranchForm({ ...branchForm, city: e.target.value })
+                    }
+                    className="w-full border p-2.5 rounded-xl text-sm"
+                  />
+                </div>
 
-          {/* State */}
-          <div>
-            <label className="block text-xs font-black uppercase text-slate-400 mb-1">
-              State
-            </label>
-            <input
-              value={branchForm.state || ""}
-              onChange={(e) =>
-                setBranchForm({ ...branchForm, state: e.target.value })
-              }
-              className="w-full border p-2.5 rounded-xl text-sm"
-            />
-          </div>
+                {/* State */}
+                <div>
+                  <label className="block text-xs font-black uppercase text-slate-400 mb-1">
+                    State
+                  </label>
+                  <input
+                    value={branchForm.state || ""}
+                    onChange={(e) =>
+                      setBranchForm({ ...branchForm, state: e.target.value })
+                    }
+                    className="w-full border p-2.5 rounded-xl text-sm"
+                  />
+                </div>
 
-          {/* Zipcode */}
-          <div>
-            <label className="block text-xs font-black uppercase text-slate-400 mb-1">
-              Zip Code
-            </label>
-            <input
-              value={branchForm.zipcode || ""}
-              onChange={(e) =>
-                setBranchForm({ ...branchForm, zipcode: e.target.value })
-              }
-              className="w-full border p-2.5 rounded-xl text-sm"
-            />
-          </div>
+                {/* Zipcode */}
+                <div>
+                  <label className="block text-xs font-black uppercase text-slate-400 mb-1">
+                    Zip Code
+                  </label>
+                  <input
+                    value={branchForm.zipcode || ""}
+                    onChange={(e) =>
+                      setBranchForm({ ...branchForm, zipcode: e.target.value })
+                    }
+                    className="w-full border p-2.5 rounded-xl text-sm"
+                  />
+                </div>
 
-          {/* Country */}
-          <div>
-            <label className="block text-xs font-black uppercase text-slate-400 mb-1">
-              Country
-            </label>
-            <input
-              value={branchForm.country || ""}
-              onChange={(e) =>
-                setBranchForm({ ...branchForm, country: e.target.value })
-              }
-              className="w-full border p-2.5 rounded-xl text-sm"
-            />
+                {/* Country */}
+                <div>
+                  <label className="block text-xs font-black uppercase text-slate-400 mb-1">
+                    Country
+                  </label>
+                  <input
+                    value={branchForm.country || ""}
+                    onChange={(e) =>
+                      setBranchForm({ ...branchForm, country: e.target.value })
+                    }
+                    className="w-full border p-2.5 rounded-xl text-sm"
+                  />
+                </div>
+              </div>
+
+              {/* Manager IDs */}
+              <div>
+
+                <div>
+                  <label className="block text-xs font-black uppercase text-slate-400 mb-2">
+                    Branch Managers
+                  </label>
+
+                  <div className="max-h-48 overflow-y-auto border rounded-xl p-3 space-y-2 bg-slate-50">
+                    {employees.length === 0 && (
+                      <p className="text-xs text-slate-400 italic">
+                        No employees found
+                      </p>
+                    )}
+
+                    {employees.map((emp) => {
+                      const checked = branchForm.managerids?.includes(emp.id);
+
+                      return (
+                        <label
+                          key={emp.id}
+                          className="flex items-center gap-3 p-2 rounded-lg hover:bg-white cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={(e) => {
+                              const current = branchForm.managerids || [];
+                              const updated = e.target.checked
+                                ? [...current, emp.id]
+                                : current.filter((id) => id !== emp.id);
+
+                              setBranchForm({
+                                ...branchForm,
+                                managerids: updated,
+                              });
+                            }}
+                            className="w-4 h-4 text-orange-500 focus:ring-orange-500 rounded"
+                          />
+                          <div className="flex flex-col">
+                            <span className="text-sm font-semibold text-slate-700">
+                              {emp.name}
+                            </span>
+                            <span className="text-xs text-slate-400">
+                              {emp.designation || "Employee"}
+                            </span>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Footer */}
+              <div className="flex justify-end gap-3 pt-6 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsBranchModalOpen(false)}
+                  className="px-6 py-2.5 text-slate-500 font-bold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-8 py-2.5 bg-orange-500 text-white rounded-xl font-black shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition-all"
+                >
+                  Save Branch
+                </button>
+              </div>
+            </form>
           </div>
         </div>
-
-        {/* Manager IDs */}
-        <div>
-          
-          <div>
-  <label className="block text-xs font-black uppercase text-slate-400 mb-2">
-    Branch Managers
-  </label>
-
-  <div className="max-h-48 overflow-y-auto border rounded-xl p-3 space-y-2 bg-slate-50">
-    {employees.length === 0 && (
-      <p className="text-xs text-slate-400 italic">
-        No employees found
-      </p>
-    )}
-
-    {employees.map((emp) => {
-      const checked = branchForm.managerids?.includes(emp.id);
-
-      return (
-        <label
-          key={emp.id}
-          className="flex items-center gap-3 p-2 rounded-lg hover:bg-white cursor-pointer"
-        >
-          <input
-            type="checkbox"
-            checked={checked}
-            onChange={(e) => {
-              const current = branchForm.managerids || [];
-              const updated = e.target.checked
-                ? [...current, emp.id]
-                : current.filter((id) => id !== emp.id);
-
-              setBranchForm({
-                ...branchForm,
-                managerids: updated,
-              });
-            }}
-            className="w-4 h-4 text-orange-500 focus:ring-orange-500 rounded"
-          />
-          <div className="flex flex-col">
-            <span className="text-sm font-semibold text-slate-700">
-              {emp.name}
-            </span>
-            <span className="text-xs text-slate-400">
-              {emp.designation || "Employee"}
-            </span>
-          </div>
-        </label>
-      );
-    })}
-  </div>
-</div>
-
-        </div>
-
-        {/* Footer */}
-        <div className="flex justify-end gap-3 pt-6 border-t border-slate-100">
-          <button
-            type="button"
-            onClick={() => setIsBranchModalOpen(false)}
-            className="px-6 py-2.5 text-slate-500 font-bold"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="px-8 py-2.5 bg-orange-500 text-white rounded-xl font-black shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition-all"
-          >
-            Save Branch
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-)}
+      )}
 
 
 
-   
 
 
       {/* Template Modal */}

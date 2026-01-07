@@ -278,18 +278,17 @@ const checkDateFilter = (dateString: string) => {
           }
 
           onAddLeave({
-              id: `lv-${Date.now()}` ,
-              employeename: user.name,
-              employeeid:user.linkedemployeeid,
-            //   employeeAvatar: user.avatar,
-              leavetype: leaveFormData.type || 'Sick Leave',
+              id: `lv-${Date.now()}`,
+              employeeId: user.linkedEmployeeId || user.id,
+              employeeName: user.name,
+              leaveType: leaveFormData.type || 'Sick Leave',
               startDate: leaveFormData.startDate,
               endDate: leaveFormData.endDate,
-            //   days: leaveFormData.days || 1,
+              days: leaveFormData.days || 1,
               reason: leaveFormData.reason || '',
               status: 'Pending',
-            //   attachment: selectedFile ? selectedFile.name : '',
-            //   appliedDate: new Date().toISOString().split('T')[0]
+              // attachment: selectedFile ? selectedFile.name : '',
+              // appliedDate: new Date().toISOString().split('T')[0]
           });
           setIsLeaveModalOpen(false);
           setLeaveFormData({ type: 'Sick Leave', days: 1, attachment: '' });
