@@ -50,7 +50,7 @@ const CopyrightPage: React.FC = () => {
       {isAdmin && (
         <div className="mt-6 flex justify-end">
           <button
-            className={`px-4 py-2 rounded-lg font-bold text-white ${editing ? 'bg-green-600 hover:bg-green-700' : 'bg-orange-500 hover:bg-orange-600'} transition-all`}
+            className={`px-4 py-2 rounded-lg font-bold text-white ${editing ? 'bg-orange-600 hover:bg-orange-700' : 'bg-orange-500 hover:bg-orange-600'} transition-all`}
             onClick={() => setEditing(editing ? false : true)}
           >
             {editing ? 'Save' : 'Edit'}

@@ -1,13 +1,8 @@
 import React from 'react';
 import { api } from '../services/api';
 import { Calendar, CheckCircle, XCircle, Clock, Plus } from 'lucide-react';
-import { User } from '../types';
 
-interface LeaveManagementProps {
-  user: User;
-}
-
-const LeaveManagement: React.FC<LeaveManagementProps> = ({ user }) => {
+const LeaveManagement: React.FC = () => {
   const [leaves, setLeaves] = React.useState<any[]>([]);
     const [showForm, setShowForm] = React.useState(false);
     const [form, setForm] = React.useState({
@@ -38,13 +33,7 @@ const LeaveManagement: React.FC<LeaveManagementProps> = ({ user }) => {
       return;
     }
     try {
-      // Use linkedEmployeeId if available, else fallback to user.id
-      const employeeId = user.linkedEmployeeId || user.id;
-      await api.create('leaves', {
-        ...form,
-        employeeId,
-        status: 'Pending'
-      });
+      await api.create('leaves', form);
       setShowForm(false);
       setForm({ type: '', startDate: '', endDate: '', days: '', reason: '' });
       api.get('leaves').then(setLeaves);
@@ -177,7 +166,7 @@ const LeaveManagement: React.FC<LeaveManagementProps> = ({ user }) => {
 
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                <Calendar size={64} className="text-green-500" />
+                <Calendar size={64} className="text-orange-500" />
             </div>
             <p className="text-gray-500 font-medium text-sm">Sick Leave</p>
              <div className="mt-4 flex items-baseline space-x-2">

@@ -89,7 +89,7 @@ const FileManager: React.FC<FileManagerProps> = ({ user }) => {
     switch (type) {
         case 'pdf': return <FileText size={24} className="text-red-500" />;
         case 'doc': return <FileText size={24} className="text-blue-500" />;
-        case 'xls': return <FileText size={24} className="text-green-500" />;
+        case 'xls': return <FileText size={24} className="text-orange-500" />;
         case 'img': case 'png': case 'jpg': case 'jpeg': return <Image size={24} className="text-purple-500" />;
         default: return <Folder size={24} className="text-yellow-500" />;
     }

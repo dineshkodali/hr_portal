@@ -1,5 +1,3 @@
-
-// ...existing imports...
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
@@ -14,6 +12,7 @@ import crypto from 'crypto';
 
 
 const { Pool } = pg;
+import * as aiHrService from './services/aiHrService.js';
 const app = express();
 
 // Multer upload initialization (must be before usage)
@@ -35,7 +34,7 @@ const upload = multer({ storage });
 app.post('/api/files/upload', upload.single('file'), async (req, res) => {
   try {
     const { body, file } = req;
-    const id = `file_${Date.now()}_${Math.floor(Math.random()*10000)}`;
+    const id = `file_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
     const data = {
       id,
       name: file.originalname,
@@ -125,7 +124,7 @@ app.post('/api/notificationsettings', async (req, res) => {
   try {
     const { userId, type, enabled, channel } = req.body;
     if (!userId || !type) return res.status(400).json({ error: 'userId and type required' });
-    const id = `notif_${Date.now()}_${Math.floor(Math.random()*10000)}`;
+    const id = `notif_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
     const { rows } = await pool.query(
       'INSERT INTO notificationsettings (id, userId, type, enabled, channel, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, NOW(), NOW()) RETURNING *',
       [id, userId, type, enabled ?? true, channel || 'email']
@@ -307,10 +306,10 @@ app.post('/api/login', async (req, res) => {
     console.log('🔐 MFA Security Check for user:', user.email);
     console.log('🔐 Security settings rows:', securityCheck.rows);
     console.log('🔐 Row count:', securityCheck.rows.length);
-    
+
     // PostgreSQL returns column names in lowercase unless quoted in query
     const totpEnabled = securityCheck.rows.length > 0 && (securityCheck.rows[0].totpenabled || securityCheck.rows[0].totpEnabled);
-    
+
     if (securityCheck.rows.length > 0) {
       console.log('🔐 totpEnabled value (lowercase):', securityCheck.rows[0].totpenabled);
       console.log('🔐 totpEnabled value (camelCase):', securityCheck.rows[0].totpEnabled);
@@ -360,64 +359,64 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-  /* ============================================================================
-     SECURE USER CREATION (ADMIN/SETTINGS)
-  ============================================================================ */
-  app.post('/api/users', async (req, res) => {
-    try {
-      const { name, email, password, role, avatar, designation, branchIds, linkedEmployee, accessModules } = req.body;
-      if (!email || !password || !role) {
-        return res.status(400).json({ error: 'Email, password, and role required' });
-      }
-      // Check if user exists
-      const exists = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
-      if (exists.rows.length) {
-        return res.status(409).json({ error: 'User already exists' });
-      }
-      // Hash password
-      const password_hash = await bcrypt.hash(password, 10);
-      // Generate user id
-      const userId = `usr_${Date.now()}_${Math.floor(Math.random()*10000)}`;
-      // Create linked employee if requested
-      let employeeId = null;
-      if (linkedEmployee && linkedEmployee.name && linkedEmployee.email) {
-        employeeId = `emp_${Date.now()}_${Math.floor(Math.random()*10000)}`;
-        await pool.query(
-          `INSERT INTO employees (id, name, email, designation, branchId, status, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, 'Active', NOW(), NOW())`,
-          [employeeId, linkedEmployee.name, linkedEmployee.email, linkedEmployee.designation || '', linkedEmployee.branchId || null]
-        );
-      }
-      // Insert user
-      await pool.query(
-        `INSERT INTO users (id, name, email, password_hash, role, avatar, designation, branchIds, linkedEmployeeId, accessModules, status, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'Active', NOW(), NOW())`,
-        [userId, name, email, password_hash, role, avatar || null, designation || '', branchIds || [], employeeId, accessModules || ['dashboard']]
-      );
-      res.status(201).json({ success: true, userId, employeeId });
-    } catch (err) {
-      res.status(500).json({ error: err.message });
+/* ============================================================================
+   SECURE USER CREATION (ADMIN/SETTINGS)
+============================================================================ */
+app.post('/api/users', async (req, res) => {
+  try {
+    const { name, email, password, role, avatar, designation, branchIds, linkedEmployee, accessModules } = req.body;
+    if (!email || !password || !role) {
+      return res.status(400).json({ error: 'Email, password, and role required' });
     }
-  });
+    // Check if user exists
+    const exists = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+    if (exists.rows.length) {
+      return res.status(409).json({ error: 'User already exists' });
+    }
+    // Hash password
+    const password_hash = await bcrypt.hash(password, 10);
+    // Generate user id
+    const userId = `usr_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+    // Create linked employee if requested
+    let employeeId = null;
+    if (linkedEmployee && linkedEmployee.name && linkedEmployee.email) {
+      employeeId = `emp_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+      await pool.query(
+        `INSERT INTO employees (id, name, email, designation, branchId, status, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, 'Active', NOW(), NOW())`,
+        [employeeId, linkedEmployee.name, linkedEmployee.email, linkedEmployee.designation || '', linkedEmployee.branchId || null]
+      );
+    }
+    // Insert user
+    await pool.query(
+      `INSERT INTO users (id, name, email, password_hash, role, avatar, designation, branchIds, linkedEmployeeId, accessModules, status, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'Active', NOW(), NOW())`,
+      [userId, name, email, password_hash, role, avatar || null, designation || '', branchIds || [], employeeId, accessModules || ['dashboard']]
+    );
+    res.status(201).json({ success: true, userId, employeeId });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
-  /* ============================================================================
-     GET ALL USERS (ADMIN/SETTINGS)
-  ============================================================================ */
-  app.get('/api/users/list', async (req, res) => {
-    try {
-      const { rows } = await pool.query(
-        `SELECT id, name, email, role, avatar, designation, status, branchIds, linkedEmployeeId, accessModules, created_at, updated_at 
+/* ============================================================================
+   GET ALL USERS (ADMIN/SETTINGS)
+============================================================================ */
+app.get('/api/users/list', async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT id, name, email, role, avatar, designation, status, branchIds, linkedEmployeeId, accessModules, created_at, updated_at 
          FROM users 
          ORDER BY created_at DESC`
-      );
-      res.json(rows);
-    } catch (err) {
-      console.error('❌ Error fetching users:', err.message);
-      res.status(500).json({ error: err.message });
-    }
-  });
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('❌ Error fetching users:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
 
-  /* ============================================================================
-   UPDATE USER (ADMIN ONLY)
+/* ============================================================================
+ UPDATE USER (ADMIN ONLY)
 ============================================================================ */
 app.put('/api/users/:id', async (req, res) => {
   try {
@@ -539,6 +538,13 @@ app.delete('/api/users/:id', async (req, res) => {
 ============================================================================ */
 const BLOCKED_TABLES = ['users'];
 
+/* ============================================================================
+   AI ASSISTANT ENDPOINT (Must be before generic :table routes)
+============================================================================ */
+app.post('/api/chat', (req, res) => {
+  aiHrService.processChatRequest(req, res, pool);
+});
+
 // Helper function to normalize column names from PostgreSQL to camelCase
 const normalizeEmployeeRow = (row) => {
   if (!row) return row;
@@ -564,13 +570,13 @@ app.get('/api/:table', async (req, res) => {
     }
 
     const { rows } = await pool.query(`SELECT * FROM ${table}`);
-    
+
     // Normalize employees data
     if (table === 'employees') {
       const normalizedRows = rows.map(normalizeEmployeeRow);
       return res.json(normalizedRows);
     }
-    
+
     res.json(rows);
 
   } catch (err) {
@@ -609,7 +615,7 @@ app.get('/api/:table/:id', async (req, res) => {
 app.post('/api/:table', async (req, res) => {
   const { table } = req.params;
   try {
-    
+
     if (BLOCKED_TABLES.includes(table)) {
       return res.status(403).json({ error: 'Access denied' });
     }
@@ -645,12 +651,12 @@ app.post('/api/:table', async (req, res) => {
     `;
 
     const { rows } = await pool.query(query, values);
-    
+
     // Normalize employees data
     if (table === 'employees') {
       return res.status(201).json(normalizeEmployeeRow(rows[0]));
     }
-    
+
     res.status(201).json(rows[0]);
 
   } catch (err) {
@@ -663,7 +669,7 @@ app.post('/api/:table', async (req, res) => {
 app.put('/api/:table/:id', async (req, res) => {
   const { table, id } = req.params;
   try {
-    
+
     if (BLOCKED_TABLES.includes(table)) {
       return res.status(403).json({ error: 'Access denied' });
     }
@@ -741,6 +747,7 @@ app.delete('/api/:table/:id', async (req, res) => {
   }
 });
 
+
 /* ============================================================================
    2FA & AUTHENTICATOR ENDPOINTS
 ============================================================================ */
@@ -749,7 +756,7 @@ app.delete('/api/:table/:id', async (req, res) => {
 app.get('/api/auth/totp/setup/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    
+
     // Generate secret
     const secret = speakeasy.generateSecret({
       name: `SD Commercial HR Portal (${userId})`,
@@ -1099,9 +1106,9 @@ app.post('/api/auth/otp/generate', async (req, res) => {
 
     if (userCheck.rows.length === 0) {
       // For security, don't reveal if email exists or not
-      return res.json({ 
-        success: true, 
-        message: 'If the email exists, an OTP has been sent.' 
+      return res.json({
+        success: true,
+        message: 'If the email exists, an OTP has been sent.'
       });
     }
 
@@ -1155,8 +1162,8 @@ app.post('/api/auth/otp/generate', async (req, res) => {
     });
     */
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: 'OTP sent to your email',
       expiresIn: 600 // seconds
     });
@@ -1263,9 +1270,9 @@ app.post('/api/auth/password-reset/request', async (req, res) => {
 
     // For security, always return success even if email doesn't exist
     if (userCheck.rows.length === 0) {
-      return res.json({ 
-        success: true, 
-        message: 'If the email exists, a password reset code has been sent.' 
+      return res.json({
+        success: true,
+        message: 'If the email exists, a password reset code has been sent.'
       });
     }
 
@@ -1295,8 +1302,8 @@ app.post('/api/auth/password-reset/request', async (req, res) => {
     // TODO: Send email (requires SMTP)
     console.log(`🔐 Password Reset OTP for ${email}: ${otpCode} (expires in 15 minutes)`);
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: 'Password reset code sent to your email',
       expiresIn: 900 // seconds
     });
@@ -1359,9 +1366,9 @@ app.post('/api/auth/password-reset/verify', async (req, res) => {
       [otp.id]
     );
 
-    res.json({ 
-      success: true, 
-      message: 'Password reset successful. You can now login with your new password.' 
+    res.json({
+      success: true,
+      message: 'Password reset successful. You can now login with your new password.'
     });
 
   } catch (err) {

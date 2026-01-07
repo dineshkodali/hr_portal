@@ -322,7 +322,7 @@ const checkDateFilter = (dateString: string) => {
       const remaining = limit - used;
       if (remaining <= 0) return 'text-red-500 bg-red-50 border-red-100';
       if (remaining <= 2) return 'text-orange-500 bg-orange-50 border-orange-100';
-      return 'text-green-600 bg-green-50 border-green-100';
+      return 'text-orange-600 bg-orange-50 border-orange-100';
   };
 
   return (
@@ -360,7 +360,7 @@ const checkDateFilter = (dateString: string) => {
       </div>
 
        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-         <StatCard title="Present Days" value={filteredRecords.filter(r => r.status === 'Present').length} icon={<CheckCircle size={20} />} color="bg-green-500" />
+         <StatCard title="Present Days" value={filteredRecords.filter(r => r.status === 'Present').length} icon={<CheckCircle size={20} />} color="bg-orange-500" />
          <StatCard title="Absent/Leave" value={filteredRecords.filter(r => r.status === 'Absent' || r.status === 'On Leave').length} icon={<XCircle size={20} />} color="bg-red-500" />
          <StatCard title="Total Hours (Day)" value={timesheets.filter(t => checkDateFilter(t.date) && (!isEmployee || t.employeeName === user.name)).reduce((acc, curr) => acc + curr.duration/60, 0).toFixed(1)} icon={<Clock size={20} />} color="bg-blue-500" />
          <StatCard title="Pending Approvals" value={!isEmployee ? filteredTimesheets.filter(t => t.status === 'Pending').length + filteredLeaves.filter(l => l.status === 'Pending').length : filteredLeaves.filter(l => l.status === 'Pending').length} icon={<Calendar size={20} />} color="bg-orange-500" />
@@ -372,7 +372,7 @@ const checkDateFilter = (dateString: string) => {
                  <button onClick={() => setActiveTab('all')} className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'all' ? 'bg-white shadow-sm text-accent-600' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}>All Logs</button>
                  {!isEmployee && (
                     <>
-                        <button onClick={() => setActiveTab('present')} className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'present' ? 'bg-white shadow-sm text-green-600' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}>Working Now</button>
+                        <button onClick={() => setActiveTab('present')} className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'present' ? 'bg-white shadow-sm text-orange-600' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}>Working Now</button>
                         <button onClick={() => setActiveTab('absent')} className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'absent' ? 'bg-white shadow-sm text-red-600' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}>Absent / Leave</button>
                         <button onClick={() => setActiveTab('overtime')} className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'overtime' ? 'bg-white shadow-sm text-purple-600' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}>Overtime</button>
                     </>
@@ -446,7 +446,7 @@ const checkDateFilter = (dateString: string) => {
                         <td className="p-4 text-sm text-slate-600 font-mono">{record?.checkout}</td>
                         <td className="p-4">
                             <span className={`px-2.5 py-1 text-[10px] font-black uppercase rounded-lg border ${
-                            record.status === 'Present' ? 'bg-green-50 text-green-700 border-green-100' :
+                            record.status === 'Present' ? 'bg-orange-50 text-orange-700 border-orange-100' :
                             record.status === 'Absent' ? 'bg-red-50 text-red-700 border-red-100' :
                             record.status === 'Late' ? 'bg-yellow-50 text-yellow-700 border-yellow-100' :
                             'bg-orange-50 text-orange-700 border-orange-100'
@@ -500,7 +500,7 @@ const checkDateFilter = (dateString: string) => {
                                  <td className="p-4 text-sm text-slate-600 max-w-xs truncate">{leave.reason}</td>
                                  <td className="p-4">
                                      <span className={`px-2 py-0.5 text-[10px] font-black uppercase rounded-lg border ${
-                                         leave.status === 'Approved' ? 'bg-green-50 text-green-700 border-green-100' :
+                                       leave.status === 'Approved' ? 'bg-orange-50 text-orange-700 border-orange-100' :
                                          leave.status === 'Rejected' ? 'bg-red-50 text-red-700 border-red-100' :
                                          'bg-yellow-50 text-yellow-700 border-yellow-100'
                                      }`}>
@@ -517,7 +517,7 @@ const checkDateFilter = (dateString: string) => {
                                                    onClick={() =>
                                                      onUpdateLeave(sanitizeLeaveForUpdate(leave, 'Approved'))
                                                    }
-                                                   className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                                                   className="p-2 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
                                                 >
                                                   <CheckCircle size={16} />
                                                 </button>

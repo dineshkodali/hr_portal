@@ -84,7 +84,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, on
       >
         <div className="flex items-center justify-between p-6 h-20 border-b border-slate-800">
           <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center font-bold text-white shadow-lg shadow-teal-500/20">
+            <div className="w-9 h-9 rounded-xl bg-orange-500 flex items-center justify-center font-bold text-white shadow-lg shadow-orange-500/20">
               HR
             </div>
             <span className="text-xl font-bold tracking-tight text-white">Portal</span>
@@ -107,7 +107,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, on
                 className={`
                   w-full flex items-center space-x-3 px-3 py-3 rounded-xl transition-all duration-200 group
                   ${currentView === item.id || (item.id === 'employees' && currentView === 'add-employee')
-                    ? 'bg-primary text-white shadow-lg shadow-teal-500/30' 
+                    ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30' 
                     : 'text-slate-400 hover:bg-slate-800 hover:text-white'}
                 `}
               >

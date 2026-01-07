@@ -65,7 +65,7 @@ const Timesheets: React.FC<TimesheetsProps> = ({ timesheets }) => {
 
          <StatCard title="Total Hours Logged" value={formatDuration(totalHours)} icon={<Clock size={20} />} color="bg-blue-500" />
          <StatCard title="Overtime Hours" value={formatDuration(totalOvertime)} icon={<Clock size={20} />} color="bg-purple-500" />
-         <StatCard title="Active Logs" value={timesheets.filter(t => t.status === 'Working').length} icon={<Calendar size={20} />} color="bg-green-500" />
+         <StatCard title="Active Logs" value={timesheets.filter(t => t.status === 'Working').length} icon={<Calendar size={20} />} color="bg-orange-500" />
          <StatCard title="Completed Shifts" value={timesheets.filter(t => t.status === 'Completed' || t.status === 'Overtime').length} icon={<Calendar size={20} />} color="bg-orange-500" />
       </div>
 
@@ -121,8 +121,8 @@ const Timesheets: React.FC<TimesheetsProps> = ({ timesheets }) => {
                     {formatDuration(ts.duration)}
                   </td>
                   <td className="p-4">
-                     <span className={`px-2.5 py-1 text-xs font-medium rounded-full border ${
-                        ts.status === 'Completed' ? 'bg-green-100 text-green-700 border-green-200' : 
+                    <span className={`px-2.5 py-1 text-xs font-medium rounded-full border ${
+                      ts.status === 'Completed' ? 'bg-orange-100 text-orange-700 border-orange-200' : 
                         ts.status === 'Overtime' ? 'bg-purple-100 text-purple-700 border-purple-200' :
                         'bg-blue-100 text-blue-700 border-blue-200'
                     }`}>

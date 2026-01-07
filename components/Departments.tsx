@@ -216,25 +216,12 @@ const Departments: React.FC<DepartmentsProps> = ({
           (shouldAssign && emp.department !== formData.name) ||
           (!shouldAssign && emp.department === formData.name)
         ) {
-          // Strip DB-managed fields
-          // const { created_at, updated_at, ...safeEmp } = emp as any;
-
-          // await fetch(`http://localhost:3001/api/employees/${emp.id}`, {
-          //   method: "PUT",
-          //   headers: { "Content-Type": "application/json" },
-          //   body: JSON.stringify({
-          //     ...safeEmp,
-          //     department: shouldAssign ? formData.name : "",
-          //   }),
-          // });
-
+          // Strip DB-managed fields and fix branchId casing
+          const { branchid, ...safeEmp } = emp as any;
           const employeePayload = {
-            name: emp.name,
-            email: emp.email,
-            phone: emp.phone,
-            designation: emp.designation,
+            ...safeEmp,
             department: shouldAssign ? formData.name : "",
-            branchid: emp.branchid ?? null,
+            branchId: emp.branchId ?? null,
             joindate: emp.joindate ?? null,
             status: emp.status,
             salary: emp.salary,
@@ -246,7 +233,6 @@ const Departments: React.FC<DepartmentsProps> = ({
             country: emp.country ?? null,
             emergencycontact: emp.emergencycontact ?? null,
             emergencyphone: emp.emergencyphone ?? null,
-            bankaccount: emp.bankaccount ?? null,
             bankname: emp.bankname ?? null,
             ifsccode: emp.ifsccode ?? null,
             employeeid: emp.employeeid ?? null,
@@ -457,7 +443,7 @@ const Departments: React.FC<DepartmentsProps> = ({
 
                   {/* <td className="p-2 md:p-3">
                                         <span className={`px-2 py-0.5 text-[9px] md:text-[10px] font-black uppercase rounded-lg border tracking-wider ${
-                                            dept?.status === 'Active' ? 'bg-green-50 text-green-700 border-green-100' : 
+                                            dept?.status === 'Active' ? 'bg-orange-50 text-orange-700 border-orange-100' : 
                                             'bg-slate-100 text-slate-500 border-slate-200'
                                         }`}>
                                             {dept?.status}
@@ -693,7 +679,7 @@ const Departments: React.FC<DepartmentsProps> = ({
                   <span
                     className={`px-2.5 py-0.5 text-[10px] font-black uppercase rounded-full border tracking-widest ${
                       editingDept.status === "Active"
-                        ? "bg-green-50 text-green-700 border-green-100"
+                        ? "bg-orange-50 text-orange-700 border-orange-100"
                         : "bg-slate-100 text-slate-500 border-slate-200"
                     }`}
                   >

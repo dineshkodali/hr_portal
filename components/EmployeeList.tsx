@@ -495,7 +495,7 @@ const calculateLeaveDays = (start: string, end: string) => {
                                                       <td className="p-3 font-mono text-xs text-slate-600">{rec.checkout}</td>
                                                       <td className="p-3 font-semibold text-blue-600">{rec.workhours}</td>
                                                       <td className="p-3 text-right">
-                                                          <span className="px-2 py-1 rounded-lg bg-green-50 text-green-700 text-[10px] font-bold">{rec.status}</span>
+                                                          <span className="px-2 py-1 rounded-lg bg-orange-50 text-orange-700 text-[10px] font-bold">{rec.status}</span>
                                                       </td>
                                                   </tr>
                                               ))}
@@ -533,7 +533,7 @@ const calculateLeaveDays = (start: string, end: string) => {
                       {profileTab === 'payroll' && (
                           <div className="space-y-3">
                               {payrollRecords.filter(p => (p.employeeId || p.employeeid) === (viewEmployee.id || viewEmployee.employeeId)).map(pay => (
-                                  <div key={pay.id} className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex justify-between items-center hover:border-green-300 transition-all">
+                                  <div key={pay.id} className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex justify-between items-center hover:border-orange-300 transition-all">
                                       <div className="flex items-center gap-3">
                                           <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
                                               <FileText size={18}/>
@@ -573,7 +573,7 @@ const calculateLeaveDays = (start: string, end: string) => {
                                       <div className="text-right">
                                           <p className="text-lg font-bold text-slate-800">${claim.amount.toLocaleString()}</p>
                                           <span className={`text-[10px] font-bold px-2 py-1 rounded-lg ${
-                                              claim.status === 'Approved' ? 'bg-green-100 text-green-700' : 
+                                              claim.status === 'Approved' ? 'bg-orange-100 text-orange-700' : 
                                               claim.status === 'Rejected' ? 'bg-red-100 text-red-700' :
                                               'bg-yellow-100 text-yellow-700'
                                           }`}>{claim.status}</span>

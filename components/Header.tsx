@@ -77,7 +77,7 @@ const Header: React.FC<HeaderProps> = ({
       case 'workforce': return 'bg-blue-50 text-blue-600';
       case 'settings': return 'bg-purple-50 text-purple-600';
       case 'attendance': return 'bg-orange-50 text-orange-600';
-      case 'payroll': return 'bg-green-50 text-green-600';
+      case 'payroll': return 'bg-orange-50 text-orange-600';
       case 'recruitment': return 'bg-indigo-50 text-indigo-600';
       case 'security': return 'bg-red-50 text-red-600';
       default: return 'bg-slate-50 text-slate-600';

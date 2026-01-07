@@ -47,9 +47,9 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, trend, trendUp, icon,
     </div>
     {trend && (
       <div className="mt-4 flex items-center text-xs font-bold uppercase tracking-tight">
-        <span className={trendUp ? "text-green-500" : "text-red-500"}>
-          {trendUp ? "↑" : "↓"} {trend}
-        </span>
+          <span className={trendUp ? "text-orange-500" : "text-red-500"}>
+            {trendUp ? "↑" : "↓"} {trend}
+          </span>
         <span className="text-slate-400 ml-2">vs last month</span>
       </div>
     )}
