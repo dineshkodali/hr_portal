@@ -3,7 +3,7 @@ version: "3.8"
 services:
   hr:
     build: .
-    container_name: hr
+    container_name: hr_portal
     restart: always
     ports:
       - "80:80"
