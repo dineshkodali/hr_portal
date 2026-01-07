@@ -14,39 +14,77 @@ import SecuritySettings from './SecuritySettings';
 import CopyrightPage from './CopyrightPage';
 import AIHRSettings from '../AI/AIHRAssistant/AIHRSettings';
 
-export const Settings: React.FC<SettingsProps> = ({
-  user,
-  users = [],
-  groups = [],
-  onAddGroup,
-  onUpdateGroup,
-  onDeleteGroup,
-  onAddPermissionGroup,
-  onUpdatePermissionGroup,
-  onDeletePermissionGroup,
-  onAddUser,
-  onDeleteUser,
-  onUpdateUser,
-  branches = [],
-  employees = [],
-  assets = [],
-  onAddBranch,
-  onUpdateBranch,
-  onDeleteBranch,
-  onUpdateEmployee,
-  onUpdateAsset,
-  onDeleteAsset,
-  systemConfig = {} as SystemConfig,
-  setSystemConfig,
-  emailTemplates = [],
-  setEmailTemplates,
-  smtpSettings = {} as any,
-  setSmtpSettings,
-  notificationSettings = {} as any,
-  setNotificationSettings,
-  leaves = [],
-  reimbursements = [],
-}) => {
+const Settings: React.FC<SettingsProps> = (props) => {
+    // Fetch notification settings for the current user
+    const fetchNotificationSettings = async () => {
+      if (!user?.id) return;
+      try {
+        const res = await api.get(`notification_settings?userId=${user.id}`);
+        if (Array.isArray(res) && res.length > 0) {
+          setNotificationSettings(res);
+        } else {
+          // If no settings, initialize defaults
+          const settingsWithUser = defaultNotificationSettings.map(s => {
+            // Ensure both userId and type are present and non-empty
+            let type = s.type || s.module || 'general';
+            if (!type || typeof type !== 'string' || type.trim() === '') {
+              type = 'general';
+            }
+            return {
+              ...s,
+              userId: user.id,
+              type,
+            };
+          });
+          setNotificationSettings(settingsWithUser);
+          // Persist to backend, ensuring userId and type are present
+          for (const setting of settingsWithUser) {
+            if (setting.userId && setting.type && typeof setting.type === 'string' && setting.type.trim() !== '') {
+              try {
+                await api.createNotificationSetting(setting);
+              } catch (e) {
+                // Optionally handle error
+              }
+            }
+          }
+        }
+      } catch (e) {
+        setNotificationSettings([]);
+      }
+    };
+  const {
+    user,
+    users = [],
+    groups = [],
+    onAddGroup,
+    onUpdateGroup,
+    onDeleteGroup,
+    onAddPermissionGroup,
+    onUpdatePermissionGroup,
+    onDeletePermissionGroup,
+    onAddUser,
+    onDeleteUser,
+    onUpdateUser,
+    branches = [],
+    employees = [],
+    assets = [],
+    onAddBranch,
+    onUpdateBranch,
+    onDeleteBranch,
+    onUpdateEmployee,
+    onUpdateAsset,
+    onDeleteAsset,
+    systemConfig = {} as SystemConfig,
+    setSystemConfig,
+    emailTemplates = [],
+    setEmailTemplates,
+    smtpSettings = {} as any,
+    setSmtpSettings,
+    notificationSettings = {} as any,
+    setNotificationSettings,
+    leaves = [],
+    reimbursements = [],
+  } = props;
   const isAdmin = user.role === "admin" || user.role === "super_admin";
   const isSuperAdmin = user.role === "super_admin";
   const isEmployee = user.role === "employee";
@@ -101,25 +139,8 @@ export const Settings: React.FC<SettingsProps> = ({
   useEffect(() => {
     if (activeTab === 'users') fetchUsers();
     if (activeTab === 'groups') fetchGroups();
-    // Initialize notification settings if empty
-    if (activeTab === 'notifications' && notificationSettings && notificationSettings.length === 0) {
-      // Attach userId and type to each default notification setting
-      const userId = user.id;
-      const settingsWithUser = defaultNotificationSettings.map(s => ({
-        ...s,
-        userId,
-        type: s.type || s.module || 'general', // fallback if type missing
-      }));
-      setNotificationSettings(settingsWithUser);
-      // Optionally, persist to backend
-      settingsWithUser.forEach(async (setting) => {
-        try {
-          await api.createNotificationSetting(setting);
-        } catch (e) {
-          // Optionally handle error
-          // console.error('Failed to create notification setting', e);
-        }
-      });
+    if (activeTab === 'notifications') {
+      fetchNotificationSettings();
     }
   }, [activeTab]);
 
