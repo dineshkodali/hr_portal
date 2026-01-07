@@ -211,11 +211,14 @@ export const Settings: React.FC<SettingsProps> = ({
 
   const [isBranchModalOpen, setIsBranchModalOpen] = useState(false);
   const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
-  const [branchForm, setBranchForm] = useState<Partial<Branch>>({
+   const [branchForm, setBranchForm] = useState<Partial<Branch>>({
     name: "",
     city: "",
-    currency: "USD",
-    managerIds: [],
+    // currency: "USD",
+    // managerIds: [],
+    location: "",
+    country: "",
+    managerids: [],
   });
 
   const [viewBranch, setViewBranch] = useState<Branch | null>(null);
@@ -539,28 +542,51 @@ export const Settings: React.FC<SettingsProps> = ({
     setIsBranchModalOpen(true);
   };
 
-  const handleBranchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (
-      !window.confirm(
-        editingBranch
-          ? "Are you sure you want to update this branch?"
-          : "Are you sure you want to create this new branch?"
-      )
-    ) {
-      return;
-    }
-    if (branchForm.name) {
-      const branchData = {
-        ...(branchForm as Branch),
-        id: editingBranch ? editingBranch.id : `b-${Date.now()}`,
-      };
-      if (editingBranch) onUpdateBranch(branchData);
-      else onAddBranch(branchData);
-      setIsBranchModalOpen(false);
-    }
-  };
+   const handleBranchSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
+  if (
+    !window.confirm(
+      editingBranch
+        ? "Are you sure you want to update this branch?"
+        : "Are you sure you want to create this new branch?"
+    )
+  ) {
+    return;
+  }
+
+  if (!branchForm.name) {
+    alert("Branch name is required");
+    return;
+  }
+
+  const payload = {
+  id: editingBranch ? editingBranch.id : `b-${Date.now()}`,
+  name: branchForm.name?.trim(),
+  city: branchForm.city?.trim(),
+  location: branchForm.location?.trim(),
+  country: branchForm.country?.trim(),
+
+  //  IMPORTANT FIX
+  managerids:
+    Array.isArray(branchForm.managerids) &&
+    branchForm.managerids.length > 0
+      ? branchForm.managerids
+      : null, //  send null instead of []
+};
+
+  try {
+    if (editingBranch) {
+      await onUpdateBranch?.(payload as Branch);
+    } else {
+      await onAddBranch?.(payload as Branch);
+    }
+    setIsBranchModalOpen(false);
+  } catch (err) {
+    console.error("Failed to save branch", err);
+    alert("Failed to save branch");
+  }
+};
   const handleAddStaffToBranch = (employeeId: string) => {
     if (!viewBranch) return;
     const emp = employees.find((e) => e.id === employeeId);
@@ -1116,13 +1142,13 @@ export const Settings: React.FC<SettingsProps> = ({
                     <div className="flex justify-between">
                       <span>Staff Count:</span>{" "}
                       <span className="font-medium">
-                        {employees.filter((e) => e.branchId === b.id).length}
+                        {employees.filter((e) => e.branchid === b.id).length}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Assets:</span>{" "}
                       <span className="font-medium">
-                        {assets.filter((a) => a.branchId === b.id).length}
+                        {assets.filter((a) => a.branchid === b.id).length}
                       </span>
                     </div>
                   </div>
@@ -2176,7 +2202,7 @@ export const Settings: React.FC<SettingsProps> = ({
                                         <table className="w-full text-left">
                                             <thead className="bg-white border-b border-slate-50 text-[10px] font-bold text-slate-400 uppercase"><tr><th className="p-4">Name</th><th className="p-4">Role</th><th className="p-4 text-right">Actions</th></tr></thead>
                                             <tbody className="divide-y divide-slate-50">
-                                                {employees.filter(e => e.branchId === viewBranch.id).map(emp => (
+                                                {employees.filter(e => e.branchid === viewBranch.id).map(emp => (
                                                     <tr key={emp.id} className="hover:bg-slate-50 transition-colors">
                                                         <td className="p-4"><div className="flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-[10px] text-slate-600 border border-slate-200">{emp.name.split(' ').map(n => n[0]).join('')}</div><span className="font-bold text-slate-700 text-xs">{emp.name}</span></div></td>
                                                         <td className="p-4 text-xs font-medium text-slate-400">{emp.designation}</td>
@@ -2309,7 +2335,7 @@ export const Settings: React.FC<SettingsProps> = ({
         </div>
       )}
 
-      {/* Branch Add Modal */}
+        {/* Branch Add Modal */}
       {isBranchModalOpen && (
   <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
     <div className="bg-white rounded-2xl p-8 w-full max-w-2xl shadow-2xl animate-in zoom-in duration-200">
@@ -2490,6 +2516,7 @@ export const Settings: React.FC<SettingsProps> = ({
     </div>
   </div>
 )}
+
 
 
    

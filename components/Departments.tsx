@@ -60,7 +60,7 @@ const Departments: React.FC<DepartmentsProps> = ({
   console.log("Departments data:", departments);
 
   let filteredDepts = departments.filter((d) => {
-    const managerNames = (d.managerIds ?? [])
+    const managerNames = (d.managerids ?? [])
       .map((id) => employees.find((e) => e.id === id)?.name ?? "")
       .join(" ")
       .toLowerCase();
@@ -77,12 +77,12 @@ const Departments: React.FC<DepartmentsProps> = ({
 
     switch (sortBy) {
       case "manager": {
-        const managerA = a.managerIds?.[0]
-          ? employees.find((e) => e.id === a.managerIds[0])
+        const managerA = a.managerids?.[0]
+          ? employees.find((e) => e.id === a.managerids[0])
           : null;
 
-        const managerB = b.managerIds?.[0]
-          ? employees.find((e) => e.id === b.managerIds[0])
+        const managerB = b.managerids?.[0]
+          ? employees.find((e) => e.id === b.managerids[0])
           : null;
 
         valA = managerA?.name?.toLowerCase() ?? "";
@@ -91,8 +91,8 @@ const Departments: React.FC<DepartmentsProps> = ({
       }
 
       case "location": {
-        const branchA = branches.find((br) => br.id === a.branchId);
-        const branchB = branches.find((br) => br.id === b.branchId);
+        const branchA = branches.find((br) => br.id === a.branchid);
+        const branchB = branches.find((br) => br.id === b.branchid);
 
         valA = branchA?.city?.toLowerCase() ?? "";
         valB = branchB?.city?.toLowerCase() ?? "";
@@ -195,7 +195,7 @@ const Departments: React.FC<DepartmentsProps> = ({
         id: editingDept ? editingDept.id : `dept-${Date.now()}`,
         name: formData.name,
         description: formData.description || "",
-        managerIds: [formData.manager], // ✅ array of employee IDs
+        managerids: [formData.manager], // ✅ array of employee IDs
         employeeCount: selectedStaff.length,
         branchId:
           branches.find((b) => `${b.city}, ${b.country}` === formData.location)

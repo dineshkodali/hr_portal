@@ -35,12 +35,13 @@ export interface Branch {
     city: string;
     state?: string;
     country: string;
+    location?: string;
     zipCode?: string;
     phone?: string;
     email?: string;
     registrationNumber?: string;
     currency: string;
-    managerIds?: string[];
+    managerids?: string[];
     managerName?: string;
     documents?: string[];
 }

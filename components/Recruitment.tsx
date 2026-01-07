@@ -47,6 +47,7 @@ import {
 import {
   Job,
   Candidate,
+  Department,
   StatCardProps,
   SystemConfig,
   OfferDetails,
@@ -55,6 +56,7 @@ import {
 interface RecruitmentProps {
   jobs: Job[];
   candidates: Candidate[];
+  departments: Department[];
   systemConfig: SystemConfig;
   onAddJob: (job: Job) => void;
   onUpdateJob: (job: Job) => void;
@@ -311,10 +313,12 @@ const OfferLetterModal: React.FC<{
   );
 };
 
+
 const Recruitment: React.FC<RecruitmentProps> = ({
   jobs,
   candidates,
   systemConfig,
+  departments,
   onAddJob,
   onUpdateJob,
   onDeleteJob,
@@ -323,6 +327,9 @@ const Recruitment: React.FC<RecruitmentProps> = ({
   onDeleteCandidate,
   standalone = false,
 }) => {
+
+  console.log("SYSTEM CONFIG:", systemConfig);
+
   const [activeTab, setActiveTab] = useState<
     "jobs" | "candidates" | "emails" | "public"
   >(standalone ? "public" : "jobs");
@@ -532,9 +539,14 @@ const Recruitment: React.FC<RecruitmentProps> = ({
                 </div>
                 <select className="w-full md:w-72 px-6 py-4 bg-slate-50 border border-slate-200 rounded-[1.5rem] outline-none font-bold text-slate-600 focus:bg-white transition-all">
                   <option>All Departments</option>
-                  {(systemConfig?.departments || []).map((d) => (
-                    <option key={d}>{d}</option>
-                  ))}
+                  {
+                  (departments || []).map((d) => (
+                    <option key={d.id} value={d.name}>
+                      {d.name}
+                    </option>
+                  ))
+
+                  }
                 </select>
               </div>
 
@@ -1095,12 +1107,16 @@ const Recruitment: React.FC<RecruitmentProps> = ({
                     className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-medium outline-none"
                   >
                     <option value="">Select Dept</option>
-                    {(systemConfig?.departments || []).map((d) => (
-                      <option key={d} value={d}>
-                        {d}
+                  
+                    {departments.map((d) => (
+                      <option key={d.id} value={d.name}>
+                        {d.name}
                       </option>
                     ))}
                   </select>
+
+
+
                 </div>
                 {/* <div className="space-y-1.5">
                                     <label className="text-sm font-bold text-slate-500">Hiring Manager</label>

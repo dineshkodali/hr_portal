@@ -29,6 +29,9 @@ const Attendance: React.FC<AttendanceProps> = ({
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week' | 'month'>('today');
 
+  console.log("111111111111",user);
+  
+
   // Modals
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<AttendanceRecord | null>(null);
@@ -59,7 +62,7 @@ const Attendance: React.FC<AttendanceProps> = ({
   const [viewLeave, setViewLeave] = useState<LeaveRequest | null>(null);
 
   const isEmployee = user.role === 'employee';
-  const canApprove = user.role === 'admin' || user.role === 'manager';
+  const canApprove = user.role === 'admin' || user.role === 'manager' || user.role === 'super_admin';
 
   // Leave Balance Logic
   const LEAVE_LIMITS: Record<string, number> = {
@@ -277,7 +280,7 @@ const checkDateFilter = (dateString: string) => {
           onAddLeave({
               id: `lv-${Date.now()}` ,
               employeename: user.name,
-              employeeid:user.id,
+              employeeid:user.linkedemployeeid,
             //   employeeAvatar: user.avatar,
               leavetype: leaveFormData.type || 'Sick Leave',
               startDate: leaveFormData.startDate,
@@ -295,6 +298,16 @@ const checkDateFilter = (dateString: string) => {
   };
 
   const handleViewLeave = (leave: LeaveRequest) => setViewLeave(leave);
+
+const Detail = ({ label, value }: { label: string; value: any }) => (
+  <div className="flex justify-between gap-4">
+    <span className="text-slate-500 font-medium">{label}</span>
+    <span className="text-slate-800 font-semibold text-right">
+      {value}
+    </span>
+  </div>
+);
+
   const sanitizeLeaveForUpdate = (leave: LeaveRequest, status: string) => {
     const {
         created_at,
@@ -617,6 +630,48 @@ const checkDateFilter = (dateString: string) => {
           </div>
         </div>
       )}
+
+      {viewLeave && (
+  <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
+    <div className="bg-white w-full max-w-md rounded-2xl shadow-xl border border-slate-100 overflow-hidden">
+      
+      {/* Header */}
+      <div className="px-6 py-4 flex justify-between items-center border-b">
+        <h2 className="text-lg font-bold text-slate-800">Leave Details</h2>
+        <button
+          onClick={() => setViewLeave(null)}
+          className="text-slate-400 hover:text-slate-700"
+        >
+          <X size={20} />
+        </button>
+      </div>
+
+      {/* Body */}
+      <div className="px-6 py-4 space-y-3 text-sm">
+        <Detail label="Employee" value={viewLeave.employeename} />
+        <Detail label="Leave Type" value={viewLeave.leavetype} />
+        <Detail
+          label="Duration"
+          value={`${viewLeave.startdate} → ${viewLeave.enddate}`}
+        />
+        <Detail label="Reason" value={viewLeave.reason || '-'} />
+        <Detail label="Status" value={viewLeave.status} />
+      </div>
+
+      {/* Footer */}
+      <div className="px-6 py-4 border-t flex justify-end">
+        <button
+          onClick={() => setViewLeave(null)}
+          className="px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-black"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+
     </div>
   );
 };
