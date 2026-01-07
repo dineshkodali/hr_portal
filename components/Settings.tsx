@@ -12,6 +12,8 @@ import { defaultNotificationSettings } from '../constants/defaultNotificationSet
 import SecuritySettings from './SecuritySettings';
 import CopyrightPage from './CopyrightPage';
 
+import AIHRSettings from '../AI/AIHRAssistant/AIHRSettings';
+
 export const Settings: React.FC<SettingsProps> = ({
   user,
   users = [],
@@ -126,27 +128,205 @@ export const Settings: React.FC<SettingsProps> = ({
   //     }
   // };
 
-import React, { useState, useEffect } from 'react';
-import { 
-    User as UserIcon, Shield, Lock, Save, Bell, Plus, Users, Trash2, X, 
-    Database, Mail, Check, Building, Edit, MapPin, Phone, Globe, Hash, 
-    Eye, Monitor, FileText, Upload, Wallet, Server, Wifi, WifiOff, List,
-    ToggleLeft, ToggleRight, CheckCircle, AlertCircle, ArrowRight, ClipboardList, Receipt, Download, ShieldCheck, ShieldOff
-} from 'lucide-react';
-import { api } from '../services/api';
-import { User, UserRole, SettingsProps, Branch, Group, SystemConfig, EmailTemplate, RolePermission, Employee, Asset, LeaveRequest, Reimbursement } from '../types';
-import { defaultNotificationSettings } from '../constants/defaultNotificationSettings';
-import SecuritySettings from './SecuritySettings';
-import CopyrightPage from './CopyrightPage';
+  const handleUserSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-const Settings: React.FC<SettingsProps> = (props) => {
-  // ...existing code (all logic, hooks, handlers, and JSX) goes here...
+    const isEdit = Boolean(editingUser);
 
-  // The rest of the file remains unchanged, just indented inside this function.
+    if (!userForm.name || !userForm.email) {
+      alert("Name and Email are required");
+      return;
+    }
 
-};
+    if (!isEdit && !userForm.password) {
+      alert("Password is required for new users");
+      return;
+    }
 
-export default Settings;
+    if (!window.confirm(isEdit ? "Update this user?" : "Create this user?")) {
+      return;
+    }
+
+    //  strip DB-managed fields
+    const { id, created_at, updated_at, ...safeForm } = userForm as any;
+
+    const payload: any = {
+      name: safeForm.name,
+      email: safeForm.email,
+      role: safeForm.role || "employee",
+      status: safeForm.status || "Active",
+      designation: safeForm.designation || "",
+      avatar:
+        safeForm.avatar ||
+        `https://ui-avatars.com/api/?name=${encodeURIComponent(
+          safeForm.name
+        )}&background=random`,
+      branchIds: safeForm.branchIds || [],
+      accessModules: safeForm.accessModules || ["dashboard"],
+    };
+
+    //  only include password when provided
+    if (safeForm.password) {
+      payload.password = safeForm.password;
+    }
+
+    //  linked employee (optional)
+    if (safeForm.linkedEmployee) {
+      payload.linkedEmployee = safeForm.linkedEmployee;
+    }
+
+    try {
+      if (isEdit && editingUser) {
+        await api.update("users", editingUser.id, payload); // ✅ UPDATE
+      } else {
+        await api.create("users", payload); // ✅ CREATE
+      }
+
+      setIsUserModalOpen(false);
+      setEditingUser(null);
+      fetchUsers();
+    } catch (err: any) {
+      console.error(err);
+      alert(err?.message || "Failed to save user");
+    }
+  };
+
+  // --- STATE FOR MODALS & FORMS ---
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [userForm, setUserForm] = useState<Partial<User>>({
+    name: "",
+    email: "",
+    role: "employee",
+    status: "Active",
+    branchIds: [],
+  });
+
+  const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
+  const [editingGroup, setEditingGroup] = useState<Group | null>(null);
+  const [groupForm, setGroupForm] = useState<Partial<Group>>({
+    name: "",
+    description: "",
+    permissions: [],
+  });
+  const [localGroups, setLocalGroups] = useState<Group[]>(groups);
+
+  const [isBranchModalOpen, setIsBranchModalOpen] = useState(false);
+  const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
+   const [branchForm, setBranchForm] = useState<Partial<Branch>>({
+    name: "",
+    city: "",
+    // currency: "USD",
+    // managerIds: [],
+    location: "",
+    country: "",
+    managerids: [],
+  });
+
+  const [viewBranch, setViewBranch] = useState<Branch | null>(null);
+  const [branchDetailTab, setBranchDetailTab] = useState<
+    "overview" | "people" | "assets" | "documents"
+  >("overview");
+
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(
+    null
+  );
+  const [templateForm, setTemplateForm] = useState<Partial<EmailTemplate>>({
+    name: "",
+    subject: "",
+    body: "",
+  });
+
+  const [configCategory, setConfigCategory] =
+    useState<keyof SystemConfig>("departments");
+  const [newItem, setNewItem] = useState("");
+  const [branchDocName, setBranchDocName] = useState("");
+
+  const [profileForm, setProfileForm] = useState<Partial<User>>({ name: user.name, email: user.email, phone: user.phone || '', address: user.address || '' });
+    const [dbStatus, setDbStatus] = useState<'connected' | 'disconnected' | 'checking'>('disconnected');
+    const [dbInfo, setDbInfo] = useState<any>(null);
+
+  const roles: UserRole[] = [
+    "super_admin",
+    "admin",
+    "manager",
+    "hr",
+    "finance",
+    "team_lead",
+    "employee",
+  ];
+
+    useEffect(() => {
+            if (isAdmin) checkDbConnection();
+    }, [isAdmin]);
+
+    useEffect(() => {
+        if (activeTab === 'database') {
+            fetchDbInfo();
+        }
+    }, [activeTab]);
+
+    const fetchDbInfo = async () => {
+        setDbInfo(null);
+        try {
+            const res = await fetch('/api/dbinfo');
+            if (res.ok) {
+                const info = await res.json();
+                setDbInfo(info);
+            } else {
+                setDbInfo({ error: 'Failed to fetch database info' });
+            }
+        } catch (e) {
+            setDbInfo({ error: 'Failed to fetch database info' });
+        }
+    };
+
+  useEffect(() => {
+    // Only sync from props if localGroups is empty
+    if (localGroups.length === 0 && groups.length > 0) {
+      setLocalGroups(groups);
+    }
+  }, [groups]);
+
+  const checkDbConnection = async () => {
+    setDbStatus("checking");
+    const isConnected = await api.checkConnection();
+    setDbStatus(isConnected ? "connected" : "disconnected");
+  };
+
+  // --- HANDLERS ---
+  const handleUpdateProfile = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!window.confirm("Are you sure you want to update your profile?")) {
+      return;
+    }
+    if (onUpdateUser) {
+      onUpdateUser({ ...user, ...(profileForm as User) });
+      alert("Profile Updated Successfully");
+    }
+  };
+
+  const openUserModal = (u?: User) => {
+    setEditingUser(u || null);
+    setUserForm(
+      u || {
+        name: "",
+        email: "",
+        role: "employee",
+        status: "Active",
+        branchIds: [],
+        designation: "",
+      }
+    );
+    setIsUserModalOpen(true);
+  };
+
+  const openGroupModal = (g?: Group) => {
+    setEditingGroup(g || null);
+    setGroupForm(g || { name: "", description: "", permissions: [] });
+    setIsGroupModalOpen(true);
+  };
 
   const handleGroupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

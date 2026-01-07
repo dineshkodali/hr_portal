@@ -21,6 +21,8 @@ import { User, ViewState, Employee, Job, Candidate, Asset, Task, LeaveRequest, A
 import { api } from './services/api';
 import { WifiOff, Lock } from 'lucide-react';
 
+import AIHRChat from './AI/AIHRAssistant/AIHRChat';
+
 // Error Boundary Component
 class ErrorBoundary extends React.Component<
   { children: React.ReactNode },
@@ -489,17 +491,19 @@ const App: React.FC = () => {
     <div className="flex h-screen bg-slate-50 overflow-hidden font-sans text-slate-800">
       <Sidebar currentView={currentView} onChangeView={setCurrentView} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} onLogout={handleLogout} userRole={user.role} user={user} />
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
-        <Header user={user} onMenuClick={() => setIsSidebarOpen(true)} onClockIn={handleClockIn} onClockOut={handleClockOut} isClockedIn={!!currentSession} sessionStartTime={currentSession?.start || null} branches={visibleBranches} selectedBranch={selectedBranchObject} onSelectBranch={setSelectedBranchId} activityLogs={logs || []} />
-        
-        {/* Offline Banner */}
-        {serverConnected === false && (
-            <div className="bg-amber-100 text-amber-800 px-4 py-2 text-xs font-bold text-center border-b border-amber-200 flex items-center justify-center gap-2">
-                <WifiOff size={14} />
-                <span>Offline Mode: Backend disconnected. Using mock data (Read-Only).</span>
-            </div>
-        )}
+      <Header user={user} onMenuClick={() => setIsSidebarOpen(true)} onClockIn={handleClockIn} onClockOut={handleClockOut} isClockedIn={!!currentSession} sessionStartTime={currentSession?.start || null} branches={visibleBranches} selectedBranch={selectedBranchObject} onSelectBranch={setSelectedBranchId} activityLogs={logs || []} />
+      {/* Offline Banner */}
+      {serverConnected === false && (
+        <div className="bg-amber-100 text-amber-800 px-4 py-2 text-xs font-bold text-center border-b border-amber-200 flex items-center justify-center gap-2">
+          <WifiOff size={14} />
+          <span>Offline Mode: Backend disconnected. Using mock data (Read-Only).</span>
+        </div>
+      )}
 
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50/50 p-4 sm:p-6"><div className="mx-auto" style={{width: '90%'}}>
+      {/* Floating AI Assistant Chat */}
+      <AIHRChat currentUser={user} />
+
+      <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50/50 p-4 sm:p-6"><div className="mx-auto" style={{width: '90%'}}>
             {currentView === 'dashboard' && <Dashboard onNavigate={handleNavigate} employees={filteredEmployees || []} tasks={tasks || []} leaves={leaves || []} jobs={jobs || []} attendance={attendance || []} selectedBranch={selectedBranchObject || 'all'} user={user} />}
             {/* Fix: Added missing props for policies, categories and holidays to EmployeeList call */}
             {currentView === 'employees' && <EmployeeList 
