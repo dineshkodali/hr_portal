@@ -796,7 +796,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
       {/* MAIN CONTENT AREA */}
       <div className="flex-1 overflow-y-auto bg-slate-50/50 p-6 md:p-8 flex justify-center">
         {activeTab === 'features' && isSuperAdmin && (
-          <div className="w-[98%] mx-auto max-w-4xl space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="w-[98%] mx-auto max-w-5xl space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
             {/* Features Hero Header */}
             <div className="relative overflow-hidden bg-slate-900 rounded-3xl p-6 text-white shadow-xl">
               <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
@@ -872,7 +872,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
           </div>
         )}
         {activeTab === "profile" && (
-          <div className="w-[98%] mx-auto max-w-4xl space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="w-[98%] mx-auto max-w-5xl space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
             {/* Profile Hero Card */}
             <div className="relative overflow-hidden bg-slate-900 rounded-3xl p-6 text-white shadow-xl">
               <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
@@ -1052,7 +1052,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
         )}
 
         {activeTab === "security" && (
-          <div className="w-[98%] mx-auto max-w-4xl">
+          <div className="w-[98%] mx-auto max-w-5xl">
             <h2 className="text-2xl font-bold text-slate-800 mb-6">
               Security & 2FA Settings
             </h2>
@@ -1061,8 +1061,10 @@ const Settings: React.FC<SettingsProps> = (props) => {
         )}
 
         {activeTab === "ai-assistant" && (
-          <div className="w-[98%] mx-auto max-w-4xl">
-            <AIHRSettings user={user} aiModel={aiModel} setAiModel={setAiModel} />
+          <div className="w-[98%] mx-auto max-w-5xl">
+            <div className="w-full">
+              <AIHRSettings user={user} aiModel={aiModel} setAiModel={setAiModel} />
+            </div>
           </div>
         )}
 
@@ -1070,7 +1072,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
         {/* Example usage: <AIHRChat currentUser={user} aiModel={aiModel} /> */}
 
         {activeTab === "users" && (
-          <div className="w-[98%] mx-auto max-w-4xl space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="w-[98%] mx-auto max-w-5xl space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
             {/* Users Hero Header */}
             <div className="relative overflow-hidden bg-slate-900 rounded-3xl p-6 text-white shadow-xl">
               <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
@@ -1189,7 +1191,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
         )}
 
         {activeTab === "branches" && (
-          <div className="w-[98%] mx-auto max-w-4xl space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="w-[98%] mx-auto max-w-5xl space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
             {/* Branches Hero Header */}
             <div className="relative overflow-hidden bg-slate-900 rounded-3xl p-6 text-white shadow-xl">
               <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
@@ -1286,7 +1288,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
         )}
 
         {activeTab === "groups" && (
-          <div className="w-[98%] mx-auto max-w-4xl space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="w-[98%] mx-auto max-w-5xl space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
             {/* Groups Hero Header */}
             <div className="relative overflow-hidden bg-slate-900 rounded-3xl p-6 text-white shadow-xl">
               <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
@@ -1413,7 +1415,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
         )}
 
         {activeTab === "config" && (
-          <div className="w-[98%] mx-auto max-w-4xl space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="w-[98%] mx-auto max-w-5xl space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
             {/* Config Hero Header */}
             <div className="relative overflow-hidden bg-slate-900 rounded-3xl p-6 text-white shadow-xl">
               <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
@@ -1561,7 +1563,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
         )}
 
         {activeTab === "notifications" && (
-          <div className="w-[98%] mx-auto max-w-4xl space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="w-[98%] mx-auto max-w-5xl space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
             {/* Notifications Hero Header */}
             <div className="relative overflow-hidden bg-slate-900 rounded-3xl p-6 text-white shadow-xl">
               <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
@@ -1625,7 +1627,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
           </div>
         )}
         {activeTab === "email" && (
-          <div className="w-[98%] mx-auto max-w-4xl space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="w-[98%] mx-auto max-w-5xl space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
             {/* Email Hero Header */}
             <div className="relative overflow-hidden bg-slate-900 rounded-3xl p-6 text-white shadow-xl">
               <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
@@ -1785,7 +1787,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
         )}
 
         {activeTab === "database" && (
-          <div className="w-[98%] mx-auto max-w-4xl space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="w-[98%] mx-auto max-w-5xl space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
             {/* Database Hero Header */}
             <div className="relative overflow-hidden bg-slate-900 rounded-3xl p-6 text-white shadow-xl">
               <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
@@ -1797,8 +1799,8 @@ const Settings: React.FC<SettingsProps> = (props) => {
                     <Database size={28} className="text-orange-400" />
                   </div>
                   <div>
-                    <h1 className="text-2xl font-black tracking-tight mb-1">Database Architecture</h1>
-                    <p className="text-slate-400 font-medium text-xs max-w-md">
+                    <h1 className="text-2xl font-bold text-slate-800">Database Architecture</h1>
+                    <p className="text-slate-500 mt-1 text-xs max-w-md">
                       Real-time synchronization and secure relational data integrity systems.
                     </p>
                   </div>
@@ -1813,79 +1815,76 @@ const Settings: React.FC<SettingsProps> = (props) => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
-              {/* Connection Specs Card */}
-              <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-                <div className="px-6 py-3 border-b border-slate-50 bg-slate-50/50 flex items-center gap-2">
-                  <SettingsIcon size={14} className="text-slate-400" />
-                  <span className="font-black uppercase tracking-widest text-slate-400 text-[10px]">Connection Specifications</span>
-                </div>
-                <div className="p-6">
-                  {dbInfo === null ? (
-                    <div className="flex items-center justify-center py-8 gap-3 text-slate-400">
-                      <div className="w-4 h-4 border-2 border-slate-200 border-t-orange-500 rounded-full animate-spin"></div>
-                      <span className="text-sm font-medium">Validating connection...</span>
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg shadow-slate-200/50 border border-white/20 overflow-hidden relative">
+              <div className="p-4 border-b border-slate-100 flex items-center gap-2 bg-white/50">
+                <SettingsIcon size={14} className="text-slate-400" />
+                <span className="font-black uppercase tracking-widest text-slate-400 text-[10px]">Connection Specifications</span>
+              </div>
+              <div className="p-6">
+                {dbInfo === null ? (
+                  <div className="flex items-center justify-center py-8 gap-3 text-slate-400">
+                    <div className="w-4 h-4 border-2 border-slate-200 border-t-orange-500 rounded-full animate-spin"></div>
+                    <span className="text-sm font-medium">Validating connection...</span>
+                  </div>
+                ) : dbInfo.error ? (
+                  <div className="bg-red-50 border border-red-100 p-4 rounded-xl flex items-start gap-3">
+                    <X size={18} className="text-red-500 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-bold text-red-700">Authentication Failure</p>
+                      <p className="text-xs text-red-600 font-mono mt-1">{dbInfo.error}</p>
                     </div>
-                  ) : dbInfo.error ? (
-                    <div className="bg-red-50 border border-red-100 p-4 rounded-xl flex items-start gap-3">
-                      <X size={18} className="text-red-500 mt-0.5" />
-                      <div>
-                        <p className="text-sm font-bold text-red-700">Authentication Failure</p>
-                        <p className="text-xs text-red-600 font-mono mt-1">{dbInfo.error}</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-6">
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {[
-                          { label: "Environment", value: dbInfo.database, icon: Database },
-                          { label: "Encryption", value: dbInfo.user, icon: Shield },
-                          { label: "Protocol", value: dbInfo.host, icon: WifiOff },
-                          { label: "Interface", value: dbInfo.port, icon: SettingsIcon }
-                        ].map((item, i) => (
-                          <div key={i} className="group p-4 bg-slate-50 rounded-2xl border border-slate-100/50 hover:bg-white hover:border-orange-500/30 hover:shadow-md transition-all duration-300">
-                            <item.icon size={14} className="text-slate-300 mb-2 group-hover:text-orange-500 transition-colors" />
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{item.label}</p>
-                            <p className="text-xs font-mono text-slate-800 font-bold break-all">{item.value}</p>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Directory Grid */}
-                      <div className="pt-4 border-t border-slate-100">
-                        <div className="flex items-center gap-3 mb-4">
-                          <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white font-black text-xs">
-                            {dbInfo.tables?.length || 0}
-                          </div>
-                          <div>
-                            <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Schema Directory</h3>
-                            <p className="text-[10px] text-slate-400 font-medium">Active relational collections found in {dbInfo.database}</p>
-                          </div>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {[
+                        { label: "Environment", value: dbInfo.database, icon: Database },
+                        { label: "Encryption", value: dbInfo.user, icon: Shield },
+                        { label: "Protocol", value: dbInfo.host, icon: WifiOff },
+                        { label: "Interface", value: dbInfo.port, icon: SettingsIcon }
+                      ].map((item, i) => (
+                        <div key={i} className="group p-4 bg-slate-50 rounded-2xl border border-slate-100/50 hover:bg-white hover:border-orange-500/30 hover:shadow-md transition-all duration-300">
+                          <item.icon size={14} className="text-slate-300 mb-2 group-hover:text-orange-500 transition-colors" />
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{item.label}</p>
+                          <p className="text-xs font-mono text-slate-800 font-bold break-all">{item.value}</p>
                         </div>
+                      ))}
+                    </div>
 
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                          {dbInfo.tables && dbInfo.tables.length > 0 ? dbInfo.tables.map((t: string) => (
-                            <div key={t} className="flex items-center gap-2.5 p-2 bg-white rounded-xl border border-slate-100 hover:border-orange-500/20 hover:bg-orange-50/10 transition-all group cursor-default">
-                              <div className="w-2 h-2 rounded-full bg-slate-200 group-hover:bg-orange-500 transition-colors"></div>
-                              <span className="font-mono text-[11px] text-slate-600 font-medium truncate">{t}</span>
-                            </div>
-                          )) : (
-                            <div className="col-span-full py-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                              <p className="text-xs text-slate-400 font-medium uppercase tracking-widest italic">No table definitions found</p>
-                            </div>
-                          )}
+                    {/* Directory Grid */}
+                    <div className="pt-4 border-t border-slate-100">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white font-black text-xs">
+                          {dbInfo.tables?.length || 0}
+                        </div>
+                        <div>
+                          <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Schema Directory</h3>
+                          <p className="text-[10px] text-slate-400 font-medium">Active relational collections found in {dbInfo.database}</p>
                         </div>
                       </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                        {dbInfo.tables && dbInfo.tables.length > 0 ? dbInfo.tables.map((t: string) => (
+                          <div key={t} className="flex items-center gap-2.5 p-2 bg-white rounded-xl border border-slate-100 hover:border-orange-500/20 hover:bg-orange-50/10 transition-all group cursor-default">
+                            <div className="w-2 h-2 rounded-full bg-slate-200 group-hover:bg-orange-500 transition-colors"></div>
+                            <span className="font-mono text-[11px] text-slate-600 font-medium truncate">{t}</span>
+                          </div>
+                        )) : (
+                          <div className="col-span-full py-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                            <p className="text-xs text-slate-400 font-medium uppercase tracking-widest italic">No table definitions found</p>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
         )}
 
         {activeTab === "copyright" && (
-          <div className="w-[98%] mx-auto max-w-4xl">
+          <div className="w-[98%] mx-auto max-w-5xl space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <CopyrightPage
               systemConfig={systemConfig}
               setSystemConfig={handleConfigUpdate}

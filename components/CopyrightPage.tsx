@@ -21,9 +21,24 @@ const CopyrightPage: React.FC<CopyrightPageProps> = ({ systemConfig, setSystemCo
     securityContent: ''
   });
 
-  const saveNotice = (text: string) => {
-    setSystemConfig({
+  // Helper to deeply clone and sanitize config
+  function safeConfigUpdate(update: Partial<SystemConfig>) {
+    // Always ensure copyrightSections is an array, footerSettings is an object
+    const payload: any = {
       ...systemConfig,
+      ...update,
+    };
+    if (payload.copyrightSections && !Array.isArray(payload.copyrightSections)) {
+      payload.copyrightSections = Object.values(payload.copyrightSections);
+    }
+    if (payload.footerSettings && (typeof payload.footerSettings !== 'object' || Array.isArray(payload.footerSettings))) {
+      payload.footerSettings = {};
+    }
+    setSystemConfig(payload);
+  }
+
+  const saveNotice = (text: string) => {
+    safeConfigUpdate({
       footerSettings: {
         ...(systemConfig.footerSettings || { companyName: '', copyrightNotice: '', privacyContent: '', termsContent: '', securityContent: '' }),
         copyrightNotice: text
@@ -33,17 +48,15 @@ const CopyrightPage: React.FC<CopyrightPageProps> = ({ systemConfig, setSystemCo
   };
 
   const savePillars = () => {
-    setSystemConfig({
-      ...systemConfig,
-      copyrightSections: tempPillars
+    safeConfigUpdate({
+      copyrightSections: Array.isArray(tempPillars) ? tempPillars : Object.values(tempPillars)
     });
     setEditing(null);
   };
 
   const saveFooter = () => {
-    setSystemConfig({
-      ...systemConfig,
-      footerSettings: tempFooter
+    safeConfigUpdate({
+      footerSettings: typeof tempFooter === 'object' && !Array.isArray(tempFooter) ? tempFooter : {}
     });
     setEditing(null);
   };
@@ -54,9 +67,9 @@ const CopyrightPage: React.FC<CopyrightPageProps> = ({ systemConfig, setSystemCo
   const bgs = ["bg-orange-50", "bg-blue-50", "bg-purple-50"];
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300 pb-20">
+    <div className="w-[98%] mx-auto max-w-5xl space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300 pb-20">
       {/* Hero Header */}
-      <div className="relative overflow-hidden bg-slate-900 rounded-3xl p-6 text-white shadow-xl">
+      <div className="relative overflow-hidden bg-slate-900 rounded-3xl p-6 text-white shadow-xl w-full">
         <div className="absolute top-0 right-0 p-6 opacity-5">
           <Copyright size={140} />
         </div>
@@ -74,8 +87,8 @@ const CopyrightPage: React.FC<CopyrightPageProps> = ({ systemConfig, setSystemCo
       </div>
 
       {/* 3 Pillar Sections */}
-      <div className="space-y-4">
-        <div className="flex justify-between items-center px-2">
+      <div className="space-y-4 w-full">
+        <div className="flex justify-between items-center px-2 w-full">
           <h2 className="text-xs font-black uppercase text-slate-400 tracking-widest flex items-center gap-2">
             <ShieldCheck size={14} /> Core Pillars
           </h2>
@@ -91,11 +104,11 @@ const CopyrightPage: React.FC<CopyrightPageProps> = ({ systemConfig, setSystemCo
             </button>
           )}
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
           {pillars.map((s, i) => {
             const Icon = icons[i] || ShieldCheck;
             return (
-              <div key={i} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300">
+              <div key={i} className="bg-white p-5 rounded-3xl border border-slate-100 shadow-lg hover:shadow-xl transition-all duration-300 w-full">
                 {editing === 'pillars' ? (
                   <div className="space-y-3">
                     <input
@@ -141,7 +154,7 @@ const CopyrightPage: React.FC<CopyrightPageProps> = ({ systemConfig, setSystemCo
       </div>
 
       {/* Main Notice Card */}
-      <div className="bg-white rounded-3xl border border-slate-100 shadow-lg overflow-hidden">
+      <div className="bg-white rounded-3xl border border-slate-100 shadow-lg overflow-hidden w-full">
         <div className="px-6 py-3 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center text-[10px]">
           <div className="flex items-center gap-2">
             <Info size={14} className="text-slate-400" />
@@ -164,7 +177,7 @@ const CopyrightPage: React.FC<CopyrightPageProps> = ({ systemConfig, setSystemCo
             </button>
           )}
         </div>
-        <div className="p-6">
+        <div className="p-6 w-full">
           {editing === 'notice' ? (
             <textarea
               value={tempFooter.copyrightNotice}
@@ -206,8 +219,8 @@ const CopyrightPage: React.FC<CopyrightPageProps> = ({ systemConfig, setSystemCo
           )}
         </div>
         <div className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+            <div className="space-y-4 w-full">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white font-black text-xs">
                   {editing === 'footer' ? (
@@ -262,8 +275,8 @@ const CopyrightPage: React.FC<CopyrightPageProps> = ({ systemConfig, setSystemCo
               </div>
             </div>
 
-            <div className="bg-slate-50/50 rounded-2xl p-6 border border-slate-100 flex flex-col items-center justify-center text-center space-y-4">
-              <div className="p-4 bg-white rounded-2xl shadow-sm border border-slate-100">
+            <div className="bg-slate-50/50 rounded-3xl p-6 border border-slate-100 flex flex-col items-center justify-center text-center space-y-4 w-full">
+              <div className="p-4 bg-white rounded-3xl shadow-lg border border-slate-100 w-full">
                 <Globe size={40} className="text-orange-500 opacity-20" />
               </div>
               <div>

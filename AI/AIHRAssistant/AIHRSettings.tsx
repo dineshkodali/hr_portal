@@ -52,7 +52,7 @@ export default function AIHRSettings({ user, aiModel, setAiModel }: AIHRSettings
     };
 
     return (
-        <div className="space-y-4 max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <div className="space-y-4 w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
             {/* AI Hero Header */}
             <div className="relative overflow-hidden bg-slate-900 rounded-3xl p-6 text-white shadow-xl">
                 <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
@@ -72,9 +72,9 @@ export default function AIHRSettings({ user, aiModel, setAiModel }: AIHRSettings
             </div>
 
             {/* Main Content Area */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
                 {/* Interface Settings Card */}
-                <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+                <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden w-full">
                     <div className="px-6 py-3 border-b border-slate-50 bg-slate-50/50 flex items-center gap-2">
                         <MessageSquare size={14} className="text-slate-400" />
                         <span className="font-black uppercase tracking-widest text-slate-400 text-[10px]">Interface & Privacy</span>
@@ -85,7 +85,7 @@ export default function AIHRSettings({ user, aiModel, setAiModel }: AIHRSettings
                             { id: 'autoSuggest', label: 'Prompt Assistance', sub: 'Contextual prompt starters', checked: settings.autoSuggest },
                             { id: 'enableAnalytics', label: 'Performance Insight', sub: 'Optimize neural responses', checked: settings.enableAnalytics }
                         ].map(item => (
-                            <div key={item.id} className="flex items-center justify-between p-3.5 bg-slate-50/50 rounded-2xl border border-slate-100/50 hover:bg-white hover:border-primary/20 transition-all duration-300">
+                            <div key={item.id} className="flex items-center justify-between p-3.5 bg-slate-50/50 rounded-2xl border border-slate-100/50 hover:bg-white hover:border-primary/20 transition-all duration-300 w-full">
                                 <div>
                                     <p className="text-xs font-bold text-slate-800">{item.label}</p>
                                     <p className="text-[10px] text-slate-400 font-medium">{item.sub}</p>
@@ -105,7 +105,7 @@ export default function AIHRSettings({ user, aiModel, setAiModel }: AIHRSettings
                 </div>
 
                 {/* Engine Configuration Card */}
-                <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+                <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden w-full">
                     <div className="px-6 py-3 border-b border-slate-50 bg-slate-50/50 flex items-center gap-2">
                         <SettingsIcon size={14} className="text-slate-400" />
                         <span className="font-black uppercase tracking-widest text-slate-400 text-[10px]">Engine Configuration</span>

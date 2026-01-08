@@ -443,16 +443,25 @@ export interface PolicyCategory {
   name: string;
   icon: string;
   description: string;
+  access?: {
+    users: string[];
+    groups: string[];
+  };
 }
 
 export interface PolicyDocument {
   id: string;
-  categoryId: string;
+  categoryid: string;
   title: string;
   content?: string;
   fileUrl?: string;
-  lastUpdated: string;
-  version: string;
+  lastUpdated?: string;
+  updated_at?: string;
+  version: string | number;
+  access?: {
+    users: string[];
+    groups: string[];
+  };
 }
 
 export interface Holiday {
@@ -570,6 +579,8 @@ export interface HandbookProps {
   user: User;
   categories: PolicyCategory[];
   policies: PolicyDocument[];
+  users?: User[];
+  groups?: Group[];
   onAddCategory: (category: PolicyCategory) => void;
   onUpdateCategory: (category: PolicyCategory) => void;
   onDeleteCategory: (id: string) => void;
