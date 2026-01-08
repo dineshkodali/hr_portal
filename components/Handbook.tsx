@@ -43,6 +43,16 @@ const Handbook: React.FC<HandbookProps> = ({
     const [isCategoryAccessModalOpen, setIsCategoryAccessModalOpen] = useState(false);
     const [accessEditCategory, setAccessEditCategory] = useState<PolicyCategory | null>(null);
     const [categoryAccessForm, setCategoryAccessForm] = useState<{ users: string[]; groups: string[] }>({ users: [], groups: [] });
+    const [userSearchTerm, setUserSearchTerm] = useState('');
+    const [groupSearchTerm, setGroupSearchTerm] = useState('');
+    const [showUserDropdown, setShowUserDropdown] = useState(false);
+    const [showGroupDropdown, setShowGroupDropdown] = useState(false);
+    const [categoryUserSearchTerm, setCategoryUserSearchTerm] = useState('');
+    const [categoryGroupSearchTerm, setCategoryGroupSearchTerm] = useState('');
+    const [showCategoryUserDropdown, setShowCategoryUserDropdown] = useState(false);
+    const [showCategoryGroupDropdown, setShowCategoryGroupDropdown] = useState(false);
+
+    // Close dropdowns when clicking outside (handled by modal onClick)
 
     // Helper: check if current user has access to a category
     const hasCategoryAccess = (cat: PolicyCategory) => {
@@ -242,7 +252,11 @@ const Handbook: React.FC<HandbookProps> = ({
 
             {/* Policy Access Permissions Modal - Webapp Style */}
             {isAccessModalOpen && accessEditPolicy && (
-                <div className="fixed inset-0 bg-[#0f172a]/60 backdrop-blur-[2px] flex items-center justify-center z-[100] p-4" onClick={() => setIsAccessModalOpen(false)}>
+                <div className="fixed inset-0 bg-[#0f172a]/60 backdrop-blur-[2px] flex items-center justify-center z-[100] p-4" onClick={() => {
+                    setIsAccessModalOpen(false);
+                    setShowUserDropdown(false);
+                    setShowGroupDropdown(false);
+                }}>
                     <div className="bg-white rounded-[24px] shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in duration-200" onClick={(e) => e.stopPropagation()}>
                         <div className="p-6 border-b border-[#f1f5f9] flex justify-between items-center bg-white">
                             <h3 className="text-xl font-bold text-[#1e293b]">Configure Access Permissions</h3>
@@ -266,76 +280,168 @@ const Handbook: React.FC<HandbookProps> = ({
                             
                             <div>
                                 <label className="block text-xs font-bold text-[#64748b] mb-1.5 uppercase tracking-wider">Allowed Users</label>
-                                {users.length === 0 ? (
-                                    <div className="border border-[#e2e8f0] rounded-xl bg-[#f8fafc] p-4 text-center">
-                                        <p className="text-sm text-[#64748b]">No users available</p>
-                                    </div>
-                                ) : (
-                                    <div className="border border-[#e2e8f0] rounded-xl bg-[#f8fafc] p-3 max-h-48 overflow-y-auto">
-                                        {users.map(u => (
-                                            <label key={u.id} className="flex items-center space-x-2 mb-2 p-2 hover:bg-white rounded-lg transition-colors cursor-pointer">
-                                                <input 
-                                                    type="checkbox" 
-                                                    checked={accessForm.users.includes(u.id)}
-                                                    onChange={(e) => {
-                                                        if (e.target.checked) {
-                                                            setAccessForm({ ...accessForm, users: [...accessForm.users, u.id] });
-                                                        } else {
-                                                            setAccessForm({ ...accessForm, users: accessForm.users.filter(id => id !== u.id) });
-                                                        }
-                                                    }}
-                                                    className="rounded text-[#f97316] focus:ring-[#f97316] cursor-pointer"
-                                                />
-                                                <div className="flex items-center gap-2 flex-1">
-                                                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                                                        {u.name.charAt(0).toUpperCase()}
+                                <div className="relative">
+                                    {/* Selected Users Tags */}
+                                    {accessForm.users.length > 0 && (
+                                        <div className="flex flex-wrap gap-2 mb-2">
+                                            {accessForm.users.map(uid => {
+                                                const u = users.find(x => x.id === uid);
+                                                return u ? (
+                                                    <span key={u.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-sm font-semibold">
+                                                        <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                                                            {u.name.charAt(0).toUpperCase()}
+                                                        </div>
+                                                        {u.name}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setAccessForm({ ...accessForm, users: accessForm.users.filter(id => id !== uid) })}
+                                                            className="text-blue-700 hover:text-blue-900"
+                                                        >
+                                                            <X size={14} />
+                                                        </button>
+                                                    </span>
+                                                ) : null;
+                                            })}
+                                        </div>
+                                    )}
+                                    
+                                    {/* Search Input */}
+                                    <div className="relative">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94a3b8]" size={18} />
+                                        <input
+                                            type="text"
+                                            placeholder={users.length === 0 ? "No users available" : "Search and select users..."}
+                                            value={userSearchTerm}
+                                            onChange={(e) => {
+                                                setUserSearchTerm(e.target.value);
+                                                setShowUserDropdown(true);
+                                            }}
+                                            onFocus={() => setShowUserDropdown(true)}
+                                            className="w-full pl-10 pr-4 py-2.5 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-[#f97316]/20 focus:border-[#f97316]"
+                                            disabled={users.length === 0}
+                                        />
+                                        {showUserDropdown && users.length > 0 && (
+                                            <div className="absolute z-[110] w-full mt-1 bg-white border border-[#e2e8f0] rounded-xl shadow-lg max-h-60 overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                                                {users
+                                                    .filter(u => 
+                                                        !accessForm.users.includes(u.id) &&
+                                                        (u.name.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+                                                         u.email.toLowerCase().includes(userSearchTerm.toLowerCase()))
+                                                    )
+                                                    .map(u => (
+                                                        <div
+                                                            key={u.id}
+                                                            onClick={() => {
+                                                                setAccessForm({ ...accessForm, users: [...accessForm.users, u.id] });
+                                                                setUserSearchTerm('');
+                                                                setShowUserDropdown(false);
+                                                            }}
+                                                            className="flex items-center gap-3 p-3 hover:bg-[#f8fafc] cursor-pointer transition-colors"
+                                                        >
+                                                            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                                                                {u.name.charAt(0).toUpperCase()}
+                                                            </div>
+                                                            <div className="flex-1">
+                                                                <p className="text-sm font-semibold text-[#1e293b]">{u.name}</p>
+                                                                <p className="text-xs text-[#64748b]">{u.email}</p>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                {users.filter(u => 
+                                                    !accessForm.users.includes(u.id) &&
+                                                    (u.name.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+                                                     u.email.toLowerCase().includes(userSearchTerm.toLowerCase()))
+                                                ).length === 0 && (
+                                                    <div className="p-4 text-center text-sm text-[#64748b]">
+                                                        No users found
                                                     </div>
-                                                    <div>
-                                                        <span className="text-sm font-semibold text-[#1e293b]">{u.name}</span>
-                                                        <p className="text-xs text-[#64748b]">{u.email}</p>
-                                                    </div>
-                                                </div>
-                                            </label>
-                                        ))}
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
-                                )}
+                                </div>
                             </div>
                             
                             <div>
                                 <label className="block text-xs font-bold text-[#64748b] mb-1.5 uppercase tracking-wider">Allowed Groups</label>
-                                {groups.length === 0 ? (
-                                    <div className="border border-[#e2e8f0] rounded-xl bg-[#f8fafc] p-4 text-center">
-                                        <p className="text-sm text-[#64748b]">No groups available</p>
-                                    </div>
-                                ) : (
-                                    <div className="border border-[#e2e8f0] rounded-xl bg-[#f8fafc] p-3 max-h-48 overflow-y-auto">
-                                        {groups.map(g => (
-                                            <label key={g.id} className="flex items-center space-x-2 mb-2 p-2 hover:bg-white rounded-lg transition-colors cursor-pointer">
-                                                <input 
-                                                    type="checkbox" 
-                                                    checked={accessForm.groups.includes(g.id)}
-                                                    onChange={(e) => {
-                                                        if (e.target.checked) {
-                                                            setAccessForm({ ...accessForm, groups: [...accessForm.groups, g.id] });
-                                                        } else {
-                                                            setAccessForm({ ...accessForm, groups: accessForm.groups.filter(id => id !== g.id) });
-                                                        }
-                                                    }}
-                                                    className="rounded text-[#f97316] focus:ring-[#f97316] cursor-pointer"
-                                                />
-                                                <div className="flex items-center gap-2 flex-1">
-                                                    <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white">
-                                                        <Users size={14} />
+                                <div className="relative">
+                                    {/* Selected Groups Tags */}
+                                    {accessForm.groups.length > 0 && (
+                                        <div className="flex flex-wrap gap-2 mb-2">
+                                            {accessForm.groups.map(gid => {
+                                                const g = groups.find(x => x.id === gid);
+                                                return g ? (
+                                                    <span key={g.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg text-sm font-semibold">
+                                                        <div className="w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center text-white">
+                                                            <Users size={12} />
+                                                        </div>
+                                                        {g.name}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setAccessForm({ ...accessForm, groups: accessForm.groups.filter(id => id !== gid) })}
+                                                            className="text-purple-700 hover:text-purple-900"
+                                                        >
+                                                            <X size={14} />
+                                                        </button>
+                                                    </span>
+                                                ) : null;
+                                            })}
+                                        </div>
+                                    )}
+                                    
+                                    {/* Search Input */}
+                                    <div className="relative">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94a3b8]" size={18} />
+                                        <input
+                                            type="text"
+                                            placeholder={groups.length === 0 ? "No groups available" : "Search and select groups..."}
+                                            value={groupSearchTerm}
+                                            onChange={(e) => {
+                                                setGroupSearchTerm(e.target.value);
+                                                setShowGroupDropdown(true);
+                                            }}
+                                            onFocus={() => setShowGroupDropdown(true)}
+                                            className="w-full pl-10 pr-4 py-2.5 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-[#f97316]/20 focus:border-[#f97316]"
+                                            disabled={groups.length === 0}
+                                        />
+                                        {showGroupDropdown && groups.length > 0 && (
+                                            <div className="absolute z-[110] w-full mt-1 bg-white border border-[#e2e8f0] rounded-xl shadow-lg max-h-60 overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                                                {groups
+                                                    .filter(g => 
+                                                        !accessForm.groups.includes(g.id) &&
+                                                        g.name.toLowerCase().includes(groupSearchTerm.toLowerCase())
+                                                    )
+                                                    .map(g => (
+                                                        <div
+                                                            key={g.id}
+                                                            onClick={() => {
+                                                                setAccessForm({ ...accessForm, groups: [...accessForm.groups, g.id] });
+                                                                setGroupSearchTerm('');
+                                                                setShowGroupDropdown(false);
+                                                            }}
+                                                            className="flex items-center gap-3 p-3 hover:bg-[#f8fafc] cursor-pointer transition-colors"
+                                                        >
+                                                            <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white">
+                                                                <Users size={14} />
+                                                            </div>
+                                                            <div className="flex-1">
+                                                                <p className="text-sm font-semibold text-[#1e293b]">{g.name}</p>
+                                                                <p className="text-xs text-[#64748b]">{g.memberIds?.length || 0} members</p>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                {groups.filter(g => 
+                                                    !accessForm.groups.includes(g.id) &&
+                                                    g.name.toLowerCase().includes(groupSearchTerm.toLowerCase())
+                                                ).length === 0 && (
+                                                    <div className="p-4 text-center text-sm text-[#64748b]">
+                                                        No groups found
                                                     </div>
-                                                    <div>
-                                                        <span className="text-sm font-semibold text-[#1e293b]">{g.name}</span>
-                                                        <p className="text-xs text-[#64748b]">{g.memberIds?.length || 0} members</p>
-                                                    </div>
-                                                </div>
-                                            </label>
-                                        ))}
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
-                                )}
+                                </div>
                             </div>
                             
                             <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
@@ -367,7 +473,11 @@ const Handbook: React.FC<HandbookProps> = ({
 
             {/* Category Access Permissions Modal - Webapp Style */}
             {isCategoryAccessModalOpen && accessEditCategory && (
-                <div className="fixed inset-0 bg-[#0f172a]/60 backdrop-blur-[2px] flex items-center justify-center z-[100] p-4" onClick={() => setIsCategoryAccessModalOpen(false)}>
+                <div className="fixed inset-0 bg-[#0f172a]/60 backdrop-blur-[2px] flex items-center justify-center z-[100] p-4" onClick={() => {
+                    setIsCategoryAccessModalOpen(false);
+                    setShowCategoryUserDropdown(false);
+                    setShowCategoryGroupDropdown(false);
+                }}>
                     <div className="bg-white rounded-[24px] shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in duration-200" onClick={(e) => e.stopPropagation()}>
                         <div className="p-6 border-b border-[#f1f5f9] flex justify-between items-center bg-white">
                             <h3 className="text-xl font-bold text-[#1e293b]">Configure Access Permissions</h3>
@@ -391,76 +501,168 @@ const Handbook: React.FC<HandbookProps> = ({
                             
                             <div>
                                 <label className="block text-xs font-bold text-[#64748b] mb-1.5 uppercase tracking-wider">Allowed Users</label>
-                                {users.length === 0 ? (
-                                    <div className="border border-[#e2e8f0] rounded-xl bg-[#f8fafc] p-4 text-center">
-                                        <p className="text-sm text-[#64748b]">No users available</p>
-                                    </div>
-                                ) : (
-                                    <div className="border border-[#e2e8f0] rounded-xl bg-[#f8fafc] p-3 max-h-48 overflow-y-auto">
-                                        {users.map(u => (
-                                            <label key={u.id} className="flex items-center space-x-2 mb-2 p-2 hover:bg-white rounded-lg transition-colors cursor-pointer">
-                                                <input 
-                                                    type="checkbox"
-                                                    checked={categoryAccessForm.users.includes(u.id)}
-                                                    onChange={(e) => {
-                                                        if (e.target.checked) {
-                                                            setCategoryAccessForm({ ...categoryAccessForm, users: [...categoryAccessForm.users, u.id] });
-                                                        } else {
-                                                            setCategoryAccessForm({ ...categoryAccessForm, users: categoryAccessForm.users.filter(id => id !== u.id) });
-                                                        }
-                                                    }}
-                                                    className="rounded text-[#f97316] focus:ring-[#f97316] cursor-pointer"
-                                                />
-                                                <div className="flex items-center gap-2 flex-1">
-                                                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                                                        {u.name.charAt(0).toUpperCase()}
+                                <div className="relative">
+                                    {/* Selected Users Tags */}
+                                    {categoryAccessForm.users.length > 0 && (
+                                        <div className="flex flex-wrap gap-2 mb-2">
+                                            {categoryAccessForm.users.map(uid => {
+                                                const u = users.find(x => x.id === uid);
+                                                return u ? (
+                                                    <span key={u.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-sm font-semibold">
+                                                        <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                                                            {u.name.charAt(0).toUpperCase()}
+                                                        </div>
+                                                        {u.name}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setCategoryAccessForm({ ...categoryAccessForm, users: categoryAccessForm.users.filter(id => id !== uid) })}
+                                                            className="text-blue-700 hover:text-blue-900"
+                                                        >
+                                                            <X size={14} />
+                                                        </button>
+                                                    </span>
+                                                ) : null;
+                                            })}
+                                        </div>
+                                    )}
+                                    
+                                    {/* Search Input */}
+                                    <div className="relative">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94a3b8]" size={18} />
+                                        <input
+                                            type="text"
+                                            placeholder={users.length === 0 ? "No users available" : "Search and select users..."}
+                                            value={categoryUserSearchTerm}
+                                            onChange={(e) => {
+                                                setCategoryUserSearchTerm(e.target.value);
+                                                setShowCategoryUserDropdown(true);
+                                            }}
+                                            onFocus={() => setShowCategoryUserDropdown(true)}
+                                            className="w-full pl-10 pr-4 py-2.5 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-[#f97316]/20 focus:border-[#f97316]"
+                                            disabled={users.length === 0}
+                                        />
+                                        {showCategoryUserDropdown && users.length > 0 && (
+                                            <div className="absolute z-[110] w-full mt-1 bg-white border border-[#e2e8f0] rounded-xl shadow-lg max-h-60 overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                                                {users
+                                                    .filter(u => 
+                                                        !categoryAccessForm.users.includes(u.id) &&
+                                                        (u.name.toLowerCase().includes(categoryUserSearchTerm.toLowerCase()) ||
+                                                         u.email.toLowerCase().includes(categoryUserSearchTerm.toLowerCase()))
+                                                    )
+                                                    .map(u => (
+                                                        <div
+                                                            key={u.id}
+                                                            onClick={() => {
+                                                                setCategoryAccessForm({ ...categoryAccessForm, users: [...categoryAccessForm.users, u.id] });
+                                                                setCategoryUserSearchTerm('');
+                                                                setShowCategoryUserDropdown(false);
+                                                            }}
+                                                            className="flex items-center gap-3 p-3 hover:bg-[#f8fafc] cursor-pointer transition-colors"
+                                                        >
+                                                            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                                                                {u.name.charAt(0).toUpperCase()}
+                                                            </div>
+                                                            <div className="flex-1">
+                                                                <p className="text-sm font-semibold text-[#1e293b]">{u.name}</p>
+                                                                <p className="text-xs text-[#64748b]">{u.email}</p>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                {users.filter(u => 
+                                                    !categoryAccessForm.users.includes(u.id) &&
+                                                    (u.name.toLowerCase().includes(categoryUserSearchTerm.toLowerCase()) ||
+                                                     u.email.toLowerCase().includes(categoryUserSearchTerm.toLowerCase()))
+                                                ).length === 0 && (
+                                                    <div className="p-4 text-center text-sm text-[#64748b]">
+                                                        No users found
                                                     </div>
-                                                    <div>
-                                                        <span className="text-sm font-semibold text-[#1e293b]">{u.name}</span>
-                                                        <p className="text-xs text-[#64748b]">{u.email}</p>
-                                                    </div>
-                                                </div>
-                                            </label>
-                                        ))}
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
-                                )}
+                                </div>
                             </div>
                             
                             <div>
                                 <label className="block text-xs font-bold text-[#64748b] mb-1.5 uppercase tracking-wider">Allowed Groups</label>
-                                {groups.length === 0 ? (
-                                    <div className="border border-[#e2e8f0] rounded-xl bg-[#f8fafc] p-4 text-center">
-                                        <p className="text-sm text-[#64748b]">No groups available</p>
-                                    </div>
-                                ) : (
-                                    <div className="border border-[#e2e8f0] rounded-xl bg-[#f8fafc] p-3 max-h-48 overflow-y-auto">
-                                        {groups.map(g => (
-                                            <label key={g.id} className="flex items-center space-x-2 mb-2 p-2 hover:bg-white rounded-lg transition-colors cursor-pointer">
-                                                <input 
-                                                    type="checkbox" 
-                                                    checked={categoryAccessForm.groups.includes(g.id)}
-                                                    onChange={(e) => {
-                                                        if (e.target.checked) {
-                                                            setCategoryAccessForm({ ...categoryAccessForm, groups: [...categoryAccessForm.groups, g.id] });
-                                                        } else {
-                                                            setCategoryAccessForm({ ...categoryAccessForm, groups: categoryAccessForm.groups.filter(id => id !== g.id) });
-                                                        }
-                                                    }}
-                                                    className="rounded text-[#f97316] focus:ring-[#f97316] cursor-pointer"
-                                                />
-                                                <div className="flex items-center gap-2 flex-1">
-                                                    <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white">
-                                                        <Users size={14} />
+                                <div className="relative">
+                                    {/* Selected Groups Tags */}
+                                    {categoryAccessForm.groups.length > 0 && (
+                                        <div className="flex flex-wrap gap-2 mb-2">
+                                            {categoryAccessForm.groups.map(gid => {
+                                                const g = groups.find(x => x.id === gid);
+                                                return g ? (
+                                                    <span key={g.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg text-sm font-semibold">
+                                                        <div className="w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center text-white">
+                                                            <Users size={12} />
+                                                        </div>
+                                                        {g.name}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setCategoryAccessForm({ ...categoryAccessForm, groups: categoryAccessForm.groups.filter(id => id !== gid) })}
+                                                            className="text-purple-700 hover:text-purple-900"
+                                                        >
+                                                            <X size={14} />
+                                                        </button>
+                                                    </span>
+                                                ) : null;
+                                            })}
+                                        </div>
+                                    )}
+                                    
+                                    {/* Search Input */}
+                                    <div className="relative">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94a3b8]" size={18} />
+                                        <input
+                                            type="text"
+                                            placeholder={groups.length === 0 ? "No groups available" : "Search and select groups..."}
+                                            value={categoryGroupSearchTerm}
+                                            onChange={(e) => {
+                                                setCategoryGroupSearchTerm(e.target.value);
+                                                setShowCategoryGroupDropdown(true);
+                                            }}
+                                            onFocus={() => setShowCategoryGroupDropdown(true)}
+                                            className="w-full pl-10 pr-4 py-2.5 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-[#f97316]/20 focus:border-[#f97316]"
+                                            disabled={groups.length === 0}
+                                        />
+                                        {showCategoryGroupDropdown && groups.length > 0 && (
+                                            <div className="absolute z-[110] w-full mt-1 bg-white border border-[#e2e8f0] rounded-xl shadow-lg max-h-60 overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                                                {groups
+                                                    .filter(g => 
+                                                        !categoryAccessForm.groups.includes(g.id) &&
+                                                        g.name.toLowerCase().includes(categoryGroupSearchTerm.toLowerCase())
+                                                    )
+                                                    .map(g => (
+                                                        <div
+                                                            key={g.id}
+                                                            onClick={() => {
+                                                                setCategoryAccessForm({ ...categoryAccessForm, groups: [...categoryAccessForm.groups, g.id] });
+                                                                setCategoryGroupSearchTerm('');
+                                                                setShowCategoryGroupDropdown(false);
+                                                            }}
+                                                            className="flex items-center gap-3 p-3 hover:bg-[#f8fafc] cursor-pointer transition-colors"
+                                                        >
+                                                            <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white">
+                                                                <Users size={14} />
+                                                            </div>
+                                                            <div className="flex-1">
+                                                                <p className="text-sm font-semibold text-[#1e293b]">{g.name}</p>
+                                                                <p className="text-xs text-[#64748b]">{g.memberIds?.length || 0} members</p>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                {groups.filter(g => 
+                                                    !categoryAccessForm.groups.includes(g.id) &&
+                                                    g.name.toLowerCase().includes(categoryGroupSearchTerm.toLowerCase())
+                                                ).length === 0 && (
+                                                    <div className="p-4 text-center text-sm text-[#64748b]">
+                                                        No groups found
                                                     </div>
-                                                    <div>
-                                                        <span className="text-sm font-semibold text-[#1e293b]">{g.name}</span>
-                                                        <p className="text-xs text-[#64748b]">{g.memberIds?.length || 0} members</p>
-                                                    </div>
-                                                </div>
-                                            </label>
-                                        ))}
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
-                                )}
+                                </div>
                             </div>
                             
                             <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
