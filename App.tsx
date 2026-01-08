@@ -311,7 +311,6 @@ const App: React.FC = () => {
   //   const branchId = selectedBranchId !== 'all' ? selectedBranchId : branches[0]?.id;
   //   const newEmp = { ...emp, id: Date.now().toString(), branchId };
 
-<<<<<<< HEAD
   //   // Fix: api.create is now implemented in services/api.ts
   //   wrap(api.create('employees', newEmp), () => {
   //     refreshEmployees();
@@ -325,21 +324,6 @@ const App: React.FC = () => {
   //     logActivity('Create Employee', 'Workforce', `Added ${emp.name}`);
   //   });
   // };
-=======
-    // Fix: api.create is now implemented in services/api.ts
-    wrap(api.create('employees', newEmp), () => {
-      refreshEmployees();
-      const newUser: User = {
-        id: `u-${Date.now()}`, name: emp.name, email: emp.email, role: 'employee', avatar: emp.avatar,
-        designation: emp.designation, status: 'Active', branchIds: [branchId], linkedEmployeeId: newEmp.id,
-        accessModules: ['dashboard', 'attendance', 'payroll', 'tasks', 'files', 'assets', 'teams', 'settings']
-      };
-      api.create('users', newUser).then(refreshUsers).catch(() => { });
-      setCurrentView('employees');
-      logActivity('Create Employee', 'Workforce', `Added employee ${emp.name} and created user account`);
-    });
-  };
->>>>>>> 6f02fe1b74c00946b67c7887b96d832a9573059a
 
   // Fix: api.update and api.delete are now implemented in services/api.ts
   const handleUpdateEmployee = (emp: Employee) => wrap(api.update('employees', emp.id, emp).then(res => {
@@ -640,7 +624,6 @@ const App: React.FC = () => {
             onUpdateHoliday={h => wrap(api.update('holidays', h.id, h), refreshHolidays)}
             onDeleteHoliday={id => wrap(api.delete('holidays', id), refreshHolidays)}
           />}
-<<<<<<< HEAD
           {currentView === 'add-employee' && (
                <AddEmployee
                  onBack={() => setCurrentView('employees')}
@@ -650,10 +633,6 @@ const App: React.FC = () => {
                  departments={departments || []}
                />
              )}
-          {currentView === 'teams' && <TeamManagement teams={teams || []} employees={filteredEmployees || []} onAddTeam={t => wrap(api.create('teams', t), refreshTeams)} onUpdateTeam={t => wrap(api.update('teams', t.id, t), refreshTeams)} onDeleteTeam={id => wrap(api.delete('teams', id), refreshTeams)} />}
-          {currentView === 'assets' && <AssetManagement user={user} assets={assets || []} employees={filteredEmployees || []} branches={visibleBranches || []} systemConfig={systemConfig || {}} onAddAsset={a => wrap(api.create('assets', a), refreshAssets)} onUpdateAsset={a => wrap(api.update('assets', a.id, a), refreshAssets)} onDeleteAsset={id => wrap(api.delete('assets', id), refreshAssets)} />}
-=======
-          {currentView === 'add-employee' && <AddEmployee onBack={() => setCurrentView('employees')} onSave={handleAddEmployee} employees={employees || []} />}
           {currentView === 'teams' && <TeamManagement
             teams={teams || []}
             employees={filteredEmployees || []}
@@ -695,7 +674,6 @@ const App: React.FC = () => {
               }), refreshAssets);
             }}
           />}
->>>>>>> 6f02fe1b74c00946b67c7887b96d832a9573059a
           {/* Fix: Added missing user prop to FileManager */}
           {currentView === 'files' && <FileManager user={user} onLogActivity={logActivity} />}
           {currentView === 'tasks' && <TaskBoard

@@ -1261,24 +1261,23 @@ const Settings: React.FC<SettingsProps> = (props) => {
                     <div className="p-3 bg-slate-50/50 rounded-2xl border border-slate-100">
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Staff Density</p>
                       <p className="text-xl font-black text-slate-800 tracking-tighter">
-                        {employees.filter((e) => e.branchId === b.id).length}
+                        {employees.filter((e) => e.branchid === b.id).length}
                         <span className="text-[10px] text-slate-400 font-bold ml-1 tracking-normal">UNITS</span>
                       </p>
                     </div>
                     <div className="p-3 bg-slate-50/50 rounded-2xl border border-slate-100">
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Asset Allocation</p>
                       <p className="text-xl font-black text-slate-800 tracking-tighter">
-                        {assets.filter((a) => a.branchId === b.id).length}
+                        {assets.filter((a) => a.branchid === b.id).length}
                         <span className="text-[10px] text-slate-400 font-bold ml-1 tracking-normal">FOUND</span>
                       </p>
                     </div>
                   </div>
-<<<<<<< HEAD
                   <div className="space-y-2 text-sm text-slate-600 border-t border-slate-50 pt-4 mb-4">
                     <div className="flex justify-between">
                       <span>Staff Count:</span>{" "}
                       <span className="font-medium">
-                        {employees.filter((e) => e.branchId === b.id).length}
+                        {employees.filter((e) => e.branchid === b.id).length}
                       </span>
                     </div>
                     <div className="flex justify-between">
@@ -1288,9 +1287,6 @@ const Settings: React.FC<SettingsProps> = (props) => {
                       </span>
                     </div>
                   </div>
-=======
-
->>>>>>> 6f02fe1b74c00946b67c7887b96d832a9573059a
                   <button
                     onClick={() => {
                       setViewBranch(b);

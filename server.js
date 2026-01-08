@@ -612,9 +612,6 @@ app.get('/api/:table', async (req, res) => {
       values.push(req.query.folder);
     }
 
-<<<<<<< HEAD
-    // query += ` ORDER BY created_at DESC`;
-=======
     // Dynamic ordering based on available columns
     const columnsCheck = await pool.query(
       "SELECT column_name FROM information_schema.columns WHERE table_name = $1",
@@ -629,7 +626,6 @@ app.get('/api/:table', async (req, res) => {
     } else if (columns.includes('createdAt')) {
       query += ` ORDER BY "createdAt" DESC`;
     }
->>>>>>> 6f02fe1b74c00946b67c7887b96d832a9573059a
 
     const { rows } = await pool.query(query, values);
 
