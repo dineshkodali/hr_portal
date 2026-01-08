@@ -348,6 +348,14 @@ app.post('/api/login', async (req, res) => {
       [logId, user.id, ipAddress || 'Unknown', browser || 'Unknown', os || 'Unknown', deviceType || 'Unknown']
     );
 
+    // Log successful login to Activity Logs
+    const activityLogId = `log_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+    await pool.query(
+      `INSERT INTO logs (id, userId, userName, userRole, action, module, details, timestamp, ipAddress) 
+       VALUES ($1, $2, $3, $4, 'Login', 'Auth', 'User logged in successfully', CURRENT_TIMESTAMP, $5)`,
+      [activityLogId, user.id, user.name, user.role, ipAddress || 'Unknown']
+    );
+
     res.json({
       success: true,
       message: 'Login successful',
@@ -564,6 +572,17 @@ app.get('/api/:table', async (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
+    // Check if table exists in public schema to avoid crashing on missing tables
+    const tableCheck = await pool.query(
+      "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = $1)",
+      [table]
+    );
+
+    if (!tableCheck.rows[0].exists) {
+      console.warn(`Attempted to fetch non-existent table: ${table}`);
+      return res.json([]); // Return empty array for convenience
+    }
+
     let query = `SELECT * FROM ${table}`;
     const values = [];
 
@@ -573,7 +592,20 @@ app.get('/api/:table', async (req, res) => {
       values.push(req.query.folder);
     }
 
-    query += ` ORDER BY created_at DESC`;
+    // Dynamic ordering based on available columns
+    const columnsCheck = await pool.query(
+      "SELECT column_name FROM information_schema.columns WHERE table_name = $1",
+      [table]
+    );
+    const columns = columnsCheck.rows.map(c => c.column_name);
+
+    if (columns.includes('timestamp')) {
+      query += ` ORDER BY timestamp DESC`;
+    } else if (columns.includes('created_at')) {
+      query += ` ORDER BY created_at DESC`;
+    } else if (columns.includes('createdAt')) {
+      query += ` ORDER BY "createdAt" DESC`;
+    }
 
     const { rows } = await pool.query(query, values);
 
@@ -586,6 +618,7 @@ app.get('/api/:table', async (req, res) => {
     res.json(rows);
 
   } catch (err) {
+    console.error(`Error fetching table ${req.params.table}:`, err.message);
     res.status(500).json({ error: err.message });
   }
 });

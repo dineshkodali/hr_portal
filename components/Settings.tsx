@@ -13,45 +13,47 @@ import { defaultFeatureToggles, FeatureToggle } from '../constants/featureToggle
 import SecuritySettings from './SecuritySettings';
 import CopyrightPage from './CopyrightPage';
 import AIHRSettings from '../AI/AIHRAssistant/AIHRSettings';
+import ActivityLogs from './ActivityLogs';
+import { History } from 'lucide-react';
 
 const Settings: React.FC<SettingsProps> = (props) => {
-    // Fetch notification settings for the current user
-    const fetchNotificationSettings = async () => {
-      if (!user?.id) return;
-      try {
-        const res = await api.get(`notification_settings?userId=${user.id}`);
-        if (Array.isArray(res) && res.length > 0) {
-          setNotificationSettings(res);
-        } else {
-          // If no settings, initialize defaults
-          const settingsWithUser = defaultNotificationSettings.map(s => {
-            // Ensure both userId and type are present and non-empty
-            let type = s.type || s.module || 'general';
-            if (!type || typeof type !== 'string' || type.trim() === '') {
-              type = 'general';
-            }
-            return {
-              ...s,
-              userId: user.id,
-              type,
-            };
-          });
-          setNotificationSettings(settingsWithUser);
-          // Persist to backend, ensuring userId and type are present
-          for (const setting of settingsWithUser) {
-            if (setting.userId && setting.type && typeof setting.type === 'string' && setting.type.trim() !== '') {
-              try {
-                await api.createNotificationSetting(setting);
-              } catch (e) {
-                // Optionally handle error
-              }
+  // Fetch notification settings for the current user
+  const fetchNotificationSettings = async () => {
+    if (!user?.id) return;
+    try {
+      const res = await api.get(`notification_settings?userId=${user.id}`);
+      if (Array.isArray(res) && res.length > 0) {
+        setNotificationSettings(res);
+      } else {
+        // If no settings, initialize defaults
+        const settingsWithUser = defaultNotificationSettings.map(s => {
+          // Ensure both userId and type are present and non-empty
+          let type = s.type || s.module || 'general';
+          if (!type || typeof type !== 'string' || type.trim() === '') {
+            type = 'general';
+          }
+          return {
+            ...s,
+            userId: user.id,
+            type,
+          };
+        });
+        setNotificationSettings(settingsWithUser);
+        // Persist to backend, ensuring userId and type are present
+        for (const setting of settingsWithUser) {
+          if (setting.userId && setting.type && typeof setting.type === 'string' && setting.type.trim() !== '') {
+            try {
+              await api.createNotificationSetting(setting);
+            } catch (e) {
+              // Optionally handle error
             }
           }
         }
-      } catch (e) {
-        setNotificationSettings([]);
       }
-    };
+    } catch (e) {
+      setNotificationSettings([]);
+    }
+  };
   const {
     user,
     users = [],
@@ -84,6 +86,8 @@ const Settings: React.FC<SettingsProps> = (props) => {
     setNotificationSettings,
     leaves = [],
     reimbursements = [],
+    logs = [],
+    onRefreshLogs,
   } = props;
   const isAdmin = user.role === "admin" || user.role === "super_admin";
   const isSuperAdmin = user.role === "super_admin";
@@ -141,6 +145,9 @@ const Settings: React.FC<SettingsProps> = (props) => {
     if (activeTab === 'groups') fetchGroups();
     if (activeTab === 'notifications') {
       fetchNotificationSettings();
+    }
+    if (activeTab === 'logs') {
+      onRefreshLogs?.();
     }
   }, [activeTab]);
 
@@ -710,6 +717,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
             <SidebarItem id="email" label="Email & SMTP" icon={Mail} />
             <SidebarItem id="notifications" label="Notifications" icon={Bell} />
             <SidebarItem id="ai-assistant" label="AI Assistant" icon={Bot} />
+            <SidebarItem id="logs" label="Activity Logs" icon={History} />
             <SidebarItem id="database" label="Database" icon={Database} />
             <SidebarItem id="copyright" label="Copyright & Ownership" icon={ShieldCheck} />
             <button
@@ -726,32 +734,37 @@ const Settings: React.FC<SettingsProps> = (props) => {
 
       {/* MAIN CONTENT AREA */}
       <div className="flex-1 overflow-y-auto bg-slate-50/50 p-6 md:p-8 flex justify-center">
-                {activeTab === 'features' && isSuperAdmin && (
-                  <div className="w-[98%] mx-auto max-w-4xl space-y-8">
-                    <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
-                      <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-                        <ToggleLeft size={24} className="text-orange-500" /> Feature Toggles
-                      </h3>
-                      <div className="space-y-4">
-                        {featureToggles.map((feature) => (
-                          <div key={feature.key} className="flex items-center justify-between p-4 border rounded-lg">
-                            <div>
-                              <div className="text-sm font-bold text-slate-700">{feature.label}</div>
-                              <div className="text-xs text-slate-400">{feature.description}</div>
-                            </div>
-                            <button
-                              onClick={() => handleToggleFeature(feature.key)}
-                              className={`px-3 py-1 rounded-lg ${feature.enabled ? 'bg-orange-500 text-white' : 'bg-slate-100 text-slate-600'}`}
-                            >
-                              {feature.enabled ? 'Enabled' : 'Disabled'}
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="text-xs text-slate-400 mt-6">Only super admins can change feature/module access for security and compliance.</div>
+        {activeTab === 'features' && isSuperAdmin && (
+          <div className="w-[98%] mx-auto max-w-4xl space-y-8">
+            <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+              <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                <ToggleLeft size={24} className="text-orange-500" /> Feature Toggles
+              </h3>
+              <div className="space-y-4">
+                {featureToggles.map((feature) => (
+                  <div key={feature.key} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                      <div className="text-sm font-bold text-slate-700">{feature.label}</div>
+                      <div className="text-xs text-slate-400">{feature.description}</div>
                     </div>
+                    <button
+                      onClick={() => handleToggleFeature(feature.key)}
+                      className={`px-3 py-1 rounded-lg ${feature.enabled ? 'bg-orange-500 text-white' : 'bg-slate-100 text-slate-600'}`}
+                    >
+                      {feature.enabled ? 'Enabled' : 'Disabled'}
+                    </button>
                   </div>
-                )}
+                ))}
+              </div>
+              <div className="text-xs text-slate-400 mt-6">Only super admins can change feature/module access for security and compliance.</div>
+            </div>
+          </div>
+        )}
+        {activeTab === "logs" && (
+          <div className="w-[98%] mx-auto max-w-5xl">
+            <ActivityLogs logs={logs} onRefresh={onRefreshLogs} />
+          </div>
+        )}
         {activeTab === "profile" && (
           <div className="w-[98%] mx-auto max-w-4xl">
             <h2 className="text-2xl font-bold text-slate-800 mb-6">

@@ -141,7 +141,7 @@ const App: React.FC = () => {
   const [payrollRecords, refreshPayroll] = useApiData<PayrollRecord[]>('payroll', []);
   const [reimbursements, refreshReimbursements] = useApiData<Reimbursement[]>('reimbursements', []);
   const [logs, refreshLogs] = useApiData<ActivityLog[]>('logs', []);
-  const [groups, refreshGroups] = useApiData<Group[]>('groups', []);
+  const [groups, refreshGroups] = useApiData<Group[]>('permission_groups', []);
   const [teams, refreshTeams] = useApiData<Team[]>('teams', []);
   const [policyCategories, refreshPolicyCategories] = useApiData<PolicyCategory[]>('policy_categories', []);
   const [policies, refreshPolicies] = useApiData<PolicyDocument[]>('policies', []);
@@ -190,6 +190,7 @@ const App: React.FC = () => {
 
   const handleLogout = () => {
     console.log('✅ User logged out');
+    logActivity('Logout', 'Auth', `User logged out: ${user?.name}`);
     setUser(null);
     setCurrentSession(null);
     localStorage.removeItem('user'); // Remove persisted user
@@ -206,12 +207,14 @@ const App: React.FC = () => {
         userName: targetActor.name,
         userRole: targetActor.role,
         action, module, details,
-        timestamp: new Date().toLocaleString(),
+        timestamp: new Date().toISOString(),
         branchId: selectedBranchId
       };
       // Only log if logs is loaded
       if (logs && Array.isArray(logs)) {
-        api.create('logs', newLog).catch(err => console.error('Failed to log activity:', err));
+        api.create('logs', newLog)
+          .then(() => refreshLogs())
+          .catch(err => console.error('Failed to log activity:', err));
       }
     } catch (err) {
       console.warn('Could not log activity:', err);
@@ -276,21 +279,54 @@ const App: React.FC = () => {
       };
       api.create('users', newUser).then(refreshUsers).catch(() => { });
       setCurrentView('employees');
-      logActivity('Create Employee', 'Workforce', `Added ${emp.name}`);
+      logActivity('Create Employee', 'Workforce', `Added employee ${emp.name} and created user account`);
     });
   };
 
   // Fix: api.update and api.delete are now implemented in services/api.ts
-  const handleUpdateEmployee = (emp: Employee) => wrap(api.update('employees', emp.id, emp), refreshEmployees);
-  const handleDeleteEmployee = (id: string) => wrap(api.delete('employees', id), refreshEmployees);
+  const handleUpdateEmployee = (emp: Employee) => wrap(api.update('employees', emp.id, emp).then(res => {
+    logActivity('Update Employee', 'Workforce', `Updated details for ${emp.name}`);
+    return res;
+  }), refreshEmployees);
+  const handleDeleteEmployee = (id: string) => {
+    const emp = employees.find(e => e.id === id);
+    wrap(api.delete('employees', id).then(res => {
+      logActivity('Delete Employee', 'Workforce', `Removed employee: ${emp?.name || id}`);
+      return res;
+    }), refreshEmployees);
+  };
 
-  const handleAddUser = (u: User) => wrap(api.create('users', { ...u, id: Date.now().toString() }), refreshUsers);
-  const handleUpdateUser = (u: User) => wrap(api.update('users', u.id, u), refreshUsers);
-  const handleDeleteUser = (id: string) => wrap(api.delete('users', id), refreshUsers);
+  const handleAddUser = (u: User) => wrap(api.create('users', { ...u, id: Date.now().toString() }).then(res => {
+    logActivity('Create User', 'Settings', `Created user account for ${u.name}`);
+    return res;
+  }), refreshUsers);
+  const handleUpdateUser = (u: User) => wrap(api.update('users', u.id, u).then(res => {
+    logActivity('Update User', 'Settings', `Updated user account for ${u.name}`);
+    return res;
+  }), refreshUsers);
+  const handleDeleteUser = (id: string) => {
+    const u = systemUsers?.find(user => user.id === id);
+    wrap(api.delete('users', id).then(res => {
+      logActivity('Delete User', 'Settings', `Deleted user account: ${u?.name || id}`);
+      return res;
+    }), refreshUsers);
+  };
 
-  const handleAddBranch = (b: Branch) => wrap(api.create('branches', b), refreshBranches);
-  const handleUpdateBranch = (b: Branch) => wrap(api.update('branches', b.id, b), refreshBranches);
-  const handleDeleteBranch = (id: string) => wrap(api.delete('branches', id), refreshBranches);
+  const handleAddBranch = (b: Branch) => wrap(api.create('branches', b).then(res => {
+    logActivity('Create Branch', 'Settings', `Added new branch: ${b.name}`);
+    return res;
+  }), refreshBranches);
+  const handleUpdateBranch = (b: Branch) => wrap(api.update('branches', b.id, b).then(res => {
+    logActivity('Update Branch', 'Settings', `Updated branch details for ${b.name}`);
+    return res;
+  }), refreshBranches);
+  const handleDeleteBranch = (id: string) => {
+    const b = branches.find(branch => branch.id === id);
+    wrap(api.delete('branches', id).then(res => {
+      logActivity('Delete Branch', 'Settings', `Removed branch: ${b?.name || id}`);
+      return res;
+    }), refreshBranches);
+  };
 
   // Clock In
   const handleClockIn = () => {
@@ -546,24 +582,316 @@ const App: React.FC = () => {
             onDeleteHoliday={id => wrap(api.delete('holidays', id), refreshHolidays)}
           />}
           {currentView === 'add-employee' && <AddEmployee onBack={() => setCurrentView('employees')} onSave={handleAddEmployee} employees={employees || []} />}
-          {currentView === 'teams' && <TeamManagement teams={teams || []} employees={filteredEmployees || []} onAddTeam={t => wrap(api.create('teams', t), refreshTeams)} onUpdateTeam={t => wrap(api.update('teams', t.id, t), refreshTeams)} onDeleteTeam={id => wrap(api.delete('teams', id), refreshTeams)} />}
-          {currentView === 'assets' && <AssetManagement user={user} assets={assets || []} employees={filteredEmployees || []} branches={visibleBranches || []} systemConfig={systemConfig || {}} onAddAsset={a => wrap(api.create('assets', a), refreshAssets)} onUpdateAsset={a => wrap(api.update('assets', a.id, a), refreshAssets)} onDeleteAsset={id => wrap(api.delete('assets', id), refreshAssets)} />}
+          {currentView === 'teams' && <TeamManagement
+            teams={teams || []}
+            employees={filteredEmployees || []}
+            onAddTeam={t => wrap(api.create('teams', t).then(res => {
+              logActivity('Create Team', 'Workforce', `Created team: ${t.name}`);
+              return res;
+            }), refreshTeams)}
+            onUpdateTeam={t => wrap(api.update('teams', t.id, t).then(res => {
+              logActivity('Update Team', 'Workforce', `Updated team: ${t.name}`);
+              return res;
+            }), refreshTeams)}
+            onDeleteTeam={id => {
+              const team = teams.find(tm => tm.id === id);
+              wrap(api.delete('teams', id).then(res => {
+                logActivity('Delete Team', 'Workforce', `Removed team: ${team?.name || id}`);
+                return res;
+              }), refreshTeams);
+            }}
+          />}
+          {currentView === 'assets' && <AssetManagement
+            user={user}
+            assets={assets || []}
+            employees={filteredEmployees || []}
+            branches={visibleBranches || []}
+            systemConfig={systemConfig || {}}
+            onAddAsset={a => wrap(api.create('assets', a).then(res => {
+              logActivity('Create Asset', 'Assets', `Registered asset: ${a.name}`);
+              return res;
+            }), refreshAssets)}
+            onUpdateAsset={a => wrap(api.update('assets', a.id, a).then(res => {
+              logActivity('Update Asset', 'Assets', `Updated asset: ${a.name}`);
+              return res;
+            }), refreshAssets)}
+            onDeleteAsset={id => {
+              const asset = assets.find(ast => ast.id === id);
+              wrap(api.delete('assets', id).then(res => {
+                logActivity('Delete Asset', 'Assets', `Decommissioned asset: ${asset?.name || id}`);
+                return res;
+              }), refreshAssets);
+            }}
+          />}
           {/* Fix: Added missing user prop to FileManager */}
           {currentView === 'files' && <FileManager user={user} />}
-          {currentView === 'tasks' && <TaskBoard tasks={tasks || []} employees={filteredEmployees || []} user={user} onAddTask={t => {
-            const payload = mapTaskToDb(t);
-            wrap(api.create('tasks', payload), refreshTasks);
-          }} onUpdateTask={t => {
-            const payload = mapTaskToDb(t);
-            wrap(api.update('tasks', t.id, payload), refreshTasks);
-          }} />}
-          {currentView === 'recruitment' && <Recruitment departments={departments || []} jobs={jobs || []} candidates={candidates || []} systemConfig={systemConfig || {}} onAddJob={j => wrap(api.create('jobs', j), refreshJobs)} onUpdateJob={j => wrap(api.update('jobs', j.id, j), refreshJobs)} onDeleteJob={id => wrap(api.delete('jobs', id), refreshJobs)} onAddCandidate={c => wrap(api.create('candidates', c), refreshCandidates)} onUpdateCandidate={c => wrap(api.update('candidates', c.id, c), refreshCandidates)} onDeleteCandidate={id => wrap(api.delete('candidates', id), refreshCandidates)} />}
-          {currentView === 'attendance' && <Attendance user={user} records={attendance || []} timesheets={timesheets || []} shifts={shifts || []} leaves={leaves || []} onAddRecord={r => wrap(api.create('attendance', r), refreshAttendance)} onUpdateRecord={r => wrap(api.update('attendance', r.id, r), refreshAttendance)} onDeleteRecord={id => wrap(api.delete('attendance', id), refreshAttendance)} onUpdateTimesheet={t => wrap(api.update('timesheets', t.id, t), refreshTimesheets)} onDeleteTimesheet={id => wrap(api.delete('timesheets', id), refreshTimesheets)} onAddShift={s => wrap(api.create('shifts', s), refreshShifts)} onUpdateShift={s => wrap(api.update('shifts', s.id, s), refreshShifts)} onDeleteShift={id => wrap(api.delete('shifts', id), refreshShifts)} onUpdateLeave={l => wrap(api.update('leaves', l.id, l), refreshLeaves)} onAddLeave={l => wrap(api.create('leaves', l), refreshLeaves)} />}
-          {currentView === 'payroll' && <Payroll user={user} payrollRecords={payrollRecords || []} employees={filteredEmployees || []} attendance={attendance || []} timesheets={timesheets || []} reimbursements={reimbursements || []} onAddPayroll={p => wrap(api.create('payroll', p), refreshPayroll)} onUpdatePayroll={p => wrap(api.update('payroll', p.id, p), refreshPayroll)} onDeletePayroll={id => wrap(api.delete('payroll', id), refreshPayroll)} onUpdateEmployee={handleUpdateEmployee} onAddReimbursement={r => wrap(api.create('reimbursements', r), refreshReimbursements)} onUpdateReimbursement={r => wrap(api.update('reimbursements', r.id, r), refreshReimbursements)} onDeleteReimbursement={id => wrap(api.delete('reimbursements', id), refreshReimbursements)} />}
-          {currentView === 'holidays' && <HolidayCalendar user={user} holidays={holidays || []} onAddHoliday={h => wrap(api.create('holidays', h), refreshHolidays)} onUpdateHoliday={h => wrap(api.update('holidays', h.id, h), refreshHolidays)} onDeleteHoliday={id => wrap(api.delete('holidays', id), refreshHolidays)} onApplyLeave={() => setCurrentView('attendance')} />}
-          {currentView === 'handbook' && <Handbook user={user} categories={policyCategories || []} policies={policies || []} onAddCategory={c => wrap(api.create('policy_categories', c), refreshPolicyCategories)} onUpdateCategory={c => wrap(api.update('policy_categories', c.id, c), refreshPolicyCategories)} onDeleteCategory={id => wrap(api.delete('policy_categories', id), refreshPolicyCategories)} onAddPolicy={p => wrap(api.create('policies', p), refreshPolicies)} onUpdatePolicy={p => wrap(api.update('policies', p.id, p), refreshPolicies)} onDeletePolicy={id => wrap(api.delete('policies', id), refreshPolicies)} />}
-          {currentView === 'settings' && <Settings user={user} users={systemUsers || []} groups={groups || []} onAddGroup={g => wrap(api.create('groups', g), refreshGroups)} onUpdateGroup={g => wrap(api.update('groups', g.id, g), refreshGroups)} onDeleteGroup={id => wrap(api.delete('groups', id), refreshGroups)} branches={visibleBranches || []} employees={employees || []} assets={assets || []} onAddUser={handleAddUser} onDeleteUser={handleDeleteUser} onUpdateUser={handleUpdateUser} onAddBranch={handleAddBranch} onUpdateBranch={handleUpdateBranch} onDeleteBranch={handleDeleteBranch} onUpdateEmployee={handleUpdateEmployee} onUpdateAsset={a => wrap(api.update('assets', a.id, a), refreshAssets)} systemConfig={systemConfig || {}} setSystemConfig={c => wrap(api.create('systemConfig', c), refreshConfig)} emailTemplates={emailTemplates || []} setEmailTemplates={t => wrap(api.create('emailTemplates', t), refreshTemplates)} smtpSettings={smtpSettings || {}} setSmtpSettings={s => wrap(api.create('smtpSettings', s), refreshSmtp)} notificationSettings={notificationSettings || {}} setNotificationSettings={n => wrap(api.create('notificationSettings', n), refreshNotifs)} onNavigate={handleNavigate} onSelectBranch={setSelectedBranchId} onViewEmployee={handleViewEmployeeProfile} leaves={leaves || []} reimbursements={reimbursements || []} />}
-          {currentView === 'logs' && <ActivityLogs logs={logs || []} />}
+          {currentView === 'tasks' && <TaskBoard
+            tasks={tasks || []}
+            employees={filteredEmployees || []}
+            user={user}
+            onAddTask={t => {
+              const payload = mapTaskToDb(t);
+              wrap(api.create('tasks', payload).then(res => {
+                logActivity('Create Task', 'Tasks', `Created task: ${t.title}`);
+                return res;
+              }), refreshTasks);
+            }}
+            onUpdateTask={t => {
+              const payload = mapTaskToDb(t);
+              wrap(api.update('tasks', t.id, payload).then(res => {
+                logActivity('Update Task', 'Tasks', `Updated task: ${t.title}`);
+                return res;
+              }), refreshTasks);
+            }}
+          />}
+          {currentView === 'recruitment' && <Recruitment
+            departments={departments || []}
+            jobs={jobs || []}
+            candidates={candidates || []}
+            systemConfig={systemConfig || {}}
+            onAddJob={j => wrap(api.create('jobs', j).then(res => {
+              logActivity('Create Job', 'Recruitment', `Posted new job: ${j.title}`);
+              return res;
+            }), refreshJobs)}
+            onUpdateJob={j => wrap(api.update('jobs', j.id, j).then(res => {
+              logActivity('Update Job', 'Recruitment', `Updated job: ${j.title}`);
+              return res;
+            }), refreshJobs)}
+            onDeleteJob={id => {
+              const job = jobs.find(jb => jb.id === id);
+              wrap(api.delete('jobs', id).then(res => {
+                logActivity('Delete Job', 'Recruitment', `Removed job posting: ${job?.title || id}`);
+                return res;
+              }), refreshJobs);
+            }}
+            onAddCandidate={c => wrap(api.create('candidates', c).then(res => {
+              logActivity('Add Candidate', 'Recruitment', `Added candidate: ${c.name} for ${c.jobTitle}`);
+              return res;
+            }), refreshCandidates)}
+            onUpdateCandidate={c => wrap(api.update('candidates', c.id, c).then(res => {
+              logActivity('Update Candidate', 'Recruitment', `Updated candidate: ${c.name}`);
+              return res;
+            }), refreshCandidates)}
+            onDeleteCandidate={id => {
+              const cand = candidates.find(can => can.id === id);
+              wrap(api.delete('candidates', id).then(res => {
+                logActivity('Delete Candidate', 'Recruitment', `Removed candidate: ${cand?.name || id}`);
+                return res;
+              }), refreshCandidates);
+            }}
+          />}
+          {currentView === 'attendance' && <Attendance
+            user={user}
+            records={attendance || []}
+            timesheets={timesheets || []}
+            shifts={shifts || []}
+            leaves={leaves || []}
+            onAddRecord={r => wrap(api.create('attendance', r).then(res => {
+              logActivity('Add Attendance', 'Attendance', `Manually added attendance for ${r.employeeName}`);
+              return res;
+            }), refreshAttendance)}
+            onUpdateRecord={r => wrap(api.update('attendance', r.id, r).then(res => {
+              logActivity('Update Attendance', 'Attendance', `Updated attendance for ${r.employeeName}`);
+              return res;
+            }), refreshAttendance)}
+            onDeleteRecord={id => {
+              const record = attendance.find(a => a.id === id);
+              wrap(api.delete('attendance', id).then(res => {
+                logActivity('Delete Attendance', 'Attendance', `Removed attendance for ${record?.employeeName || id}`);
+                return res;
+              }), refreshAttendance);
+            }}
+            onUpdateTimesheet={t => wrap(api.update('timesheets', t.id, t).then(res => {
+              logActivity('Update Timesheet', 'Attendance', `Updated timesheet for ${t.employeeName}`);
+              return res;
+            }), refreshTimesheets)}
+            onDeleteTimesheet={id => {
+              const ts = timesheets.find(t => t.id === id);
+              wrap(api.delete('timesheets', id).then(res => {
+                logActivity('Delete Timesheet', 'Attendance', `Removed timesheet for ${ts?.employeeName || id}`);
+                return res;
+              }), refreshTimesheets);
+            }}
+            onAddShift={s => wrap(api.create('shifts', s).then(res => {
+              logActivity('Add Shift', 'Attendance', `Added shift: ${s.name}`);
+              return res;
+            }), refreshShifts)}
+            onUpdateShift={s => wrap(api.update('shifts', s.id, s).then(res => {
+              logActivity('Update Shift', 'Attendance', `Updated shift: ${s.name}`);
+              return res;
+            }), refreshShifts)}
+            onDeleteShift={id => {
+              const sh = shifts.find(sf => sf.id === id);
+              wrap(api.delete('shifts', id).then(res => {
+                logActivity('Delete Shift', 'Attendance', `Removed shift: ${sh?.name || id}`);
+                return res;
+              }), refreshShifts);
+            }}
+            onUpdateLeave={l => wrap(api.update('leaves', l.id, l).then(res => {
+              logActivity('Update Leave', 'Attendance', `Updated leave request for ${l.employeeName}: ${l.status}`);
+              return res;
+            }), refreshLeaves)}
+            onAddLeave={l => wrap(api.create('leaves', l).then(res => {
+              logActivity('Apply Leave', 'Attendance', `New leave request from ${l.employeeName}`);
+              return res;
+            }), refreshLeaves)}
+          />}
+          {currentView === 'payroll' && <Payroll
+            user={user}
+            payrollRecords={payrollRecords || []}
+            employees={filteredEmployees || []}
+            attendance={attendance || []}
+            timesheets={timesheets || []}
+            reimbursements={reimbursements || []}
+            onAddPayroll={p => wrap(api.create('payroll', p).then(res => {
+              logActivity('Create Payroll', 'Payroll', `Generated payroll for ${p.employeeName}`);
+              return res;
+            }), refreshPayroll)}
+            onUpdatePayroll={p => wrap(api.update('payroll', p.id, p).then(res => {
+              logActivity('Update Payroll', 'Payroll', `Updated payroll record for ${p.employeeName}`);
+              return res;
+            }), refreshPayroll)}
+            onDeletePayroll={id => {
+              const pr = payrollRecords.find(p => p.id === id);
+              wrap(api.delete('payroll', id).then(res => {
+                logActivity('Delete Payroll', 'Payroll', `Removed payroll record for ${pr?.employeeName || id}`);
+                return res;
+              }), refreshPayroll);
+            }}
+            onUpdateEmployee={handleUpdateEmployee}
+            onAddReimbursement={r => wrap(api.create('reimbursements', r).then(res => {
+              logActivity('Add Reimbursement', 'Payroll', `New reimbursement for ${r.employeeName}: ${r.amount}`);
+              return res;
+            }), refreshReimbursements)}
+            onUpdateReimbursement={r => wrap(api.update('reimbursements', r.id, r).then(res => {
+              logActivity('Update Reimbursement', 'Payroll', `Updated reimbursement for ${r.employeeName}`);
+              return res;
+            }), refreshReimbursements)}
+            onDeleteReimbursement={id => {
+              const rb = reimbursements.find(r => r.id === id);
+              wrap(api.delete('reimbursements', id).then(res => {
+                logActivity('Delete Reimbursement', 'Payroll', `Removed reimbursement: ${rb?.amount || id}`);
+                return res;
+              }), refreshReimbursements);
+            }}
+          />}
+          {currentView === 'holidays' && <HolidayCalendar
+            user={user}
+            holidays={holidays || []}
+            onAddHoliday={h => wrap(api.create('holidays', h).then(res => {
+              logActivity('Add Holiday', 'Settings', `Added holiday: ${h.name}`);
+              return res;
+            }), refreshHolidays)}
+            onUpdateHoliday={h => wrap(api.update('holidays', h.id, h).then(res => {
+              logActivity('Update Holiday', 'Settings', `Updated holiday: ${h.name}`);
+              return res;
+            }), refreshHolidays)}
+            onDeleteHoliday={id => {
+              const hol = holidays.find(h => h.id === id);
+              wrap(api.delete('holidays', id).then(res => {
+                logActivity('Delete Holiday', 'Settings', `Removed holiday: ${hol?.name || id}`);
+                return res;
+              }), refreshHolidays);
+            }}
+            onApplyLeave={() => setCurrentView('attendance')}
+          />}
+          {currentView === 'handbook' && <Handbook
+            user={user}
+            categories={policyCategories || []}
+            policies={policies || []}
+            onAddCategory={c => wrap(api.create('policy_categories', c).then(res => {
+              logActivity('Add Category', 'Handbook', `Created category: ${c.name}`);
+              return res;
+            }), refreshPolicyCategories)}
+            onUpdateCategory={c => wrap(api.update('policy_categories', c.id, c).then(res => {
+              logActivity('Update Category', 'Handbook', `Updated category: ${c.name}`);
+              return res;
+            }), refreshPolicyCategories)}
+            onDeleteCategory={id => wrap(api.delete('policy_categories', id).then(res => {
+              logActivity('Delete Category', 'Handbook', `Removed category: ${id}`);
+              return res;
+            }), refreshPolicyCategories)}
+            onAddPolicy={p => wrap(api.create('policies', p).then(res => {
+              logActivity('Add Policy', 'Handbook', `Added policy: ${p.title}`);
+              return res;
+            }), refreshPolicies)}
+            onUpdatePolicy={p => wrap(api.update('policies', p.id, p).then(res => {
+              logActivity('Update Policy', 'Handbook', `Updated policy: ${p.title}`);
+              return res;
+            }), refreshPolicies)}
+            onDeletePolicy={id => wrap(api.delete('policies', id).then(res => {
+              logActivity('Delete Policy', 'Handbook', `Removed policy: ${id}`);
+              return res;
+            }), refreshPolicies)}
+          />}
+          {currentView === 'settings' && <Settings
+            user={user}
+            users={systemUsers || []}
+            groups={groups || []}
+            onAddGroup={g => wrap(api.create('permission_groups', g).then(res => {
+              logActivity('Create Group', 'Settings', `Created permission group: ${g.name}`);
+              return res;
+            }), refreshGroups)}
+            onUpdateGroup={g => wrap(api.update('permission_groups', g.id, g).then(res => {
+              logActivity('Update Group', 'Settings', `Updated permission group: ${g.name}`);
+              return res;
+            }), refreshGroups)}
+            onDeleteGroup={id => {
+              const g = groups.find(group => group.id === id);
+              wrap(api.delete('permission_groups', id).then(res => {
+                logActivity('Delete Group', 'Settings', `Deleted permission group: ${g?.name || id}`);
+                return res;
+              }), refreshGroups);
+            }}
+            branches={visibleBranches || []}
+            employees={employees || []}
+            assets={assets || []}
+            onAddUser={handleAddUser}
+            onDeleteUser={handleDeleteUser}
+            onUpdateUser={handleUpdateUser}
+            onAddBranch={handleAddBranch}
+            onUpdateBranch={handleUpdateBranch}
+            onDeleteBranch={handleDeleteBranch}
+            onUpdateEmployee={handleUpdateEmployee}
+            onUpdateAsset={a => wrap(api.update('assets', a.id, a).then(res => {
+              logActivity('Update Asset', 'Assets', `Updated asset: ${a.name}`);
+              return res;
+            }), refreshAssets)}
+            onDeleteAsset={id => {
+              const a = assets.find(asset => asset.id === id);
+              wrap(api.delete('assets', id).then(res => {
+                logActivity('Delete Asset', 'Assets', `Deleted asset: ${a?.name || id}`);
+                return res;
+              }), refreshAssets);
+            }}
+            systemConfig={systemConfig || {}}
+            setSystemConfig={c => wrap(api.create('system_config', c).then(res => {
+              logActivity('Update Config', 'Settings', 'Updated system configuration');
+              return res;
+            }), refreshConfig)}
+            emailTemplates={emailTemplates || []}
+            setEmailTemplates={t => wrap(api.create('email_templates', t).then(res => {
+              logActivity('Update Templates', 'Settings', 'Updated email templates');
+              return res;
+            }), refreshTemplates)}
+            smtpSettings={smtpSettings || {}}
+            setSmtpSettings={s => wrap(api.create('smtp_settings', s).then(res => {
+              logActivity('Update SMTP', 'Settings', 'Updated SMTP settings');
+              return res;
+            }), refreshSmtp)}
+            notificationSettings={notificationSettings || {}}
+            setNotificationSettings={n => wrap(api.create('notification_settings', n).then(res => {
+              logActivity('Update Notifications', 'Settings', 'Updated notification preferences');
+              return res;
+            }), refreshNotifs)}
+            onNavigate={handleNavigate}
+            onSelectBranch={setSelectedBranchId}
+            onViewEmployee={handleViewEmployeeProfile}
+            leaves={leaves || []}
+            reimbursements={reimbursements || []}
+            logs={logs || []}
+            onRefreshLogs={refreshLogs}
+          />}
           {currentView === 'email' && <EmailWorkflow />}
         </div><div className="h-6"></div></main>
       </div>

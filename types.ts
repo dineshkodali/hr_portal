@@ -604,6 +604,8 @@ export interface SettingsProps {
   onViewEmployee?: (id: string) => void;
   leaves?: LeaveRequest[];
   reimbursements?: Reimbursement[];
+  logs?: ActivityLog[];
+  onRefreshLogs?: () => void;
 }
 
 export interface DepartmentsProps {
