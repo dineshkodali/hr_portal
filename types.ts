@@ -113,6 +113,21 @@ export interface Employee {
   complianceDetails?: ComplianceDetails;
 }
 
+export type EmployeeUpdatePayload = {
+  id: string;               // PK is required
+  name?: string;
+  email?: string;
+  phone?: string;
+  designation?: string;
+  department?: string;
+  status?: 'Active' | 'On Leave' | 'Terminated';
+  employeeid?: string;      // business ID
+  branchid?: string;
+  joindate?: string;
+  avatar?: string | null;
+};
+
+
 export interface Department {
   id: string;
   name: string;
@@ -458,7 +473,7 @@ export interface EmployeeListProps {
   systemConfig: SystemConfig;
   selectedBranch: Branch | 'all';
   onAddEmployee: () => void;
-  onUpdateEmployee: (employee: Employee) => void;
+  onUpdateEmployee: (emp: EmployeeUpdatePayload) => void;
   onDeleteEmployee: (id: string) => void;
   onAddDepartment: (dept: Department) => void;
   onUpdateDepartment: (dept: Department) => void;

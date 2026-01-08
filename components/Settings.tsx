@@ -1206,7 +1206,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
                     <div className="flex justify-between">
                       <span>Assets:</span>{" "}
                       <span className="font-medium">
-                        {assets.filter((a) => a.branchId === b.id).length}
+                        {assets.filter((a) => a.branchid === b.id).length}
                       </span>
                     </div>
                   </div>
@@ -2345,7 +2345,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {assets
-                      .filter((a) => a.branchId === viewBranch.id)
+                      .filter((a) => a.branchid === viewBranch.id)
                       .map((asset) => (
                         <div
                           key={asset.id}
@@ -2360,7 +2360,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
                                 {asset.name}
                               </p>
                               <p className="text-[10px] text-slate-400 font-mono mt-0.5">
-                                {asset.serialNumber}
+                                {asset.serialnumber}
                               </p>
                             </div>
                           </div>

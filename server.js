@@ -592,7 +592,7 @@ app.get('/api/:table', async (req, res) => {
       values.push(req.query.folder);
     }
 
-    query += ` ORDER BY created_at DESC`;
+    // query += ` ORDER BY created_at DESC`;
 
     const { rows } = await pool.query(query, values);
 

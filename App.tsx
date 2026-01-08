@@ -366,7 +366,7 @@ const App: React.FC = () => {
         } else {
           api.create('attendance', {
             id: `at-${Date.now()}`,
-            employeeId: user.id,
+            employeeId: user.linkedemployeeid,
             employeeName: user.name,
             employeeAvatar: user.avatar,
             date: todayStr,
@@ -563,9 +563,15 @@ const App: React.FC = () => {
             onUpdateHoliday={h => wrap(api.update('holidays', h.id, h), refreshHolidays)}
             onDeleteHoliday={id => wrap(api.delete('holidays', id), refreshHolidays)}
           />}
-          {currentView === 'add-employee' && <AddEmployee onBack={() => setCurrentView('employees')} 
-          // onSave={handleAddEmployee}
-           employees={employees || []} />}
+          {currentView === 'add-employee' && (
+               <AddEmployee
+                 onBack={() => setCurrentView('employees')}
+                //  onSave={handleAddEmployee}
+                 employees={employees || []}
+                 branches={branches || []}
+                 departments={departments || []}
+               />
+             )}
           {currentView === 'teams' && <TeamManagement teams={teams || []} employees={filteredEmployees || []} onAddTeam={t => wrap(api.create('teams', t), refreshTeams)} onUpdateTeam={t => wrap(api.update('teams', t.id, t), refreshTeams)} onDeleteTeam={id => wrap(api.delete('teams', id), refreshTeams)} />}
           {currentView === 'assets' && <AssetManagement user={user} assets={assets || []} employees={filteredEmployees || []} branches={visibleBranches || []} systemConfig={systemConfig || {}} onAddAsset={a => wrap(api.create('assets', a), refreshAssets)} onUpdateAsset={a => wrap(api.update('assets', a.id, a), refreshAssets)} onDeleteAsset={id => wrap(api.delete('assets', id), refreshAssets)} />}
           {/* Fix: Added missing user prop to FileManager */}

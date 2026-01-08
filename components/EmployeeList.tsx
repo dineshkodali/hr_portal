@@ -44,9 +44,9 @@ const EmployeeList: React.FC<EmployeeListProps & { onTransferEmployee?: (empId: 
   const isHR = user.role === 'admin' || user.role === 'super_admin' || user.role === 'hr';
 
     let filteredEmployees = employees.filter(emp => 
-        (emp.name.toLowerCase().includes(searchTerm.toLowerCase()) || emp.employeeid.toLowerCase().includes(searchTerm.toLowerCase())) &&
+        (emp.name?.toLowerCase().includes(searchTerm?.toLowerCase()) || emp.employeeid?.toLowerCase().includes(searchTerm?.toLowerCase())) &&
         (departmentFilter === 'All' || emp.department === departmentFilter) &&
-        (branchFilter === 'All' || emp.branchId === branchFilter)
+        (branchFilter === 'All' || emp.branchid === branchFilter)
     );
 
     // Sorting
@@ -88,23 +88,29 @@ const EmployeeList: React.FC<EmployeeListProps & { onTransferEmployee?: (empId: 
 
 const handleUpdate = (e: React.FormEvent) => {
   e.preventDefault();
-
   if (!editEmployee) return;
 
-  if (!window.confirm('Are you sure you want to update this employee information?')) {
-    return;
-  }
+  if (!window.confirm('Are you sure you want to update this employee?')) return;
 
-  // strip DB-managed fields
-  const {
-    created_at,
-    updated_at,
-    ...safeEmployee
-  } = editEmployee as any;
+  const cleaned = {
+    id: editEmployee.id, // ONLY PK
+    name: editEmployee.name,
+    email: editEmployee.email,
+    phone: editEmployee.phone,
+    designation: editEmployee.designation,
+    department: editEmployee.department,
+    status: editEmployee.status,
+    employeeid: editEmployee.employeeid,
+    branchid: editEmployee.branchid || editEmployee.branchId,
+    joindate: editEmployee.joindate || editEmployee.joinDate,
+    avatar: editEmployee.avatar ?? null
+  };
 
-  onUpdateEmployee(safeEmployee); //  clean payload
+  onUpdateEmployee(cleaned);
+
   setEditEmployee(null);
 };
+
 
 const calculateLeaveDays = (start: string, end: string) => {
   if (!start || !end) return 0;
@@ -598,7 +604,20 @@ const calculateLeaveDays = (start: string, end: string) => {
                           {isHR && (
                               <button 
                                   onClick={() => {
-                                      setEditEmployee(viewEmployee);
+                                      setEditEmployee({
+                                      id: viewEmployee.id,
+                                      name: viewEmployee.name,
+                                      email: viewEmployee.email,
+                                      phone: viewEmployee.phone,
+                                      designation: viewEmployee.designation,
+                                      department: viewEmployee.department,
+                                      status: viewEmployee.status,
+                                      employeeid: viewEmployee.employeeid,
+                                      branchid: viewEmployee.branchid,
+                                      joindate: viewEmployee.joindate,
+                                      avatar: viewEmployee.avatar
+                                    });
+
                                       setViewEmployee(null);
                                   }}
                                   className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-200 transition-all flex items-center gap-1"
@@ -778,10 +797,17 @@ const calculateLeaveDays = (start: string, end: string) => {
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-black uppercase text-slate-400 block mb-2 tracking-widest">Branch / Location</label>
-                                        <select value={editEmployee.location || ''} onChange={e=>setEditEmployee({...editEmployee, location: e.target.value})} className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold text-slate-700 outline-none">
-                                            <option value="">Central HQ</option>
-                                            {(branches || []).map(b => <option key={b.id} value={b.name}>{b.name}</option>)}
+                                        <select
+                                          value={editEmployee.branchid || ''}
+                                          onChange={e =>
+                                            setEditEmployee({ ...editEmployee, branchid: e.target.value })
+                                          }
+                                        >
+                                          {branches.map(b => (
+                                            <option key={b.id} value={b.id}>{b.name}</option>
+                                          ))}
                                         </select>
+
                                     </div>
                                 </div>
                             </div>

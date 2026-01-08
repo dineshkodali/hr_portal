@@ -26,9 +26,9 @@ const ActivityLogs: React.FC<ActivityLogsProps> = ({ logs }) => {
 
     const filteredLogs = logs.filter(log => {
         const matchesSearch = 
-            log.action.toLowerCase().includes(searchTerm.toLowerCase()) || 
-            log.details.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            log.userName.toLowerCase().includes(searchTerm.toLowerCase());
+            log.action.toLowerCase().includes(searchTerm?.toLowerCase()) || 
+            log.details.toLowerCase().includes(searchTerm?.toLowerCase()) ||
+            log.username.toLowerCase().includes(searchTerm?.toLowerCase());
         const matchesModule = moduleFilter === 'all' || log.module === moduleFilter;
         const matchesAction = actionFilter === 'all' || log.action === actionFilter;
         return matchesSearch && matchesModule && matchesAction;
@@ -105,8 +105,8 @@ const ActivityLogs: React.FC<ActivityLogsProps> = ({ logs }) => {
                                         <td className="p-4 text-sm text-slate-600 font-mono text-xs whitespace-nowrap">{log.timestamp}</td>
                                         <td className="p-4">
                                             <div className="flex flex-col">
-                                                <span className="text-sm font-semibold text-slate-800">{log.userName}</span>
-                                                <span className="text-xs text-slate-500 capitalize">{log.userRole}</span>
+                                                <span className="text-sm font-semibold text-slate-800">{log.username}</span>
+                                                <span className="text-xs text-slate-500 capitalize">{log.userrole}</span>
                                             </div>
                                         </td>
                                         <td className="p-4">
