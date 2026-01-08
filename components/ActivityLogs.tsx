@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { ActivityLog } from '../types';
-import { Search, Filter, History, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, Filter, History, ChevronDown, ChevronUp, Calendar, X, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface ActivityLogsProps {
     logs: ActivityLog[];
@@ -9,7 +9,6 @@ interface ActivityLogsProps {
 }
 
 const ActivityLogs: React.FC<ActivityLogsProps> = ({ logs, onRefresh }) => {
-
     const [searchTerm, setSearchTerm] = useState('');
     const [moduleFilter, setModuleFilter] = useState('all');
     const [actionFilter, setActionFilter] = useState('all');
@@ -19,6 +18,12 @@ const ActivityLogs: React.FC<ActivityLogsProps> = ({ logs, onRefresh }) => {
     });
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
+
+    // Custom Date Picker State
+    const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+    const [currentMonth, setCurrentMonth] = useState(new Date());
+    const [tempStartDate, setTempStartDate] = useState(startDate);
+    const [tempEndDate, setTempEndDate] = useState(endDate);
 
     const ALL_MODULES = [
         'Auth',
@@ -35,7 +40,13 @@ const ActivityLogs: React.FC<ActivityLogsProps> = ({ logs, onRefresh }) => {
     ];
 
     const modules = Array.from(new Set([...ALL_MODULES, ...logs.map(l => l.module)])).filter(Boolean).sort();
-    const actions = Array.from(new Set(logs.map(l => l.action))).filter(Boolean).sort();
+
+    // Dynamically filter actions based on selected module
+    const actions = Array.from(new Set(
+        logs
+            .filter(l => moduleFilter === 'all' || l.module === moduleFilter)
+            .map(l => l.action)
+    )).filter(Boolean).sort();
 
     const formatTimestamp = (ts: string) => {
         try {
@@ -54,6 +65,69 @@ const ActivityLogs: React.FC<ActivityLogsProps> = ({ logs, onRefresh }) => {
         }
     };
 
+    const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
+    const getFirstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay();
+
+    const getPredefinedRange = (period: string) => {
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        let start = new Date(now);
+        let end = new Date(now);
+
+        switch (period) {
+            case 'Today':
+                break;
+            case 'Yesterday':
+                start.setDate(now.getDate() - 1);
+                end.setDate(now.getDate() - 1);
+                break;
+            case 'This Week':
+                start.setDate(now.getDate() - now.getDay());
+                break;
+            case 'Last 7 Days':
+                start.setDate(now.getDate() - 6);
+                break;
+            case 'This Month':
+                start.setDate(1);
+                break;
+            case 'Last Month':
+                start.setMonth(now.getMonth() - 1);
+                start.setDate(1);
+                end = new Date(now.getFullYear(), now.getMonth(), 0);
+                break;
+            case 'Last Week':
+                start.setDate(now.getDate() - now.getDay() - 7);
+                end.setDate(now.getDate() - now.getDay() - 1);
+                break;
+            default:
+                break;
+        }
+
+        const formatDate = (d: Date) => d.toISOString().split('T')[0];
+        setTempStartDate(formatDate(start));
+        setTempEndDate(formatDate(end));
+    };
+
+    const isDateSelected = (dateStr: string) => {
+        if (!tempStartDate) return false;
+        if (!tempEndDate) return dateStr === tempStartDate;
+        return dateStr >= tempStartDate && dateStr <= tempEndDate;
+    };
+
+    const handleDateClick = (dateStr: string) => {
+        if (!tempStartDate || (tempStartDate && tempEndDate)) {
+            setTempStartDate(dateStr);
+            setTempEndDate('');
+        } else {
+            if (dateStr < tempStartDate) {
+                setTempEndDate(tempStartDate);
+                setTempStartDate(dateStr);
+            } else {
+                setTempEndDate(dateStr);
+            }
+        }
+    };
+
     const filteredLogs = logs.filter(log => {
         const matchesSearch =
             (log.action?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
@@ -67,7 +141,9 @@ const ActivityLogs: React.FC<ActivityLogsProps> = ({ logs, onRefresh }) => {
 
         let matchesStartDate = !startDate;
         if (startDate && isValidDate) {
-            matchesStartDate = logDate >= new Date(startDate);
+            const s = new Date(startDate);
+            s.setHours(0, 0, 0, 0);
+            matchesStartDate = logDate >= s;
         }
 
         let matchesEndDate = !endDate;
@@ -123,7 +199,7 @@ const ActivityLogs: React.FC<ActivityLogsProps> = ({ logs, onRefresh }) => {
                 )}
             </div>
 
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg shadow-slate-200/50 border border-white/20 overflow-hidden">
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg shadow-slate-200/50 border border-white/20 overflow-hidden relative">
                 <div className="p-4 border-b border-slate-100 flex flex-col lg:flex-row gap-4 bg-white/50">
                     <div className="relative flex-1">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
@@ -136,55 +212,147 @@ const ActivityLogs: React.FC<ActivityLogsProps> = ({ logs, onRefresh }) => {
                         />
                     </div>
                     <div className="flex flex-wrap items-center gap-3">
+                        {/* Custom Date Range Trigger */}
+                        <div className="relative">
+                            <button
+                                onClick={() => {
+                                    setIsDatePickerOpen(!isDatePickerOpen);
+                                    if (!isDatePickerOpen) {
+                                        setTempStartDate(startDate);
+                                        setTempEndDate(endDate);
+                                    }
+                                }}
+                                className={`flex items-center gap-3 bg-white border ${startDate || endDate ? 'border-orange-500 ring-1 ring-orange-500/20' : 'border-slate-200'} rounded-xl px-4 py-2.5 text-sm font-medium transition-all hover:border-orange-500 group`}
+                            >
+                                <Calendar size={18} className={startDate || endDate ? 'text-orange-500' : 'text-slate-400 group-hover:text-orange-500'} />
+                                <span className={startDate || endDate ? 'text-slate-800' : 'text-slate-500'}>
+                                    {startDate ? (endDate ? `${new Date(startDate).toLocaleDateString()} - ${new Date(endDate).toLocaleDateString()}` : new Date(startDate).toLocaleDateString()) : 'Select Period'}
+                                </span>
+                                <ChevronDown size={14} className={`text-slate-400 transition-transform ${isDatePickerOpen ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            {/* Advanced Date Picker Dropdown */}
+                            {isDatePickerOpen && (
+                                <div className="absolute right-0 top-full mt-2 bg-white rounded-3xl shadow-2xl border border-slate-100 z-50 p-4 flex gap-4 animate-in fade-in zoom-in-95 duration-200" style={{ width: '520px' }}>
+                                    {/* Left: Calendar View */}
+                                    <div className="flex-1">
+                                        <div className="flex items-center justify-between mb-4 px-1">
+                                            <button
+                                                onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))}
+                                                className="p-1 hover:bg-slate-50 rounded-lg text-slate-400"
+                                            >
+                                                <ChevronLeft size={16} />
+                                            </button>
+                                            <h3 className="font-bold text-slate-800 text-sm">
+                                                {currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
+                                            </h3>
+                                            <button
+                                                onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))}
+                                                className="p-1 hover:bg-slate-50 rounded-lg text-slate-400"
+                                            >
+                                                <ChevronRight size={16} />
+                                            </button>
+                                        </div>
+
+                                        <div className="grid grid-cols-7 gap-1 mb-1">
+                                            {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
+                                                <div key={day} className="text-center text-[9px] font-bold text-slate-400 uppercase pb-1">{day}</div>
+                                            ))}
+                                        </div>
+
+                                        <div className="grid grid-cols-7 gap-1">
+                                            {Array.from({ length: getFirstDayOfMonth(currentMonth.getFullYear(), currentMonth.getMonth()) }).map((_, i) => (
+                                                <div key={`empty-${i}`} className="h-8 w-8" />
+                                            ))}
+                                            {Array.from({ length: getDaysInMonth(currentMonth.getFullYear(), currentMonth.getMonth()) }).map((_, i) => {
+                                                const day = i + 1;
+                                                const d = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+                                                const dateStr = d.toISOString().split('T')[0];
+                                                const isSelected = isDateSelected(dateStr);
+                                                const isStart = tempStartDate === dateStr;
+                                                const isEnd = tempEndDate === dateStr;
+                                                const isToday = new Date().toISOString().split('T')[0] === dateStr;
+
+                                                return (
+                                                    <button
+                                                        key={day}
+                                                        onClick={() => handleDateClick(dateStr)}
+                                                        className={`h-8 w-8 flex items-center justify-center rounded-lg text-xs transition-all relative
+                                                            ${isSelected ? 'bg-orange-500 text-white font-bold shadow-md shadow-orange-500/20' : 'text-slate-600 hover:bg-orange-50'}
+                                                            ${isToday && !isSelected ? 'ring-1 ring-orange-500/30 font-bold' : ''}
+                                                        `}
+                                                    >
+                                                        {day}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+
+                                    {/* Middle: Divider */}
+                                    <div className="w-px bg-slate-100 self-stretch" />
+
+                                    {/* Right: Predefined Filters */}
+                                    <div className="w-40 flex flex-col">
+                                        <h4 className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-3">Filter by Period</h4>
+                                        <div className="grid grid-cols-1 gap-1">
+                                            {['Today', 'Yesterday', 'Last 7 Days', 'This Week', 'Last Week', 'This Month', 'Last Month', 'Custom'].map(period => (
+                                                <button
+                                                    key={period}
+                                                    onClick={() => period === 'Custom' ? (setTempStartDate(''), setTempEndDate('')) : getPredefinedRange(period)}
+                                                    className="w-full text-left px-3 py-1.5 rounded-lg text-[11px] font-bold text-slate-600 hover:bg-orange-50 hover:text-orange-600 transition-all"
+                                                >
+                                                    {period}
+                                                </button>
+                                            ))}
+                                        </div>
+
+                                        <div className="mt-auto flex gap-2 pt-4">
+                                            <button
+                                                onClick={() => setIsDatePickerOpen(false)}
+                                                className="flex-1 py-2 rounded-lg text-[11px] font-bold text-slate-500 hover:bg-slate-50 transition-all border border-slate-100"
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    setStartDate(tempStartDate);
+                                                    setEndDate(tempEndDate);
+                                                    setIsDatePickerOpen(false);
+                                                }}
+                                                className="flex-1 py-2 bg-orange-500 text-white rounded-lg text-[11px] font-bold hover:bg-orange-600 transition-all shadow-md shadow-orange-500/20"
+                                            >
+                                                Apply
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
                         <div className="flex items-center gap-2">
                             <Filter size={16} className="text-slate-400" />
                             <select
                                 value={moduleFilter}
-                                onChange={(e) => setModuleFilter(e.target.value)}
-                                className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
+                                onChange={(e) => {
+                                    setModuleFilter(e.target.value);
+                                    setActionFilter('all'); // Reset action when module changes
+                                }}
+                                className="px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all cursor-pointer"
                             >
-                                <option value="all">Every Module</option>
+                                <option value="all">All Modules</option>
                                 {modules.map(mod => <option key={mod} value={mod}>{mod}</option>)}
                             </select>
                         </div>
                         <select
                             value={actionFilter}
                             onChange={(e) => setActionFilter(e.target.value)}
-                            className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
+                            className="px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all min-w-[160px] cursor-pointer"
                         >
-                            <option value="all">Every Action</option>
+                            <option value="all">{moduleFilter === 'all' ? 'All Actions' : `Actions: ${moduleFilter}`}</option>
                             {actions.map(act => <option key={act} value={act}>{act}</option>)}
                         </select>
                     </div>
-                </div>
-
-                <div className="px-4 py-3 border-b border-slate-100 flex flex-wrap items-center gap-6 bg-slate-50/30">
-                    <div className="flex items-center gap-3">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Time Range</span>
-                        <div className="flex items-center gap-2">
-                            <input
-                                type="date"
-                                value={startDate}
-                                onChange={(e) => setStartDate(e.target.value)}
-                                className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-600 text-xs focus:ring-2 focus:ring-orange-500/20 shadow-sm transition-all"
-                            />
-                            <span className="text-slate-300">→</span>
-                            <input
-                                type="date"
-                                value={endDate}
-                                onChange={(e) => setEndDate(e.target.value)}
-                                className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-600 text-xs focus:ring-2 focus:ring-orange-500/20 shadow-sm transition-all"
-                            />
-                        </div>
-                    </div>
-                    {(startDate || endDate) && (
-                        <button
-                            onClick={() => { setStartDate(''); setEndDate(''); }}
-                            className="text-xs bg-orange-50 text-orange-600 px-2 py-1 rounded-lg hover:bg-orange-100 font-bold transition-all"
-                        >
-                            Clear Date Range
-                        </button>
-                    )}
                 </div>
 
                 <div className="overflow-x-auto">
