@@ -215,6 +215,10 @@ export interface FileItem {
   uploadedDate: string;
   category: 'Company' | 'Personal';
   ownerId?: string;
+  access?: {
+    users: string[];
+    groups: string[];
+  };
 }
 
 export type TaskStatus = 'To Do' | 'In Progress' | 'Review' | 'Done';
@@ -605,6 +609,7 @@ export interface SettingsProps {
   employees: Employee[];
   assets: Asset[];
   groups: Group[];
+  files?: FileItem[];
   onAddGroup: (group: Group) => void;
   onUpdateGroup: (group: Group) => void;
   onDeleteGroup: (id: string) => void;
@@ -617,6 +622,7 @@ export interface SettingsProps {
   onAddUser?: (u: User) => void;
   onDeleteUser?: (id: string) => void;
   onUpdateUser?: (u: User) => void;
+  onUpdateFile?: (file: FileItem) => void;
   systemConfig: SystemConfig;
   setSystemConfig: (config: SystemConfig) => void;
   emailTemplates: EmailTemplate[];

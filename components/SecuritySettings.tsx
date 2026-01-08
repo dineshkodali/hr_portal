@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { 
     Shield, Lock, Smartphone, Trash2, Eye, EyeOff, Copy, CheckCircle, 
     AlertCircle, Plus, RefreshCw, LogOut, MapPin, Monitor, Globe, Calendar,
-    QrCode, Key, Zap, ShieldCheck, ShieldOff, ToggleLeft, ToggleRight
+    QrCode, Key, Zap, ShieldCheck, ShieldOff, ToggleLeft, ToggleRight, FileText, X, Save,
+    Users, Share2, Search, Grid, List, UserPlus, Globe as GlobeIcon
 } from 'lucide-react';
-import { User } from '../types';
+import { User, FileItem, Group } from '../types';
 import { api } from '../services/api';
 import { collectDeviceMetadata, getDeviceMetadataDisplay } from '../services/deviceMetadata';
 import { getLocationFromIP, formatLocationShort, LocationData } from '../services/geolocation';
@@ -43,8 +44,8 @@ interface SecuritySettings {
     totpSecret?: string;
 }
 
-export const SecuritySettings: React.FC<{ user: User }> = ({ user }) => {
-    const [activeSubTab, setActiveSubTab] = useState<'sessions' | 'history' | 'devices' | 'setup'>('sessions');
+export const SecuritySettings: React.FC<{ user: User; files?: FileItem[]; users?: User[]; groups?: Group[]; onUpdateFile?: (file: FileItem) => void }> = ({ user, files = [], users = [], groups = [], onUpdateFile }) => {
+    const [activeSubTab, setActiveSubTab] = useState<'sessions' | 'history' | 'devices' | 'setup' | 'file-access'>('sessions');
     const [loading, setLoading] = useState(false);
     const [securitySettings, setSecuritySettings] = useState<SecuritySettings>({
         totpEnabled: false,
@@ -60,6 +61,12 @@ export const SecuritySettings: React.FC<{ user: User }> = ({ user }) => {
     const [newDeviceName, setNewDeviceName] = useState('');
     const [setupStep, setSetupStep] = useState<'initial' | 'qr' | 'verify' | 'complete'>('initial');
     const [totpVerified, setTotpVerified] = useState(false);
+    const [isFileAccessModalOpen, setIsFileAccessModalOpen] = useState(false);
+    const [accessEditFile, setAccessEditFile] = useState<FileItem | null>(null);
+    const [accessForm, setAccessForm] = useState<{ users: string[]; groups: string[] }>({ users: [], groups: [] });
+    const [fileSearchTerm, setFileSearchTerm] = useState('');
+    const [fileViewMode, setFileViewMode] = useState<'grid' | 'list'>('grid');
+    const [fileFilter, setFileFilter] = useState<'all' | 'shared' | 'private'>('all');
 
     // Load security settings
     useEffect(() => {
@@ -309,6 +316,19 @@ export const SecuritySettings: React.FC<{ user: User }> = ({ user }) => {
                     <div className="flex items-center gap-2">
                         <Shield size={18} />
                         2FA, MFA & OTP
+                    </div>
+                </button>
+                <button
+                    onClick={() => setActiveSubTab('file-access')}
+                    className={`px-6 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${
+                        activeSubTab === 'file-access'
+                            ? 'bg-orange-500 text-white'
+                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    }`}
+                >
+                    <div className="flex items-center gap-2">
+                        <FileText size={18} />
+                        File Access Management
                     </div>
                 </button>
             </div>
@@ -1039,6 +1059,434 @@ export const SecuritySettings: React.FC<{ user: User }> = ({ user }) => {
                 </div>
             )}
 
+            {/* FILE ACCESS MANAGEMENT TAB */}
+            {activeSubTab === 'file-access' && (
+                <div className="space-y-6">
+                    <div className="bg-white rounded-xl border border-slate-200 p-6">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                            <div>
+                                <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                                    <FileText className="text-orange-500" size={24} />
+                                    File Sharing & Access
+                                </h3>
+                                <p className="text-sm text-slate-500 mt-1">Manage who can access your files, just like OneDrive</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => setFileViewMode(fileViewMode === 'grid' ? 'list' : 'grid')}
+                                    className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 transition-all"
+                                    title={fileViewMode === 'grid' ? 'Switch to List View' : 'Switch to Grid View'}
+                                >
+                                    {fileViewMode === 'grid' ? <List size={18} /> : <Grid size={18} />}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Search and Filter Bar */}
+                        <div className="flex flex-col md:flex-row gap-4 mb-6">
+                            <div className="relative flex-1">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                <input
+                                    type="text"
+                                    placeholder="Search files..."
+                                    value={fileSearchTerm}
+                                    onChange={(e) => setFileSearchTerm(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-sm"
+                                />
+                            </div>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setFileFilter('all')}
+                                    className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                                        fileFilter === 'all'
+                                            ? 'bg-orange-500 text-white'
+                                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                    }`}
+                                >
+                                    All Files
+                                </button>
+                                <button
+                                    onClick={() => setFileFilter('shared')}
+                                    className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${
+                                        fileFilter === 'shared'
+                                            ? 'bg-orange-500 text-white'
+                                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                    }`}
+                                >
+                                    <Share2 size={16} />
+                                    Shared
+                                </button>
+                                <button
+                                    onClick={() => setFileFilter('private')}
+                                    className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${
+                                        fileFilter === 'private'
+                                            ? 'bg-orange-500 text-white'
+                                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                    }`}
+                                >
+                                    <Lock size={16} />
+                                    Private
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Filtered Files */}
+                        {(() => {
+                            const filteredFiles = files.filter(file => {
+                                const matchesSearch = file.name.toLowerCase().includes(fileSearchTerm.toLowerCase());
+                                const fileAccess = (file as any).access || { users: [], groups: [] };
+                                const isShared = fileAccess.users.length > 0 || fileAccess.groups.length > 0;
+                                
+                                if (fileFilter === 'shared' && !isShared) return false;
+                                if (fileFilter === 'private' && isShared) return false;
+                                
+                                return matchesSearch;
+                            });
+
+                            if (filteredFiles.length === 0) {
+                                return (
+                                    <div className="text-center py-12">
+                                        <FileText className="mx-auto mb-4 text-slate-300" size={48} />
+                                        <p className="text-slate-600 font-medium">No files found</p>
+                                        <p className="text-sm text-slate-500 mt-1">
+                                            {fileSearchTerm ? 'Try a different search term' : 'Files will appear here once uploaded'}
+                                        </p>
+                                    </div>
+                                );
+                            }
+
+                            if (fileViewMode === 'grid') {
+                                return (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                        {filteredFiles.map((file) => {
+                                            const fileAccess = (file as any).access || { users: [], groups: [] };
+                                            const isShared = fileAccess.users.length > 0 || fileAccess.groups.length > 0;
+                                            const totalShared = fileAccess.users.length + fileAccess.groups.length;
+                                            
+                                            return (
+                                                <div
+                                                    key={file.id}
+                                                    className="bg-white border-2 border-slate-200 rounded-xl p-4 hover:border-orange-300 hover:shadow-lg transition-all cursor-pointer group"
+                                                >
+                                                    <div className="flex items-start justify-between mb-3">
+                                                        <div className="p-2 bg-orange-50 rounded-lg">
+                                                            <FileText size={24} className="text-orange-500" />
+                                                        </div>
+                                                        <div className="flex items-center gap-1">
+                                                            {isShared ? (
+                                                                <div className="p-1.5 bg-blue-100 rounded-full">
+                                                                    <Share2 size={14} className="text-blue-600" />
+                                                                </div>
+                                                            ) : (
+                                                                <div className="p-1.5 bg-slate-100 rounded-full">
+                                                                    <Lock size={14} className="text-slate-400" />
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <h4 className="font-bold text-slate-800 text-sm mb-2 line-clamp-2 group-hover:text-orange-600 transition-colors">
+                                                        {file.name}
+                                                    </h4>
+                                                    
+                                                    <div className="flex items-center gap-2 text-xs text-slate-500 mb-3">
+                                                        <span className="truncate">{file.uploadedBy}</span>
+                                                        <span>•</span>
+                                                        <span>{file.category}</span>
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                                                        <div className="flex items-center gap-2">
+                                                            {isShared ? (
+                                                                <>
+                                                                    <Users size={14} className="text-blue-600" />
+                                                                    <span className="text-xs font-semibold text-blue-600">
+                                                                        {totalShared} {totalShared === 1 ? 'person' : 'people'}
+                                                                    </span>
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <GlobeIcon size={14} className="text-slate-400" />
+                                                                    <span className="text-xs font-semibold text-slate-400">Everyone</span>
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setAccessEditFile(file);
+                                                                setAccessForm(fileAccess);
+                                                                setIsFileAccessModalOpen(true);
+                                                            }}
+                                                            className="px-3 py-1.5 bg-orange-500 text-white rounded-lg text-xs font-semibold hover:bg-orange-600 transition-all flex items-center gap-1"
+                                                        >
+                                                            <Share2 size={12} />
+                                                            Share
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                );
+                            }
+
+                            // List View
+                            return (
+                                <div className="space-y-2">
+                                    {filteredFiles.map((file) => {
+                                        const fileAccess = (file as any).access || { users: [], groups: [] };
+                                        const isShared = fileAccess.users.length > 0 || fileAccess.groups.length > 0;
+                                        const totalShared = fileAccess.users.length + fileAccess.groups.length;
+                                        
+                                        return (
+                                            <div
+                                                key={file.id}
+                                                className="bg-white border border-slate-200 rounded-xl p-4 hover:border-orange-300 hover:shadow-md transition-all"
+                                            >
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-4 flex-1">
+                                                        <div className="p-2 bg-orange-50 rounded-lg">
+                                                            <FileText size={20} className="text-orange-500" />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <h4 className="font-bold text-slate-800 text-sm truncate">
+                                                                    {file.name}
+                                                                </h4>
+                                                                {isShared && (
+                                                                    <div className="p-1 bg-blue-100 rounded-full">
+                                                                        <Share2 size={12} className="text-blue-600" />
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex items-center gap-3 text-xs text-slate-500">
+                                                                <span>{file.uploadedBy}</span>
+                                                                <span>•</span>
+                                                                <span>{file.category}</span>
+                                                                <span>•</span>
+                                                                {isShared ? (
+                                                                    <span className="text-blue-600 font-semibold">
+                                                                        Shared with {totalShared} {totalShared === 1 ? 'person' : 'people'}
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="text-slate-400">Available to everyone</span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => {
+                                                            setAccessEditFile(file);
+                                                            setAccessForm(fileAccess);
+                                                            setIsFileAccessModalOpen(true);
+                                                        }}
+                                                        className="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-semibold hover:bg-orange-600 transition-all flex items-center gap-2 ml-4"
+                                                    >
+                                                        <Share2 size={16} />
+                                                        Manage Access
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            );
+                        })()}
+                    </div>
+                </div>
+            )}
+
+            {/* FILE ACCESS MODAL - OneDrive Style */}
+            {isFileAccessModalOpen && accessEditFile && (
+                <div className="fixed inset-0 bg-[#0f172a]/60 backdrop-blur-[2px] flex items-center justify-center z-[100] p-4">
+                    <div className="bg-white rounded-[24px] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in duration-200 max-h-[90vh] flex flex-col">
+                        <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-white flex-shrink-0">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-orange-50 rounded-lg">
+                                    <FileText size={24} className="text-orange-500" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold text-slate-800">Share "{accessEditFile.name}"</h3>
+                                    <p className="text-xs text-slate-500 mt-0.5">Control who can access this file</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setIsFileAccessModalOpen(false)} className="text-slate-400 hover:text-slate-600 p-2 hover:bg-slate-100 rounded-lg transition-all">
+                                <X size={24} />
+                            </button>
+                        </div>
+                        
+                        <div className="flex-1 overflow-y-auto p-6">
+                            <form className="space-y-6" onSubmit={e => {
+                                e.preventDefault();
+                                if (accessEditFile && onUpdateFile) {
+                                    const updatedFile = { ...accessEditFile, access: accessForm } as FileItem;
+                                    onUpdateFile(updatedFile);
+                                    setIsFileAccessModalOpen(false);
+                                }
+                            }}>
+                                {/* Current Access Status */}
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-3">Who has access</label>
+                                    <div className="space-y-3">
+                                        {accessForm.users.length === 0 && accessForm.groups.length === 0 ? (
+                                            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center gap-3">
+                                                <div className="p-2 bg-green-100 rounded-full">
+                                                    <GlobeIcon size={20} className="text-green-600" />
+                                                </div>
+                                                <div>
+                                                    <p className="font-semibold text-slate-800">Everyone in your organization</p>
+                                                    <p className="text-xs text-slate-500">All employees can view this file</p>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                {accessForm.users.map((uid: string) => {
+                                                    const u = users.find(x => x.id === uid);
+                                                    return u ? (
+                                                        <div key={u.id} className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center justify-between">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+                                                                    {u.name.charAt(0).toUpperCase()}
+                                                                </div>
+                                                                <div>
+                                                                    <p className="font-semibold text-slate-800">{u.name}</p>
+                                                                    <p className="text-xs text-slate-500">{u.email}</p>
+                                                                </div>
+                                                            </div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setAccessForm({ ...accessForm, users: accessForm.users.filter(id => id !== uid) })}
+                                                                className="text-red-500 hover:text-red-700 p-2 hover:bg-red-50 rounded-lg transition-all"
+                                                            >
+                                                                <X size={18} />
+                                                            </button>
+                                                        </div>
+                                                    ) : null;
+                                                })}
+                                                {accessForm.groups.map((gid: string) => {
+                                                    const g = groups.find(x => x.id === gid);
+                                                    return g ? (
+                                                        <div key={g.id} className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center justify-between">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center text-white">
+                                                                    <Users size={20} />
+                                                                </div>
+                                                                <div>
+                                                                    <p className="font-semibold text-slate-800">{g.name}</p>
+                                                                    <p className="text-xs text-slate-500">Group • {g.memberIds?.length || 0} members</p>
+                                                                </div>
+                                                            </div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setAccessForm({ ...accessForm, groups: accessForm.groups.filter(id => id !== gid) })}
+                                                                className="text-red-500 hover:text-red-700 p-2 hover:bg-red-50 rounded-lg transition-all"
+                                                            >
+                                                                <X size={18} />
+                                                            </button>
+                                                        </div>
+                                                    ) : null;
+                                                })}
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Add People */}
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-3">Add people or groups</label>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-600 mb-2">Select Users</label>
+                                            <select 
+                                                multiple 
+                                                value={[]}
+                                                onChange={e => {
+                                                    const selectedIds = Array.from(e.target.selectedOptions as any, (o: any) => (o as HTMLOptionElement).value);
+                                                    setAccessForm({ 
+                                                        ...accessForm, 
+                                                        users: [...new Set([...accessForm.users, ...selectedIds])]
+                                                    });
+                                                    e.target.selectedIndex = -1;
+                                                }} 
+                                                className="w-full px-4 py-2.5 bg-white border-2 border-slate-200 rounded-xl text-sm font-medium outline-none focus:border-orange-500 min-h-[100px]"
+                                            >
+                                                {users.filter(u => !accessForm.users.includes(u.id)).map(u => 
+                                                    <option key={u.id} value={u.id}>{u.name} ({u.email})</option>
+                                                )}
+                                            </select>
+                                            <p className="text-xs text-slate-400 mt-1">Hold Ctrl/Cmd to select multiple users</p>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-600 mb-2">Select Groups</label>
+                                            <select 
+                                                multiple 
+                                                value={[]}
+                                                onChange={e => {
+                                                    const selectedIds = Array.from(e.target.selectedOptions as any, (o: any) => (o as HTMLOptionElement).value);
+                                                    setAccessForm({ 
+                                                        ...accessForm, 
+                                                        groups: [...new Set([...accessForm.groups, ...selectedIds])]
+                                                    });
+                                                    e.target.selectedIndex = -1;
+                                                }} 
+                                                className="w-full px-4 py-2.5 bg-white border-2 border-slate-200 rounded-xl text-sm font-medium outline-none focus:border-orange-500 min-h-[100px]"
+                                            >
+                                                {groups.filter(g => !accessForm.groups.includes(g.id)).map(g => 
+                                                    <option key={g.id} value={g.id}>{g.name} ({g.memberIds?.length || 0} members)</option>
+                                                )}
+                                            </select>
+                                            <p className="text-xs text-slate-400 mt-1">Hold Ctrl/Cmd to select multiple groups</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Make Public Option */}
+                                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                                    <div className="flex items-start gap-3">
+                                        <GlobeIcon size={20} className="text-blue-600 flex-shrink-0 mt-0.5" />
+                                        <div className="flex-1">
+                                            <p className="font-semibold text-blue-900 text-sm mb-1">Make available to everyone</p>
+                                            <p className="text-xs text-blue-800 mb-3">Remove all restrictions to make this file accessible to all employees in your organization.</p>
+                                            <button
+                                                type="button"
+                                                onClick={() => setAccessForm({ users: [], groups: [] })}
+                                                className="text-sm font-semibold text-blue-700 hover:text-blue-900 underline"
+                                            >
+                                                Make public
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div className="p-6 border-t border-slate-200 bg-slate-50 flex justify-end gap-3 flex-shrink-0">
+                            <button 
+                                type="button"
+                                onClick={() => setIsFileAccessModalOpen(false)}
+                                className="px-6 py-2.5 border border-slate-300 text-slate-700 rounded-xl font-semibold hover:bg-white transition-all"
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                type="button"
+                                onClick={() => {
+                                    if (accessEditFile && onUpdateFile) {
+                                        const updatedFile = { ...accessEditFile, access: accessForm } as FileItem;
+                                        onUpdateFile(updatedFile);
+                                        setIsFileAccessModalOpen(false);
+                                    }
+                                }}
+                                className="px-6 py-2.5 bg-orange-500 text-white rounded-xl font-semibold shadow-lg hover:bg-orange-600 transition-all flex items-center gap-2"
+                            >
+                                <Save size={16} />
+                                Save Changes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
         </div>
     );

@@ -22,6 +22,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
     user,
     users = [],
     groups = [],
+    files = [],
     onAddGroup,
     onUpdateGroup,
     onDeleteGroup,
@@ -40,6 +41,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
     onUpdateEmployee,
     onUpdateAsset,
     onDeleteAsset,
+    onUpdateFile,
     systemConfig = {} as SystemConfig,
     setSystemConfig,
     emailTemplates = [],
@@ -1056,7 +1058,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
             <h2 className="text-2xl font-bold text-slate-800 mb-6">
               Security & 2FA Settings
             </h2>
-            <SecuritySettings user={user} />
+            <SecuritySettings user={user} files={files} users={users} groups={groups} onUpdateFile={onUpdateFile} />
           </div>
         )}
 
