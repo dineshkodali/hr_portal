@@ -310,7 +310,8 @@ app.post('/api/login', async (req, res) => {
     console.log('🔐 Row count:', securityCheck.rows.length);
 
     // PostgreSQL returns column names in lowercase unless quoted in query
-    const totpEnabled = securityCheck.rows.length > 0 && (securityCheck.rows[0].totpenabled || securityCheck.rows[0].totpEnabled);
+    const totpEnabled = securityCheck.rows.length > 0 &&
+      (securityCheck.rows[0].totpenabled === true || securityCheck.rows[0].totpEnabled === true);
 
     if (securityCheck.rows.length > 0) {
       console.log('🔐 totpEnabled value (lowercase):', securityCheck.rows[0].totpenabled);

@@ -624,7 +624,7 @@ const App: React.FC = () => {
             }}
           />}
           {/* Fix: Added missing user prop to FileManager */}
-          {currentView === 'files' && <FileManager user={user} />}
+          {currentView === 'files' && <FileManager user={user} onLogActivity={logActivity} />}
           {currentView === 'tasks' && <TaskBoard
             tasks={tasks || []}
             employees={filteredEmployees || []}
@@ -892,7 +892,7 @@ const App: React.FC = () => {
             logs={logs || []}
             onRefreshLogs={refreshLogs}
           />}
-          {currentView === 'email' && <EmailWorkflow />}
+          {currentView === 'email' && <EmailWorkflow onLogActivity={logActivity} />}
         </div><div className="h-6"></div></main>
       </div>
     </div>

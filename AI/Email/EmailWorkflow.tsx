@@ -5,7 +5,7 @@ import EmailCompose from './EmailCompose';
 import EmailSettings from './EmailSettings';
 import { EmailFolder, EmailCustomFolder } from '../../types';
 
-const EmailWorkflow: React.FC = () => {
+const EmailWorkflow: React.FC<{ onLogActivity?: (action: string, module: string, details: string) => void }> = ({ onLogActivity }) => {
   const [activeFolder, setActiveFolder] = useState<EmailFolder | 'compose' | 'settings' | 'ai-assistant'>('inbox');
   const [searchQuery, setSearchQuery] = useState('');
   const [customFolders, setCustomFolders] = useState<EmailCustomFolder[]>(() => {
@@ -205,7 +205,7 @@ const EmailWorkflow: React.FC = () => {
         <div className="flex-1 overflow-y-auto bg-white">
           <div className="h-full">
             {activeFolder === 'compose' ? (
-              <EmailCompose />
+              <EmailCompose onLogActivity={onLogActivity} />
             ) : activeFolder === 'settings' ? (
               <EmailSettings />
             ) : (

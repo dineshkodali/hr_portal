@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { api } from '../../services/api';
 import { Send, Sparkles, Loader2, User, Mail, AlignLeft, CheckCircle2, Paperclip, X, FileText, Save } from 'lucide-react';
 
-const EmailCompose: React.FC = () => {
+const EmailCompose: React.FC<{ onLogActivity?: (action: string, module: string, details: string) => void }> = ({ onLogActivity }) => {
   const [to, setTo] = useState('');
   const [cc, setCc] = useState('');
   const [bcc, setBcc] = useState('');
@@ -55,6 +55,8 @@ const EmailCompose: React.FC = () => {
         }
       }
 
+      onLogActivity?.(isDraft ? 'Save Draft' : 'Send Email', 'Email', `${isDraft ? 'Saved draft' : 'Sent email'} to ${to} with subject: ${subject}`);
+
       setStatus('success');
       if (!isDraft) {
         setTo('');
@@ -86,6 +88,7 @@ const EmailCompose: React.FC = () => {
       });
       if (response.suggestion) {
         setBody(response.suggestion);
+        onLogActivity?.('AI Assist', 'Email', `Used AI Smart Compose for subject: ${subject}`);
       }
     } catch (err) {
       console.error('AI error:', err);

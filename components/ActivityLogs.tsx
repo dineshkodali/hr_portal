@@ -20,8 +20,22 @@ const ActivityLogs: React.FC<ActivityLogsProps> = ({ logs, onRefresh }) => {
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
 
-    const modules = Array.from(new Set(logs.map(l => l.module))).filter(Boolean);
-    const actions = Array.from(new Set(logs.map(l => l.action))).filter(Boolean);
+    const ALL_MODULES = [
+        'Auth',
+        'Workforce',
+        'Assets',
+        'Tasks',
+        'Recruitment',
+        'Attendance',
+        'Payroll',
+        'Handbook',
+        'Settings',
+        'Files',
+        'Email'
+    ];
+
+    const modules = Array.from(new Set([...ALL_MODULES, ...logs.map(l => l.module)])).filter(Boolean).sort();
+    const actions = Array.from(new Set(logs.map(l => l.action))).filter(Boolean).sort();
 
     const formatTimestamp = (ts: string) => {
         try {
