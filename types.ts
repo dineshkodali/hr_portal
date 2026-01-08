@@ -28,6 +28,19 @@ export interface Group {
   memberIds: string[];
 }
 
+export interface CopyrightSection {
+  title: string;
+  content: string;
+}
+
+export interface FooterSettings {
+  companyName: string;
+  copyrightNotice: string;
+  privacyContent: string;
+  termsContent: string;
+  securityContent: string;
+}
+
 export interface Branch {
   id: string;
   name: string;
@@ -362,7 +375,9 @@ export interface SystemConfig {
     allowEmployeePhotoUpload: boolean;
     allowEmployeeAddressEdit: boolean;
     allowEmployeeBankEdit: boolean;
-  }
+  };
+  footerSettings?: FooterSettings;
+  copyrightSections?: CopyrightSection[];
 }
 
 export interface EmailTemplate {

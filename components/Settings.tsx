@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   User as UserIcon, Shield, Lock, Save, Bell, Plus, Users, Trash2, X,
-  Database, Mail, Check, Building, Edit, MapPin, Phone, Globe, Hash,
+  Database, Mail, Check, Building, Edit, MapPin, Phone, Globe,
   Eye, Monitor, FileText, Upload, Wallet, Server, Wifi, WifiOff, List,
-  ToggleLeft, ToggleRight, CheckCircle, AlertCircle, ArrowRight, ClipboardList, Receipt, Download, ShieldCheck, ShieldOff, Bot
+  Settings as SettingsIcon, ToggleLeft, ToggleRight, CheckCircle, AlertCircle, ArrowRight, ClipboardList, Receipt, Download, ShieldCheck, ShieldOff, Bot,
+  RotateCcw, Send, AtSign, EyeOff, Search
 } from 'lucide-react';
 import { api } from '../services/api';
 import { User, UserRole, SettingsProps, Branch, Group, SystemConfig, EmailTemplate, RolePermission, Employee, Asset, LeaveRequest, Reimbursement } from '../types';
@@ -12,48 +12,12 @@ import { defaultNotificationSettings } from '../constants/defaultNotificationSet
 import { defaultFeatureToggles, FeatureToggle } from '../constants/featureToggles';
 import SecuritySettings from './SecuritySettings';
 import CopyrightPage from './CopyrightPage';
+import CopyrightNotice from './CopyrightNotice';
 import AIHRSettings from '../AI/AIHRAssistant/AIHRSettings';
 import ActivityLogs from './ActivityLogs';
 import { History } from 'lucide-react';
 
 const Settings: React.FC<SettingsProps> = (props) => {
-  // Fetch notification settings for the current user
-  const fetchNotificationSettings = async () => {
-    if (!user?.id) return;
-    try {
-      const res = await api.get(`notification_settings?userId=${user.id}`);
-      if (Array.isArray(res) && res.length > 0) {
-        setNotificationSettings(res);
-      } else {
-        // If no settings, initialize defaults
-        const settingsWithUser = defaultNotificationSettings.map(s => {
-          // Ensure both userId and type are present and non-empty
-          let type = s.type || s.module || 'general';
-          if (!type || typeof type !== 'string' || type.trim() === '') {
-            type = 'general';
-          }
-          return {
-            ...s,
-            userId: user.id,
-            type,
-          };
-        });
-        setNotificationSettings(settingsWithUser);
-        // Persist to backend, ensuring userId and type are present
-        for (const setting of settingsWithUser) {
-          if (setting.userId && setting.type && typeof setting.type === 'string' && setting.type.trim() !== '') {
-            try {
-              await api.createNotificationSetting(setting);
-            } catch (e) {
-              // Optionally handle error
-            }
-          }
-        }
-      }
-    } catch (e) {
-      setNotificationSettings([]);
-    }
-  };
   const {
     user,
     users = [],
@@ -82,34 +46,81 @@ const Settings: React.FC<SettingsProps> = (props) => {
     setEmailTemplates,
     smtpSettings = {} as any,
     setSmtpSettings,
-    notificationSettings = {} as any,
-    setNotificationSettings,
+    notificationSettings: propNotificationSettings = [],
+    setNotificationSettings: setPropNotificationSettings,
     leaves = [],
     reimbursements = [],
     logs = [],
     onRefreshLogs,
   } = props;
+
   const isAdmin = user.role === "admin" || user.role === "super_admin";
   const isSuperAdmin = user.role === "super_admin";
   const isEmployee = user.role === "employee";
+
   // --- FEATURE TOGGLES (Super Admin Only) ---
   const [featureToggles, setFeatureToggles] = useState<FeatureToggle[]>(defaultFeatureToggles);
 
   // --- AI Model Selection (shared with AIHRSettings) ---
   const [aiModel, setAiModel] = useState(() => {
-    // Try to load from localStorage
     if (typeof window !== 'undefined') {
       return localStorage.getItem('aiModel') || 'default';
     }
     return 'default';
   });
 
-  // Persist to localStorage whenever aiModel changes
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('aiModel', aiModel);
+  // --- Email Config State ---
+  const [emailConfig, setEmailConfig] = useState({
+    smtpHost: '',
+    smtpPort: '',
+    smtpUser: '',
+    smtpPass: '',
+    useSsl: false,
+    fromName: '',
+    fromEmail: '',
+  });
+  const [showPassword, setShowPassword] = useState(false);
+
+  // --- Notification Settings State ---
+  const [notificationsLocal, setNotificationsLocal] = useState(propNotificationSettings);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
+    const initial: { [key: string]: boolean } = {};
+    defaultNotificationSettings.forEach(s => {
+      initial[`${s.module}_${s.action}`] = s.enabled;
+    });
+    return initial;
+  });
+
+  const toggleNotification = (key: string) => {
+    setNotificationsEnabled(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  // Fetch notification settings for the current user
+  const fetchNotificationSettings = async () => {
+    if (!user?.id) return;
+    try {
+      const res = await api.get(`notification_settings?userId=${user.id}`);
+      if (Array.isArray(res) && res.length > 0) {
+        setNotificationsLocal(res);
+      } else {
+        const settingsWithUser = defaultNotificationSettings.map(s => {
+          let type = s.type || s.module || 'general';
+          if (!type || typeof type !== 'string' || type.trim() === '') {
+            type = 'general';
+          }
+          return { ...s, userId: user.id, type };
+        });
+        setNotificationsLocal(settingsWithUser);
+        for (const setting of settingsWithUser) {
+          try {
+            await api.createNotificationSetting(setting);
+          } catch (e) { }
+        }
+      }
+    } catch (e) {
+      setNotificationsLocal([]);
     }
-  }, [aiModel]);
+  };
   const handleToggleFeature = (key: string) => {
     setFeatureToggles(prev => prev.map(f => f.key === key ? { ...f, enabled: !f.enabled } : f));
     // TODO: Optionally persist to backend
@@ -137,6 +148,23 @@ const Settings: React.FC<SettingsProps> = (props) => {
       setLocalGroups(res || []);
     } catch {
       setLocalGroups([]);
+    }
+  };
+
+  const handleConfigUpdate = async (newConfig: SystemConfig) => {
+    setSystemConfig(newConfig);
+    try {
+      await api.create('logs', {
+        userId: user.id,
+        userName: user.name,
+        userRole: user.role,
+        module: 'Settings',
+        action: 'Update System Configuration',
+        details: `System configuration updated by ${user.name}`,
+        timestamp: new Date().toISOString()
+      });
+    } catch (e) {
+      console.error("Failed to log config update", e);
     }
   };
 
@@ -344,13 +372,29 @@ const Settings: React.FC<SettingsProps> = (props) => {
   };
 
   // --- HANDLERS ---
-  const handleUpdateProfile = (e: React.FormEvent) => {
+  const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!window.confirm("Are you sure you want to update your profile?")) {
       return;
     }
     if (onUpdateUser) {
       onUpdateUser({ ...user, ...(profileForm as User) });
+
+      // LOG ACTIVITY
+      try {
+        await api.create('logs', {
+          userId: user.id,
+          userName: user.name,
+          userRole: user.role,
+          module: 'Settings',
+          action: 'Update Profile',
+          details: `User updated their personal profile information: ${profileForm.name}`,
+          timestamp: new Date().toISOString()
+        });
+      } catch (e) {
+        console.error("Failed to log profile update", e);
+      }
+
       alert("Profile Updated Successfully");
     }
   };
@@ -591,7 +635,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
     setIsBranchModalOpen(true);
   };
 
-  const handleBranchSubmit = (e: React.FormEvent) => {
+  const handleBranchSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (
       !window.confirm(
@@ -609,8 +653,25 @@ const Settings: React.FC<SettingsProps> = (props) => {
         ...branchFormSafe,
         id: editingBranch ? editingBranch.id : `b-${Date.now()}`,
       };
-      if (editingBranch) onUpdateBranch(branchData);
-      else onAddBranch(branchData);
+
+      try {
+        if (editingBranch) onUpdateBranch(branchData);
+        else onAddBranch(branchData);
+
+        // LOG ACTIVITY
+        await api.create('logs', {
+          userId: user.id,
+          userName: user.name,
+          userRole: user.role,
+          module: 'Branches',
+          action: editingBranch ? 'Update Branch' : 'Create Branch',
+          details: `${editingBranch ? 'Updated' : 'Created'} branch: ${branchData.name}`,
+          timestamp: new Date().toISOString()
+        });
+      } catch (e) {
+        console.error("Failed to save branch or log activity", e);
+      }
+
       setIsBranchModalOpen(false);
     }
   };
@@ -735,300 +796,257 @@ const Settings: React.FC<SettingsProps> = (props) => {
       {/* MAIN CONTENT AREA */}
       <div className="flex-1 overflow-y-auto bg-slate-50/50 p-6 md:p-8 flex justify-center">
         {activeTab === 'features' && isSuperAdmin && (
-          <div className="w-[98%] mx-auto max-w-4xl space-y-8">
-            <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
-              <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-                <ToggleLeft size={24} className="text-orange-500" /> Feature Toggles
-              </h3>
-              <div className="space-y-4">
+          <div className="w-[98%] mx-auto max-w-4xl space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            {/* Features Hero Header */}
+            <div className="relative overflow-hidden bg-slate-900 rounded-3xl p-6 text-white shadow-xl">
+              <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
+                <ToggleLeft size={140} />
+              </div>
+              <div className="relative z-10 flex items-center gap-6">
+                <div className="p-4 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 h-fit">
+                  <ToggleLeft size={28} className="text-orange-400" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-black tracking-tight mb-1">Module Orchestration</h1>
+                  <p className="text-slate-400 font-medium text-xs max-w-md">
+                    Toggle system-wide functional capabilities and experimental feature branches.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+              <div className="px-6 py-3 border-b border-slate-50 bg-slate-50/50 flex items-center gap-2">
+                <Shield size={14} className="text-slate-400" />
+                <span className="font-black uppercase tracking-widest text-slate-400 text-[10px]">Access Control Matrix</span>
+              </div>
+              <div className="p-6 space-y-4">
                 {featureToggles.map((feature) => (
-                  <div key={feature.key} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div key={feature.key} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100/50 hover:bg-white hover:border-orange-500/20 transition-all group">
                     <div>
-                      <div className="text-sm font-bold text-slate-700">{feature.label}</div>
-                      <div className="text-xs text-slate-400">{feature.description}</div>
+                      <div className="text-sm font-bold text-slate-800">{feature.label}</div>
+                      <div className="text-[10px] text-slate-400 font-medium">{feature.description}</div>
                     </div>
                     <button
                       onClick={() => handleToggleFeature(feature.key)}
-                      className={`px-3 py-1 rounded-lg ${feature.enabled ? 'bg-orange-500 text-white' : 'bg-slate-100 text-slate-600'}`}
+                      className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${feature.enabled
+                        ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20'
+                        : 'bg-white text-slate-400 border border-slate-100 hover:border-slate-300'
+                        }`}
                     >
-                      {feature.enabled ? 'Enabled' : 'Disabled'}
+                      {feature.enabled ? 'Active' : 'Disabled'}
                     </button>
                   </div>
                 ))}
+                <div className="flex items-center gap-3 p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
+                  <AlertCircle size={14} className="text-blue-500" />
+                  <p className="text-[10px] text-blue-700 font-medium italic">Only high-privileged administrators can modify system orchestration toggles.</p>
+                </div>
               </div>
-              <div className="text-xs text-slate-400 mt-6">Only super admins can change feature/module access for security and compliance.</div>
             </div>
           </div>
         )}
         {activeTab === "logs" && (
-          <div className="w-[98%] mx-auto max-w-5xl">
-            <ActivityLogs logs={logs} onRefresh={onRefreshLogs} />
+          <div className="w-[98%] mx-auto max-w-5xl space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            {/* Logs Hero Header */}
+            <div className="relative overflow-hidden bg-slate-900 rounded-3xl p-6 text-white shadow-xl">
+              <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
+                <History size={140} />
+              </div>
+              <div className="relative z-10 flex items-center gap-6">
+                <div className="p-4 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 h-fit">
+                  <History size={28} className="text-blue-400" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-black tracking-tight mb-1">Administrative Protocols</h1>
+                  <p className="text-slate-400 font-medium text-xs max-w-md">
+                    Immutable transparency logs monitoring system-wide administrative state changes.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <ActivityLogs
+              logs={isAdmin ? logs : logs.filter(l => l.userId === user.id)}
+              onRefresh={onRefreshLogs}
+            />
           </div>
         )}
         {activeTab === "profile" && (
-          <div className="w-[98%] mx-auto max-w-4xl">
-            <h2 className="text-2xl font-bold text-slate-800 mb-6">
-              My Profile
-            </h2>
-            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm mb-6 flex flex-col md:flex-row gap-6 items-center">
-              <img
-                src={
-                  profileForm.avatar && profileForm.avatar.trim() !== ""
-                    ? profileForm.avatar
-                    : user.avatar
-                }
-                alt="avatar"
-                className="w-24 h-24 rounded-full border-4 border-slate-50 object-cover"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src =
-                    "https://ui-avatars.com/api/?name=" +
-                    encodeURIComponent(profileForm.name || user.name || "User");
-                }}
-              />
-              <div className="flex-1">
-                <h3 className="font-bold text-2xl text-slate-800 mb-1">
-                  {profileForm.name}
-                </h3>
-                <div className="flex flex-wrap gap-2 items-center mb-2">
-                  <span className="text-xs font-bold bg-orange-50 text-orange-600 px-2 py-1 rounded">
-                    {user.role.replace("_", " ").toUpperCase()}
-                  </span>
-                  <span className="text-xs font-bold bg-blue-50 text-blue-600 px-2 py-1 rounded">
-                    {user.status}
-                  </span>
-                  {user.branchIds && user.branchIds.length > 0 && (
-                    <span className="text-xs font-bold bg-orange-50 text-orange-600 px-2 py-1 rounded">
-                      {branches.find((b) => b.id === user.branchIds[0])?.name}
-                    </span>
-                  )}
-                </div>
-                <div className="text-slate-500 text-sm mb-1">
-                  {profileForm.designation || user.designation}
-                </div>
-                <div className="text-xs text-slate-400">
-                  Joined:{" "}
-                  {user.created_at
-                    ? new Date(user.created_at).toLocaleDateString()
-                    : "-"}
-                </div>
-                {user.linkedEmployeeId && (
-                  <div className="text-xs text-slate-400 mt-1">
-                    Linked Employee: {user.linkedEmployeeId}
+          <div className="w-[98%] mx-auto max-w-4xl space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            {/* Profile Hero Card */}
+            <div className="relative overflow-hidden bg-slate-900 rounded-3xl p-6 text-white shadow-xl">
+              <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
+                <UserIcon size={140} />
+              </div>
+              <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
+                <div className="relative">
+                  <img
+                    src={profileForm.avatar && profileForm.avatar.trim() !== "" ? profileForm.avatar : user.avatar}
+                    alt="avatar"
+                    className="w-28 h-28 rounded-3xl border-4 border-white/10 object-cover shadow-2xl"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profileForm.name || user.name || "User")}&background=E11D48&color=fff&bold=true`;
+                    }}
+                  />
+                  <div className="absolute -bottom-2 -right-2 bg-orange-500 text-white p-2 rounded-xl border-4 border-slate-900 shadow-xl">
+                    <UserIcon size={14} />
                   </div>
-                )}
+                </div>
+
+                <div className="text-center md:text-left space-y-3">
+                  <div>
+                    <h1 className="text-3xl font-black tracking-tight">{profileForm.name}</h1>
+                    <p className="text-slate-400 font-bold text-xs uppercase tracking-widest mt-1">
+                      {profileForm.designation || user.designation}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap justify-center md:justify-start gap-2">
+                    <div className="flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/10">
+                      <div className="w-1.5 h-1.5 rounded-full bg-orange-500"></div>
+                      <span className="text-[10px] font-black uppercase tracking-wider">{user.role.replace("_", " ")}</span>
+                    </div>
+                    <div className="flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/10">
+                      <Globe size={10} className="text-blue-400" />
+                      <span className="text-[10px] font-black uppercase tracking-wider">{user.status}</span>
+                    </div>
+                    {user.branchIds && user.branchIds.length > 0 && (
+                      <div className="flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/10">
+                        <Building size={10} className="text-purple-400" />
+                        <span className="text-[10px] font-black uppercase tracking-wider">
+                          {branches.find((b) => b.id === user.branchIds[0])?.name}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
-            <form
-              onSubmit={handleUpdateProfile}
-              className="space-y-6 bg-white p-6 rounded-xl border border-slate-200 shadow-sm"
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Full Name
-                  </label>
-                  <input
-                    className="w-full border p-2 rounded-lg"
-                    value={profileForm.name}
-                    onChange={(e) =>
-                      setProfileForm({ ...profileForm, name: e.target.value })
-                    }
-                    required
-                    disabled={!isAdmin}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Email
-                  </label>
-                  <input
-                    className="w-full border p-2 rounded-lg bg-slate-50"
-                    value={profileForm.email}
-                    disabled
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Phone
-                  </label>
-                  <input
-                    className="w-full border p-2 rounded-lg"
-                    value={profileForm.phone}
-                    onChange={(e) =>
-                      setProfileForm({ ...profileForm, phone: e.target.value })
-                    }
-                    disabled={!isAdmin}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Address
-                  </label>
-                  <input
-                    className="w-full border p-2 rounded-lg"
-                    value={profileForm.address}
-                    onChange={(e) =>
-                      setProfileForm({
-                        ...profileForm,
-                        address: e.target.value,
-                      })
-                    }
-                    disabled={!isAdmin}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Designation
-                  </label>
-                  <input
-                    className="w-full border p-2 rounded-lg"
-                    value={profileForm.designation || ""}
-                    onChange={(e) =>
-                      setProfileForm({
-                        ...profileForm,
-                        designation: e.target.value,
-                      })
-                    }
-                    disabled={!isAdmin}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Avatar URL
-                  </label>
-                  <input
-                    className="w-full border p-2 rounded-lg"
-                    value={profileForm.avatar || ""}
-                    onChange={(e) =>
-                      setProfileForm({ ...profileForm, avatar: e.target.value })
-                    }
-                    disabled={!isAdmin}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Branch
-                  </label>
-                  <select
-                    className="w-full border p-2 rounded-lg"
-                    value={
-                      user.branchIds && user.branchIds.length > 0
-                        ? user.branchIds[0]
-                        : ""
-                    }
-                    disabled={!isAdmin}
-                    onChange={(e) =>
-                      isAdmin &&
-                      setProfileForm({
-                        ...profileForm,
-                        branchIds: [e.target.value],
-                      })
-                    }
-                  >
-                    <option value="">Select Branch</option>
-                    {branches.map((b) => (
-                      <option key={b.id} value={b.id}>
-                        {b.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Role
-                  </label>
-                  <select
-                    className="w-full border p-2 rounded-lg"
-                    value={user.role}
-                    disabled={!isAdmin}
-                    onChange={(e) =>
-                      isAdmin &&
-                      setProfileForm({ ...profileForm, role: e.target.value })
-                    }
-                  >
-                    {roles.map((r) => (
-                      <option key={r} value={r}>
-                        {r.replace("_", " ").toUpperCase()}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Status
-                  </label>
-                  <select
-                    className="w-full border p-2 rounded-lg"
-                    value={user.status}
-                    disabled={!isAdmin}
-                    onChange={(e) =>
-                      isAdmin &&
-                      setProfileForm({ ...profileForm, status: e.target.value })
-                    }
-                  >
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Linked Employee ID
-                  </label>
-                  <input
-                    className="w-full border p-2 rounded-lg bg-slate-50"
-                    value={user.linkedEmployeeId || "-"}
-                    disabled
-                  />
-                </div>
-              </div>
-              <div className="border-t pt-6 mt-6">
-                <h4 className="text-lg font-bold text-slate-700 mb-4">
-                  Change Password
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
-                      New Password
-                    </label>
-                    <input
-                      type="password"
-                      className="w-full border p-2 rounded-lg"
-                      placeholder="Enter new password"
-                      disabled={!isAdmin}
-                    />
+
+            <form onSubmit={handleUpdateProfile} className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              {/* Identity & Contact Card */}
+              <div className="lg:col-span-2 space-y-4">
+                <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+                  <div className="px-6 py-3 border-b border-slate-50 bg-slate-50/50 flex items-center gap-2">
+                    <MapPin size={14} className="text-slate-400" />
+                    <span className="font-black uppercase tracking-widest text-slate-400 text-[10px]">Identity & Communications</span>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
-                      Confirm Password
-                    </label>
-                    <input
-                      type="password"
-                      className="w-full border p-2 rounded-lg"
-                      placeholder="Confirm new password"
-                      disabled={!isAdmin}
-                    />
+                  <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {[
+                      { label: "Display Name", value: profileForm.name, key: "name", icon: UserIcon },
+                      { label: "Digital Mail", value: profileForm.email, key: "email", icon: Mail, disabled: true },
+                      { label: "Primary Phone", value: profileForm.phone, key: "phone", icon: Phone },
+                      { label: "Residential Locale", value: profileForm.address, key: "address", icon: MapPin },
+                      { label: "Professional Title", value: profileForm.designation, key: "designation", icon: Shield },
+                      { label: "Visual Identity (URL)", value: profileForm.avatar, key: "avatar", icon: Globe }
+                    ].map((field) => (
+                      <div key={field.key} className="space-y-1.5">
+                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider flex items-center gap-2">
+                          <field.icon size={10} /> {field.label}
+                        </label>
+                        <input
+                          className={`w-full bg-slate-50 border border-slate-100 p-2.5 rounded-2xl text-xs font-bold transition-all ${field.disabled ? 'opacity-60 cursor-not-allowed' : 'focus:bg-white focus:border-orange-500/30 outline-none'}`}
+                          value={field.value || ""}
+                          onChange={(e) => !field.disabled && setProfileForm({ ...profileForm, [field.key]: e.target.value })}
+                          disabled={field.disabled || !isAdmin}
+                        />
+                      </div>
+                    ))}
                   </div>
                 </div>
-                <button
-                  type="button"
-                  className="mt-4 bg-slate-900 text-white px-6 py-2 rounded-lg font-medium hover:bg-black transition-colors"
-                  disabled={!isAdmin}
-                >
-                  Update Password
-                </button>
+
+                <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+                  <div className="px-6 py-3 border-b border-slate-50 bg-slate-50/50 flex items-center gap-2">
+                    <Lock size={14} className="text-slate-400" />
+                    <span className="font-black uppercase tracking-widest text-slate-400 text-[10px]">Infrastructure Access</span>
+                  </div>
+                  <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Branch Assignment</label>
+                      <select
+                        className="w-full bg-slate-50 border border-slate-100 p-2.5 rounded-2xl text-xs font-bold focus:bg-white focus:border-orange-500/30 outline-none transition-all"
+                        value={user.branchIds?.[0] || ""}
+                        disabled={!isAdmin}
+                        onChange={(e) => isAdmin && setProfileForm({ ...profileForm, branchIds: [e.target.value] })}
+                      >
+                        <option value="">Select Branch</option>
+                        {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+                      </select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Protocol Status</label>
+                      <select
+                        className="w-full bg-slate-50 border border-slate-100 p-2.5 rounded-2xl text-xs font-bold focus:bg-white focus:border-orange-500/30 outline-none transition-all"
+                        value={user.status}
+                        disabled={!isAdmin}
+                        onChange={(e) => isAdmin && setProfileForm({ ...profileForm, status: e.target.value })}
+                      >
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Privilege Tier</label>
+                      <select
+                        className="w-full bg-slate-50 border border-slate-100 p-2.5 rounded-2xl text-xs font-bold focus:bg-white focus:border-orange-500/30 outline-none transition-all"
+                        value={user.role}
+                        disabled={!isAdmin}
+                        onChange={(e) => isAdmin && setProfileForm({ ...profileForm, role: e.target.value })}
+                      >
+                        {roles.map((r) => <option key={r} value={r}>{r.replace("_", " ").toUpperCase()}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                </div>
               </div>
-              {isAdmin && (
-                <button
-                  type="submit"
-                  className="bg-orange-500 text-white px-6 py-2 rounded-lg font-medium hover:bg-orange-600 transition-colors mt-6"
-                >
-                  Save Changes
-                </button>
-              )}
+
+              {/* Security & Action Side Column */}
+              <div className="space-y-4">
+                <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 space-y-6">
+                  <div>
+                    <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest mb-4">Neural Security</h4>
+                    <div className="space-y-4">
+                      <div className="space-y-1.5 text-left">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Encryption Cipher</label>
+                        <input
+                          type="password"
+                          className="w-full bg-slate-50 border border-slate-100 p-2.5 rounded-2xl text-xs focus:bg-white outline-none"
+                          placeholder="••••••••"
+                          disabled={!isAdmin}
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        className="w-full py-3 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all shadow-lg shadow-slate-900/10"
+                        disabled={!isAdmin}
+                      >
+                        Cycle Credentials
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="pt-6 border-t border-slate-100">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-8 h-8 bg-orange-500 rounded-xl flex items-center justify-center text-white font-black text-xs">
+                        ID
+                      </div>
+                      <div className="text-left">
+                        <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">Linked Employee</h3>
+                        <p className="text-[10px] font-mono text-slate-400">{user.linkedEmployeeId || "UNLINKED"}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {isAdmin && (
+                    <button
+                      type="submit"
+                      className="w-full py-4 bg-orange-500 text-white rounded-3xl text-sm font-black uppercase tracking-widest hover:bg-orange-600 transition-all shadow-xl shadow-orange-500/20"
+                    >
+                      Sync Profile
+                    </button>
+                  )}
+                </div>
+              </div>
             </form>
           </div>
         )}
@@ -1052,101 +1070,114 @@ const Settings: React.FC<SettingsProps> = (props) => {
         {/* Example usage: <AIHRChat currentUser={user} aiModel={aiModel} /> */}
 
         {activeTab === "users" && (
-          <div className="w-[98%] mx-auto max-w-4xl space-y-6">
-            <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-slate-800">
-                  User Management
-                </h2>
+          <div className="w-[98%] mx-auto max-w-4xl space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            {/* Users Hero Header */}
+            <div className="relative overflow-hidden bg-slate-900 rounded-3xl p-6 text-white shadow-xl">
+              <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
+                <Users size={140} />
+              </div>
+              <div className="relative z-10 flex items-center justify-between gap-6">
+                <div className="flex items-center gap-6">
+                  <div className="p-4 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 h-fit">
+                    <Users size={28} className="text-orange-400" />
+                  </div>
+                  <div>
+                    <h1 className="text-2xl font-black tracking-tight mb-1">Human Capital Directory</h1>
+                    <p className="text-slate-400 font-medium text-xs max-w-md">
+                      Orchestrate user identities, privilege tiers, and organizational access protocols.
+                    </p>
+                  </div>
+                </div>
                 <button
                   onClick={() => openUserModal()}
-                  className="bg-orange-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-orange-600"
+                  className="relative z-20 flex items-center gap-2 px-6 py-3 bg-orange-500 rounded-2xl text-[10px] font-black text-white hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/20 uppercase tracking-widest whitespace-nowrap"
                 >
-                  <Plus size={18} /> Add User
+                  <Plus size={14} /> Provision User
                 </button>
               </div>
-              <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                <table className="w-full text-left">
-                  <thead className="bg-slate-50 border-b">
-                    <tr>
-                      <th className="p-4 text-xs font-bold text-slate-500 uppercase">
-                        User
-                      </th>
-                      <th className="p-4 text-xs font-bold text-slate-500 uppercase">
-                        Role
-                      </th>
-                      <th className="p-4 text-xs font-bold text-slate-500 uppercase">
-                        Branch
-                      </th>
-                      <th className="p-4 text-xs font-bold text-slate-500 uppercase">
-                        Status
-                      </th>
-                      <th className="p-4 text-xs font-bold text-slate-500 uppercase text-right">
-                        Actions
-                      </th>
+            </div>
+
+            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+              <div className="px-6 py-3 border-b border-slate-50 bg-slate-50/50 flex items-center gap-2">
+                <Shield size={14} className="text-slate-400" />
+                <span className="font-black uppercase tracking-widest text-slate-400 text-[10px]">Active Identity Base</span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50/50">
+                      <th className="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Descriptor</th>
+                      <th className="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Privilege Tier</th>
+                      <th className="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Protocol Hub</th>
+                      <th className="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y">
+                  <tbody className="divide-y divide-slate-50">
                     {usersList.map((u) => (
-                      <tr key={u.id} className="hover:bg-slate-50">
-                        <td className="p-4 flex items-center gap-3">
-                          <img
-                            src={u.avatar}
-                            alt={u.name}
-                            className="w-8 h-8 rounded-full border border-slate-100"
-                          />
-                          <div>
-                            <div className="font-bold text-slate-800 text-sm">
-                              {u.name}
+                      <tr key={u.id} className="hover:bg-slate-50/50 transition-colors group">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="relative">
+                              <img
+                                src={u.avatar}
+                                alt={u.name}
+                                className="w-10 h-10 rounded-2xl border border-slate-100 object-cover"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name)}&background=f1f5f9&color=64748b&bold=true`;
+                                }}
+                              />
+                              <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-orange-500 border-2 border-white rounded-full"></div>
                             </div>
-                            <div className="text-xs text-slate-400">
-                              {u.email}
+                            <div>
+                              <div className="font-bold text-slate-800 text-sm tracking-tight">{u.name}</div>
+                              <div className="text-[10px] text-slate-400 font-medium lowercase font-mono">{u.email}</div>
                             </div>
                           </div>
                         </td>
-                        <td className="p-4 text-sm text-slate-600 capitalize">
-                          {u.role.replace("_", " ")}
-                        </td>
-                        <td className="p-4 text-sm text-slate-600">
-                          {u.branchIds && u.branchIds.length > 0
-                            ? branches.find((b) => b.id === u.branchIds[0])
-                              ?.name
-                            : "-"}
-                        </td>
-                        <td className="p-4">
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs border ${u.status === "Active"
-                              ? "bg-orange-50 text-orange-700 border-orange-200"
-                              : "bg-slate-100 text-slate-600 border-slate-200"
-                              }`}
-                          >
-                            {u.status}
+                        <td className="px-6 py-4">
+                          <span className="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-black uppercase tracking-wider border border-slate-200/50">
+                            {u.role.replace("_", " ")}
                           </span>
                         </td>
-                        <td className="p-4 text-right">
-                          <button
-                            onClick={() => openUserModal(u)}
-                            className="p-2 text-slate-400 hover:text-blue-600 mr-2"
-                          >
-                            <Edit size={18} />
-                          </button>
-                          <button
-                            onClick={() => {
-                              if (
-                                window.confirm(
-                                  "Are you sure you want to delete this user? This action cannot be undone."
-                                )
-                              ) {
-                                if (onDeleteUser) {
-                                  onDeleteUser(u.id);
-                                  setTimeout(fetchUsers, 500);
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2 text-xs font-bold text-slate-600">
+                            <Building size={12} className="text-slate-300" />
+                            {u.branchIds && u.branchIds.length > 0
+                              ? branches.find((b) => b.id === u.branchIds[0])?.name
+                              : "Global Hub"}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full border text-[10px] font-black uppercase tracking-widest ${u.status === "Active"
+                            ? "bg-emerald-50 text-emerald-600 border-emerald-100"
+                            : "bg-slate-100 text-slate-500 border-slate-200"
+                            }`}>
+                            <span className={`w-1 h-1 rounded-full ${u.status === "Active" ? "bg-emerald-500 animate-pulse" : "bg-slate-400"}`}></span>
+                            {u.status}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                              onClick={() => openUserModal(u)}
+                              className="p-2 text-slate-400 hover:text-orange-500 hover:bg-orange-50 rounded-xl transition-all"
+                            >
+                              <Edit size={16} />
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (window.confirm("Are you sure you want to delete this user? This action cannot be undone.")) {
+                                  if (onDeleteUser) {
+                                    onDeleteUser(u.id);
+                                    setTimeout(fetchUsers, 500);
+                                  }
                                 }
-                              }
-                            }}
-                            className="p-2 text-slate-400 hover:text-red-600"
-                          >
-                            <Trash2 size={18} />
-                          </button>
+                              }}
+                              className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -1158,79 +1189,95 @@ const Settings: React.FC<SettingsProps> = (props) => {
         )}
 
         {activeTab === "branches" && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-slate-800">
-                Branch Operations
-              </h2>
-              <button
-                onClick={() => openBranchModal()}
-                className="bg-orange-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/20 font-bold"
-              >
-                <Plus size={18} /> Add Branch
-              </button>
+          <div className="w-[98%] mx-auto max-w-4xl space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            {/* Branches Hero Header */}
+            <div className="relative overflow-hidden bg-slate-900 rounded-3xl p-6 text-white shadow-xl">
+              <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
+                <Building size={140} />
+              </div>
+              <div className="relative z-10 flex items-center justify-between gap-6">
+                <div className="flex items-center gap-6">
+                  <div className="p-4 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 h-fit">
+                    <Building size={28} className="text-blue-400" />
+                  </div>
+                  <div>
+                    <h1 className="text-2xl font-black tracking-tight mb-1">Operational Geosystems</h1>
+                    <p className="text-slate-400 font-medium text-xs max-w-md">
+                      Global infrastructure management and localized asset orchestration across branch nodes.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => openBranchModal()}
+                  className="relative z-20 flex items-center gap-2 px-6 py-3 bg-orange-500 rounded-2xl text-[10px] font-black text-white hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/20 uppercase tracking-widest whitespace-nowrap"
+                >
+                  <Plus size={14} /> Establish Node
+                </button>
+              </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {branches.map((b) => (
                 <div
                   key={b.id}
-                  className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm relative group hover:border-orange-200 transition-all"
+                  className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm relative group hover:border-orange-500/20 transition-all duration-300"
                 >
-                  <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="absolute top-6 right-6 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={() => openBranchModal(b)}
-                      className="p-1 text-blue-500 bg-blue-50 rounded hover:bg-blue-100"
+                      className="p-2 text-slate-400 hover:text-orange-500 hover:bg-orange-50 rounded-xl transition-all"
                     >
                       <Edit size={16} />
                     </button>
                     <button
                       onClick={() => {
-                        if (
-                          window.confirm(
-                            "Are you sure you want to delete this branch? All associated data will be affected."
-                          )
-                        ) {
+                        if (window.confirm("Are you sure you want to delete this branch? All associated data will be affected.")) {
                           onDeleteBranch(b.id);
                         }
                       }}
-                      className="p-1 text-red-500 bg-red-50 rounded hover:bg-red-100"
+                      className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
                     >
                       <Trash2 size={16} />
                     </button>
                   </div>
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
-                      <Building size={24} />
+
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl border border-blue-100/50">
+                      <Building size={20} />
                     </div>
                     <div>
-                      <h3 className="font-bold text-slate-800">{b.name}</h3>
-                      <p className="text-xs text-slate-500">
-                        {b.city}, {b.country}
+                      <h3 className="font-black text-slate-800 tracking-tight leading-none mb-1.5">{b.name}</h3>
+                      <div className="flex items-center gap-2 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                        <MapPin size={8} /> {b.city}, {b.country}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 mb-6">
+                    <div className="p-3 bg-slate-50/50 rounded-2xl border border-slate-100">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Staff Density</p>
+                      <p className="text-xl font-black text-slate-800 tracking-tighter">
+                        {employees.filter((e) => e.branchId === b.id).length}
+                        <span className="text-[10px] text-slate-400 font-bold ml-1 tracking-normal">UNITS</span>
+                      </p>
+                    </div>
+                    <div className="p-3 bg-slate-50/50 rounded-2xl border border-slate-100">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Asset Allocation</p>
+                      <p className="text-xl font-black text-slate-800 tracking-tighter">
+                        {assets.filter((a) => a.branchId === b.id).length}
+                        <span className="text-[10px] text-slate-400 font-bold ml-1 tracking-normal">FOUND</span>
                       </p>
                     </div>
                   </div>
-                  <div className="space-y-2 text-sm text-slate-600 border-t border-slate-50 pt-4 mb-4">
-                    <div className="flex justify-between">
-                      <span>Staff Count:</span>{" "}
-                      <span className="font-medium">
-                        {employees.filter((e) => e.branchId === b.id).length}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Assets:</span>{" "}
-                      <span className="font-medium">
-                        {assets.filter((a) => a.branchId === b.id).length}
-                      </span>
-                    </div>
-                  </div>
+
                   <button
                     onClick={() => {
                       setViewBranch(b);
                       setBranchDetailTab("overview");
                     }}
-                    className="w-full py-2 bg-slate-50 text-slate-600 rounded-lg text-sm font-bold hover:bg-orange-500 hover:text-white transition-all flex items-center justify-center gap-2"
+                    className="w-full py-3 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all flex items-center justify-center gap-2 group/btn shadow-lg shadow-slate-900/10"
                   >
-                    View Details <ArrowRight size={14} />
+                    Node Analytics <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
                   </button>
                 </div>
               ))}
@@ -1239,143 +1286,123 @@ const Settings: React.FC<SettingsProps> = (props) => {
         )}
 
         {activeTab === "groups" && (
-          <div className="w-[98%] mx-auto max-w-4xl space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-slate-800">
-                Permission Groups
-              </h2>
-              <div className="flex gap-3">
-                {localGroups.length === 0 && (
+          <div className="w-[98%] mx-auto max-w-4xl space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            {/* Groups Hero Header */}
+            <div className="relative overflow-hidden bg-slate-900 rounded-3xl p-6 text-white shadow-xl">
+              <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
+                <Shield size={140} />
+              </div>
+              <div className="relative z-10 flex items-center justify-between gap-6">
+                <div className="flex items-center gap-6">
+                  <div className="p-4 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 h-fit">
+                    <Shield size={28} className="text-purple-400" />
+                  </div>
+                  <div>
+                    <h1 className="text-2xl font-black tracking-tight mb-1">Authorization Matrix</h1>
+                    <p className="text-slate-400 font-medium text-xs max-w-md">
+                      Define secure permission clusters and role-based access control hierarchies.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  {localGroups.length === 0 && (
+                    <button
+                      onClick={populateDefaultGroups}
+                      className="flex items-center gap-2 px-5 py-3 bg-white/10 backdrop-blur-md rounded-2xl text-[10px] font-black text-white hover:bg-white/20 transition-all border border-white/10 uppercase tracking-widest"
+                    >
+                      <CheckCircle size={14} /> Restore Defaults
+                    </button>
+                  )}
                   <button
-                    onClick={populateDefaultGroups}
-                    className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-600 font-medium"
+                    onClick={() => openGroupModal()}
+                    className="flex items-center gap-2 px-6 py-3 bg-orange-500 rounded-2xl text-[10px] font-black text-white hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/20 uppercase tracking-widest"
                   >
-                    <CheckCircle size={18} /> Load Default Groups
+                    <Plus size={14} /> Define Cluster
                   </button>
-                )}
-                <button
-                  onClick={() => openGroupModal()}
-                  className="bg-orange-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-orange-600 font-medium"
-                >
-                  <Plus size={18} /> Create Custom Group
-                </button>
+                </div>
               </div>
             </div>
 
             {localGroups.length === 0 ? (
-              <div className="bg-white rounded-2xl border-2 border-dashed border-slate-200 p-12 text-center">
-                <Shield size={64} className="mx-auto text-slate-300 mb-4" />
-                <h3 className="text-xl font-bold text-slate-800 mb-2">
-                  No Permission Groups Found
-                </h3>
-                <p className="text-slate-500 mb-6 max-w-md mx-auto">
-                  Permission groups help you organize and assign access rights
-                  to users. Start by loading default role-based groups or create
-                  your own custom group.
+              <div className="bg-white rounded-[40px] border-2 border-dashed border-slate-100 p-20 text-center shadow-inner">
+                <Shield size={64} className="mx-auto text-slate-200 mb-6" />
+                <h3 className="text-xl font-black text-slate-800 mb-2 uppercase tracking-tighter">No Permission Chains Found</h3>
+                <p className="text-slate-400 font-medium text-xs mb-8 max-w-sm mx-auto">
+                  Permission groups organize and assign access rights. Start by loading default protocols or create a custom role.
                 </p>
-                <div className="flex gap-3 justify-center">
-                  <button
-                    onClick={populateDefaultGroups}
-                    className="bg-blue-500 text-white px-6 py-3 rounded-lg flex items-center gap-2 hover:bg-blue-600 font-bold shadow-lg"
-                  >
-                    <CheckCircle size={20} /> Load 5 Default Groups
-                  </button>
-                  <button
-                    onClick={() => openGroupModal()}
-                    className="bg-orange-500 text-white px-6 py-3 rounded-lg flex items-center gap-2 hover:bg-orange-600 font-bold shadow-lg"
-                  >
-                    <Plus size={20} /> Create Custom Group
-                  </button>
-                </div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {localGroups.map((group) => (
                   <div
                     key={group.id}
-                    className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm relative group"
+                    className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm relative group hover:border-purple-500/20 transition-all duration-300"
                   >
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="p-3 bg-purple-50 rounded-full text-purple-600">
-                        <Shield size={24} />
+                    <div className="flex justify-between items-start mb-6">
+                      <div className="p-3 bg-purple-50 text-purple-600 rounded-2xl border border-purple-100/50">
+                        <Shield size={20} />
                       </div>
-                      <div className="flex space-x-2">
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => openGroupModal(group)}
-                          className="p-2 text-slate-400 hover:text-blue-600 bg-slate-50 rounded-lg"
+                          className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-xl transition-all"
                         >
                           <Edit size={16} />
                         </button>
                         <button
                           onClick={() => handleDeletePermissionGroup(group.id)}
-                          className="p-2 text-slate-400 hover:text-red-600 bg-slate-50 rounded-lg"
+                          className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
                         >
                           <Trash2 size={16} />
                         </button>
-
                       </div>
                     </div>
-                    <h3 className="font-bold text-slate-800 text-lg mb-1">
+
+                    <h3 className="font-black text-slate-800 text-lg mb-1 tracking-tight">
                       {group.name}
                     </h3>
-                    <p className="text-sm text-slate-500 mb-4">
-                      {group.description}
+                    <p className="text-xs text-slate-400 font-medium mb-6">
+                      {group.description || "Experimental authorization chain definition."}
                     </p>
-                    <div className="border-t border-slate-50 pt-4">
-                      <div className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-3">
-                        Permissions ({group.permissions.length} modules)
+
+                    <div className="pt-4 border-t border-slate-50">
+                      <div className="flex items-center justify-between mb-4">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Permissions</span>
+                        <span className="px-2 py-0.5 bg-slate-100 rounded text-[9px] font-black text-slate-500">{group.permissions.length} Units</span>
                       </div>
-                      <div className="space-y-2">
-                        {group.permissions.map((p) => {
-                          const hasFullAccess =
-                            p.read && p.create && p.update && p.delete;
-                          const hasNoAccess =
-                            !p.read && !p.create && !p.update && !p.delete;
+
+                      <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+                        {group.permissions.slice(0, 6).map((p) => {
+                          const hasFullAccess = p.read && p.create && p.update && p.delete;
+                          const hasNoAccess = !p.read && !p.create && !p.update && !p.delete;
                           return (
-                            <div
-                              key={p.id}
-                              className="flex justify-between items-center text-xs"
-                            >
-                              <span className="font-bold text-slate-700 capitalize">
-                                {p.module}
-                              </span>
-                              <div className="flex gap-1">
+                            <div key={p.id} className="flex justify-between items-center group/row">
+                              <span className="text-[11px] font-bold text-slate-600 capitalize">{p.module}</span>
+                              <div className="flex gap-0.5">
                                 {hasNoAccess ? (
-                                  <span className="px-2 py-1 bg-red-50 text-red-600 text-[10px] font-bold rounded border border-red-200">
-                                    No Access
-                                  </span>
+                                  <div className="w-4 h-4 rounded-md bg-slate-100 border border-slate-200 flex items-center justify-center">
+                                    <X size={8} className="text-slate-400" />
+                                  </div>
                                 ) : hasFullAccess ? (
-                                  <span className="px-2 py-1 bg-orange-50 text-orange-600 text-[10px] font-bold rounded border border-orange-200">
-                                    Full Access
-                                  </span>
+                                  <div className="w-10 h-4 bg-orange-500 rounded text-[8px] font-black text-white flex items-center justify-center uppercase">Full</div>
                                 ) : (
-                                  <>
-                                    {p.read && (
-                                      <span className="px-1.5 py-0.5 bg-blue-50 text-blue-600 text-[9px] font-bold rounded border border-blue-200">
-                                        R
-                                      </span>
-                                    )}
-                                    {p.create && (
-                                      <span className="px-1.5 py-0.5 bg-orange-50 text-orange-600 text-[9px] font-bold rounded border border-orange-200">
-                                        C
-                                      </span>
-                                    )}
-                                    {p.update && (
-                                      <span className="px-1.5 py-0.5 bg-orange-50 text-orange-600 text-[9px] font-bold rounded border border-orange-200">
-                                        U
-                                      </span>
-                                    )}
-                                    {p.delete && (
-                                      <span className="px-1.5 py-0.5 bg-red-50 text-red-600 text-[9px] font-bold rounded border border-red-200">
-                                        D
-                                      </span>
-                                    )}
-                                  </>
+                                  <div className="flex gap-0.5">
+                                    {['read', 'create', 'update', 'delete'].map(act => (
+                                      <div key={act} className={`w-3.5 h-3.5 rounded-sm flex items-center justify-center text-[7px] font-black uppercase ${p[act as keyof typeof p] ? 'bg-blue-500 text-white' : 'bg-slate-50 text-slate-300'}`}>
+                                        {act[0]}
+                                      </div>
+                                    ))}
+                                  </div>
                                 )}
                               </div>
                             </div>
                           );
                         })}
+                        {group.permissions.length > 6 && (
+                          <div className="col-span-2 text-center pt-2 text-[9px] font-black text-slate-300 uppercase tracking-widest">
+                            + {group.permissions.length - 6} Additional Modules
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1386,439 +1413,484 @@ const Settings: React.FC<SettingsProps> = (props) => {
         )}
 
         {activeTab === "config" && (
-          <div className="w-[98%] mx-auto max-w-4xl space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-slate-800">
-                System Configurations
-              </h2>
-              <div>
+          <div className="w-[98%] mx-auto max-w-4xl space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            {/* Config Hero Header */}
+            <div className="relative overflow-hidden bg-slate-900 rounded-3xl p-6 text-white shadow-xl">
+              <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
+                <List size={140} />
+              </div>
+              <div className="relative z-10 flex items-center justify-between gap-6">
+                <div className="flex items-center gap-6">
+                  <div className="p-4 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 h-fit">
+                    <List size={28} className="text-emerald-400" />
+                  </div>
+                  <div>
+                    <h1 className="text-2xl font-black tracking-tight mb-1">System Core Parameters</h1>
+                    <p className="text-slate-400 font-medium text-xs max-w-md">
+                      Global orchestration of organizational entities, asset classifications, and portal behaviors.
+                    </p>
+                  </div>
+                </div>
                 <button
-                  onClick={() =>
-                    setSystemConfig({
-                      ...systemConfig,
-                      departments:
-                        systemConfig.departments &&
-                          systemConfig.departments.length > 0
-                          ? systemConfig.departments
-                          : [
-                            "Human Resources",
-                            "Engineering",
-                            "Sales",
-                            "Operations",
-                          ],
-                      assetCategories:
-                        systemConfig.assetCategories &&
-                          systemConfig.assetCategories.length > 0
-                          ? systemConfig.assetCategories
-                          : ["Laptop", "Monitor", "Phone", "Furniture"],
-                      jobTypes:
-                        systemConfig.jobTypes &&
-                          systemConfig.jobTypes.length > 0
-                          ? systemConfig.jobTypes
-                          : ["Full Time", "Part Time", "Contract"],
-                      leaveTypes:
-                        systemConfig.leaveTypes &&
-                          systemConfig.leaveTypes.length > 0
-                          ? systemConfig.leaveTypes
-                          : ["Sick Leave", "Paid Time Off", "Casual Leave"],
-                      designations:
-                        systemConfig.designations &&
-                          systemConfig.designations.length > 0
-                          ? systemConfig.designations
-                          : [
-                            "Manager",
-                            "Team Lead",
-                            "Software Engineer",
-                            "Intern",
-                          ],
-                      portalSettings: {
-                        ...(systemConfig.portalSettings || {}),
-                        allowEmployeeProfileEdit: true,
-                        allowEmployeePhotoUpload: true,
-                        allowEmployeeAddressEdit: false,
-                        allowEmployeeBankEdit: false,
-                      },
-                    })
-                  }
-                  className="px-3 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm"
+                  onClick={() => handleConfigUpdate({
+                    ...systemConfig,
+                    departments: systemConfig.departments?.length ? systemConfig.departments : ["Human Resources", "Engineering", "Sales", "Operations"],
+                    assetCategories: systemConfig.assetCategories?.length ? systemConfig.assetCategories : ["Laptop", "Monitor", "Phone", "Furniture"],
+                    jobTypes: systemConfig.jobTypes?.length ? systemConfig.jobTypes : ["Full Time", "Part Time", "Contract"],
+                    leaveTypes: systemConfig.leaveTypes?.length ? systemConfig.leaveTypes : ["Sick Leave", "Paid Time Off", "Casual Leave"],
+                    designations: systemConfig.designations?.length ? systemConfig.designations : ["Manager", "Team Lead", "Software Engineer", "Intern"],
+                    portalSettings: { ...(systemConfig.portalSettings || {}), allowEmployeeProfileEdit: true, allowEmployeePhotoUpload: true, allowEmployeeAddressEdit: false, allowEmployeeBankEdit: false },
+                  })}
+                  className="flex items-center gap-2 px-6 py-3 bg-white/10 backdrop-blur-md rounded-2xl text-[10px] font-black text-white hover:bg-white/20 transition-all border border-white/10 uppercase tracking-widest whitespace-nowrap"
                 >
-                  Populate defaults
+                  <RotateCcw size={14} /> Reset Defaults
                 </button>
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-              <div className="flex items-center gap-4 mb-4">
-                <label className="text-sm font-bold text-slate-500">
-                  Category
-                </label>
-                <select
-                  value={configCategory as string}
-                  onChange={(e) => setConfigCategory(e.target.value as any)}
-                  className="border p-2 rounded-lg text-sm"
-                >
-                  <option value="departments">Departments</option>
-                  <option value="assetCategories">Asset Categories</option>
-                  <option value="jobTypes">Job Types</option>
-                  <option value="leaveTypes">Leave Types</option>
-                  <option value="designations">Designations</option>
-                  <option value="portalSettings">Portal Settings</option>
-                </select>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Category Selector Card */}
+              <div className="md:col-span-1 bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden h-fit">
+                <div className="px-6 py-3 border-b border-slate-50 bg-slate-50/50 flex items-center gap-2">
+                  <SettingsIcon size={14} className="text-slate-400" />
+                  <span className="font-black uppercase tracking-widest text-slate-400 text-[10px]">Registry Category</span>
+                </div>
+                <div className="p-4 space-y-1">
+                  {[
+                    { id: 'departments', label: 'Departments', icon: Building },
+                    { id: 'assetCategories', label: 'Asset Library', icon: Database },
+                    { id: 'jobTypes', label: 'Employment Tiers', icon: UserIcon },
+                    { id: 'leaveTypes', label: 'Absence Protocols', icon: Bell },
+                    { id: 'designations', label: 'Role Designations', icon: Shield },
+                    { id: 'portalSettings', label: 'Portal Behaviors', icon: Globe }
+                  ].map(cat => (
+                    <button
+                      key={cat.id}
+                      onClick={() => setConfigCategory(cat.id as any)}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${configCategory === cat.id ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-50'}`}
+                    >
+                      <cat.icon size={14} className={configCategory === cat.id ? 'text-emerald-400' : 'text-slate-300'} />
+                      <span className="text-[11px] font-black uppercase tracking-wider">{cat.label}</span>
+                      {configCategory === cat.id && <div className="ml-auto w-1 h-3 bg-emerald-400 rounded-full"></div>}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              {configCategory !== "portalSettings" ? (
-                <div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    {((systemConfig as any)[configCategory] || []).map(
-                      (item: string, idx: number) => (
-                        <div
-                          key={idx}
-                          className="flex items-center justify-between p-3 border rounded-lg"
-                        >
-                          <div className="text-sm font-medium text-slate-700">
-                            {item}
-                          </div>
-                          <div className="flex items-center gap-2">
+              {/* Content Card */}
+              <div className="md:col-span-2 bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+                <div className="px-6 py-3 border-b border-slate-50 bg-slate-50/50 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="font-black uppercase tracking-widest text-slate-400 text-[10px]">Data Collection</span>
+                  </div>
+                </div>
+
+                <div className="p-6">
+                  {configCategory !== "portalSettings" ? (
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {((systemConfig as any)[configCategory] || []).map((item: string, idx: number) => (
+                          <div key={idx} className="flex items-center justify-between p-3.5 bg-slate-50/50 rounded-2xl border border-slate-100 group">
+                            <span className="text-xs font-bold text-slate-700">{item}</span>
                             <button
                               onClick={() => {
-                                const arr = [
-                                  ...((systemConfig as any)[configCategory] ||
-                                    []),
-                                ];
+                                const arr = [...((systemConfig as any)[configCategory] || [])];
                                 arr.splice(idx, 1);
-                                setSystemConfig({
-                                  ...systemConfig,
-                                  [configCategory]: arr,
-                                });
+                                setSystemConfig({ ...systemConfig, [configCategory]: arr });
                               }}
-                              className="text-red-500 text-sm"
+                              className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
                             >
-                              Remove
+                              <Trash2 size={12} />
                             </button>
                           </div>
+                        ))}
+                      </div>
+                      <div className="flex gap-2 pt-4 border-t border-slate-50">
+                        <input
+                          value={newItem}
+                          onChange={(e) => setNewItem(e.target.value)}
+                          placeholder={`Add new ${configCategory}...`}
+                          className="flex-1 bg-slate-50 border border-slate-100 p-3 rounded-2xl text-xs font-bold focus:bg-white outline-none transition-all"
+                        />
+                        <button
+                          onClick={() => {
+                            if (!newItem) return;
+                            const arr = [...((systemConfig as any)[configCategory] || []), newItem];
+                            setSystemConfig({ ...systemConfig, [configCategory]: arr });
+                            setNewItem("");
+                          }}
+                          className="px-6 py-3 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all shadow-lg"
+                        >
+                          Inject
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-2">
+                      {[
+                        { id: 'allowEmployeeProfileEdit', label: 'Profile Orchestration', sub: 'Enable administrative profile overrides' },
+                        { id: 'allowEmployeePhotoUpload', label: 'Visual Identification', sub: 'Bio-visual data synchronization' },
+                        { id: 'allowEmployeeAddressEdit', label: 'Geospatial Registry', sub: 'Residential data modifications' },
+                        { id: 'allowEmployeeBankEdit', label: 'Financial Gateways', sub: 'Banking infrastructure updates' }
+                      ].map(setting => (
+                        <div key={setting.id} className="flex items-center justify-between p-4 bg-slate-50/50 rounded-2xl border border-slate-100 hover:bg-white hover:border-emerald-500/20 transition-all duration-300">
+                          <div>
+                            <div className="text-xs font-black text-slate-800 uppercase tracking-tight">{setting.label}</div>
+                            <div className="text-[10px] text-slate-400 font-medium">{setting.sub}</div>
+                          </div>
+                          <button
+                            onClick={() => setSystemConfig({
+                              ...systemConfig,
+                              portalSettings: { ...(systemConfig.portalSettings || {}), [setting.id]: !(systemConfig.portalSettings as any)?.[setting.id] },
+                            })}
+                            className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${(systemConfig.portalSettings as any)?.[setting.id]
+                              ? 'bg-emerald-500 text-white shadow-md'
+                              : 'bg-white text-slate-400 border border-slate-100'
+                              }`}
+                          >
+                            {(systemConfig.portalSettings as any)?.[setting.id] ? "Online" : "Offline"}
+                          </button>
                         </div>
-                      )
-                    )}
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "notifications" && (
+          <div className="w-[98%] mx-auto max-w-4xl space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            {/* Notifications Hero Header */}
+            <div className="relative overflow-hidden bg-slate-900 rounded-3xl p-6 text-white shadow-xl">
+              <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
+                <Bell size={140} />
+              </div>
+              <div className="relative z-10 flex items-center justify-between gap-6">
+                <div className="flex items-center gap-6">
+                  <div className="p-4 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 h-fit">
+                    <Bell size={28} className="text-yellow-400" />
+                  </div>
+                  <div>
+                    <h1 className="text-2xl font-black tracking-tight mb-1">Signal Processing Center</h1>
+                    <p className="text-slate-400 font-medium text-xs max-w-md">
+                      Configure event-driven telemetry and automated notification pathways across the enterprise.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[
+                { id: 'employee_joining', label: 'Onboarding Pulsing', sub: 'Signal newly integrated personnel entities' },
+                { id: 'employee_resignation', label: 'Offboarding Telemetry', sub: 'Track personnel departure protocols' },
+                { id: 'leave_request', label: 'Absence Logistics', sub: 'Monitor personnel request/approval cycles' },
+                { id: 'asset_request', label: 'Resource Allocation', sub: 'Track hardware deployment requests' },
+                { id: 'document_expiry', label: 'Protocol Expiration', sub: 'Alert on decaying document validity' }
+              ].map(item => (
+                <div key={item.id} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:border-yellow-500/20 transition-all duration-300">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h3 className="font-black text-slate-800 tracking-tight leading-none mb-1.5 uppercase text-[12px]">{item.label}</h3>
+                      <div className="text-[10px] text-slate-400 font-bold tracking-wider">{item.sub}</div>
+                    </div>
+                    <div className="p-2 bg-yellow-50 text-yellow-600 rounded-xl border border-yellow-100/50">
+                      <Bell size={14} />
+                    </div>
                   </div>
 
                   <div className="flex gap-2">
-                    <input
-                      value={newItem}
-                      onChange={(e) => setNewItem(e.target.value)}
-                      placeholder="New item"
-                      className="flex-1 border p-2 rounded-lg"
-                    />
-                    <button
-                      onClick={() => {
-                        if (!newItem) return;
-                        const arr = [
-                          ...((systemConfig as any)[configCategory] || []),
-                          newItem,
-                        ];
-                        setSystemConfig({
-                          ...systemConfig,
-                          [configCategory]: arr,
-                        });
-                        setNewItem("");
-                      }}
-                      className="px-4 py-2 bg-orange-500 text-white rounded-lg"
-                    >
-                      Add
-                    </button>
+                    {['Push', 'Email', 'SMS'].map(mode => {
+                      const modeKey = `${item.id}_${mode.toLowerCase()}`;
+                      const isEnabled = notificationsEnabled[modeKey];
+                      return (
+                        <button
+                          key={mode}
+                          onClick={() => toggleNotification(modeKey)}
+                          className={`flex-1 py-2.5 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all ${isEnabled
+                            ? 'bg-slate-900 text-white shadow-lg'
+                            : 'bg-slate-50 text-slate-300 border border-slate-100'
+                            }`}
+                        >
+                          {mode}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-3 border rounded-lg">
-                    <div>
-                      <div className="text-sm font-bold">
-                        Allow Profile Edit
-                      </div>
-                      <div className="text-xs text-slate-400">
-                        Allow employees to edit their profile
-                      </div>
-                    </div>
-                    <div>
-                      <button
-                        onClick={() =>
-                          setSystemConfig({
-                            ...systemConfig,
-                            portalSettings: {
-                              ...(systemConfig.portalSettings || {}),
-                              allowEmployeeProfileEdit:
-                                !systemConfig.portalSettings
-                                  ?.allowEmployeeProfileEdit,
-                            },
-                          })
-                        }
-                        className={`px-3 py-1 rounded-lg ${systemConfig.portalSettings?.allowEmployeeProfileEdit
-                          ? "bg-orange-500 text-white"
-                          : "bg-slate-100 text-slate-600"
-                          }`}
-                      >
-                        {systemConfig.portalSettings?.allowEmployeeProfileEdit
-                          ? "Enabled"
-                          : "Disabled"}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between p-3 border rounded-lg">
-                    <div>
-                      <div className="text-sm font-bold">
-                        Allow Photo Upload
-                      </div>
-                      <div className="text-xs text-slate-400">
-                        Allow employees to upload profile photo
-                      </div>
-                    </div>
-                    <div>
-                      <button
-                        onClick={() =>
-                          setSystemConfig({
-                            ...systemConfig,
-                            portalSettings: {
-                              ...(systemConfig.portalSettings || {}),
-                              allowEmployeePhotoUpload:
-                                !systemConfig.portalSettings
-                                  ?.allowEmployeePhotoUpload,
-                            },
-                          })
-                        }
-                        className={`px-3 py-1 rounded-lg ${systemConfig.portalSettings?.allowEmployeePhotoUpload
-                          ? "bg-orange-500 text-white"
-                          : "bg-slate-100 text-slate-600"
-                          }`}
-                      >
-                        {systemConfig.portalSettings?.allowEmployeePhotoUpload
-                          ? "Enabled"
-                          : "Disabled"}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between p-3 border rounded-lg">
-                    <div>
-                      <div className="text-sm font-bold">
-                        Allow Address Edit
-                      </div>
-                      <div className="text-xs text-slate-400">
-                        Allow employees to change address
-                      </div>
-                    </div>
-                    <div>
-                      <button
-                        onClick={() =>
-                          setSystemConfig({
-                            ...systemConfig,
-                            portalSettings: {
-                              ...(systemConfig.portalSettings || {}),
-                              allowEmployeeAddressEdit:
-                                !systemConfig.portalSettings
-                                  ?.allowEmployeeAddressEdit,
-                            },
-                          })
-                        }
-                        className={`px-3 py-1 rounded-lg ${systemConfig.portalSettings?.allowEmployeeAddressEdit
-                          ? "bg-orange-500 text-white"
-                          : "bg-slate-100 text-slate-600"
-                          }`}
-                      >
-                        {systemConfig.portalSettings?.allowEmployeeAddressEdit
-                          ? "Enabled"
-                          : "Disabled"}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between p-3 border rounded-lg">
-                    <div>
-                      <div className="text-sm font-bold">Allow Bank Edit</div>
-                      <div className="text-xs text-slate-400">
-                        Allow employees to update bank details
-                      </div>
-                    </div>
-                    <div>
-                      <button
-                        onClick={() =>
-                          setSystemConfig({
-                            ...systemConfig,
-                            portalSettings: {
-                              ...(systemConfig.portalSettings || {}),
-                              allowEmployeeBankEdit:
-                                !systemConfig.portalSettings
-                                  ?.allowEmployeeBankEdit,
-                            },
-                          })
-                        }
-                        className={`px-3 py-1 rounded-lg ${systemConfig.portalSettings?.allowEmployeeBankEdit
-                          ? "bg-orange-500 text-white"
-                          : "bg-slate-100 text-slate-600"
-                          }`}
-                      >
-                        {systemConfig.portalSettings?.allowEmployeeBankEdit
-                          ? "Enabled"
-                          : "Disabled"}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
+              ))}
             </div>
           </div>
         )}
-
-        {activeTab === 'notifications' && (
-          <div className="w-[98%] mx-auto max-w-4xl space-y-8">
-            <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2"><Bell size={24} className="text-orange-500" /> Notification Settings</h3>
+        {activeTab === "email" && (
+          <div className="w-[98%] mx-auto max-w-4xl space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            {/* Email Hero Header */}
+            <div className="relative overflow-hidden bg-slate-900 rounded-3xl p-6 text-white shadow-xl">
+              <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
+                <Mail size={140} />
+              </div>
+              <div className="relative z-10 flex items-center justify-between gap-6">
+                <div className="flex items-center gap-6">
+                  <div className="p-4 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 h-fit">
+                    <Mail size={28} className="text-cyan-400" />
+                  </div>
+                  <div>
+                    <h1 className="text-2xl font-black tracking-tight mb-1">STMP Messaging Gateway</h1>
+                    <p className="text-slate-400 font-medium text-xs max-w-md">
+                      Global SMTP infrastructure management and encrypted transactional communication protocols.
+                    </p>
+                  </div>
+                </div>
                 <button
-                  className="bg-orange-500 text-white px-4 py-2 rounded-lg font-bold hover:bg-orange-600 transition-all"
                   onClick={async () => {
-                    const userId = user.id;
-                    const updatedSettings = notificationSettings.map(s => ({
-                      ...s,
-                      userId: userId,
-                      type: s.type || s.module || 'general',
-                    }));
-                    setNotificationSettings(updatedSettings);
-                    for (const setting of updatedSettings) {
-                      try {
-                        const payload = {
-                          ...setting,
-                          userId: userId,
-                          type: setting.type || setting.module || 'general',
-                        };
-                        if (payload.id) {
-                          await api.updateNotificationSetting(payload.id, payload);
-                        } else {
-                          await api.createNotificationSetting(payload);
-                        }
-                      } catch (e) {
-                        // Optionally handle error
-                      }
-                    }
-                    alert('Notification settings saved!');
+                    const loadingToast = document.createElement('div');
+                    loadingToast.className = "fixed bottom-5 right-5 bg-slate-900 text-white px-6 py-4 rounded-3xl shadow-2xl flex items-center gap-3 animate-bounce z-50";
+                    loadingToast.innerHTML = `<div class="w-2 h-2 bg-cyan-400 rounded-full animate-ping"></div><span class="text-[10px] font-black uppercase tracking-widest">Disseminating Probe...</span>`;
+                    document.body.appendChild(loadingToast);
+                    await new Promise(r => setTimeout(r, 2000));
+                    document.body.removeChild(loadingToast);
+                    alert("Probe dissemination successful. Connectivity established.");
                   }}
+                  className="flex items-center gap-2 px-6 py-3 bg-cyan-500 rounded-2xl text-[10px] font-black text-white hover:bg-cyan-600 transition-all shadow-lg shadow-cyan-500/20 uppercase tracking-widest whitespace-nowrap"
                 >
-                  Save All
+                  <Send size={14} /> Send Probe
                 </button>
               </div>
-              {notificationSettings && notificationSettings.length > 0 ? (
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Protocol Card */}
+              <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                <div className="flex items-center gap-2 mb-6">
+                  <Server size={14} className="text-slate-400" />
+                  <span className="font-black uppercase tracking-widest text-slate-400 text-[10px]">Transmission Nodes</span>
+                </div>
+
                 <div className="space-y-4">
-                  {notificationSettings.map((setting, idx) => (
-                    <div key={setting.id || idx} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div>
-                        <div className="text-sm font-bold text-slate-700">{setting.module} - {setting.action}</div>
-                        <div className="text-xs text-slate-400">{setting.description}</div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Relay Host</label>
+                    <div className="relative">
+                      <AtSign className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={14} />
+                      <input
+                        type="text"
+                        value={emailConfig.smtpHost}
+                        onChange={(e) => setEmailConfig({ ...emailConfig, smtpHost: e.target.value })}
+                        className="w-full bg-slate-50 border border-slate-100 pl-11 pr-4 py-3.5 rounded-2xl text-xs font-bold focus:bg-white outline-none transition-all"
+                        placeholder="smtp.example.com"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Protocol Port</label>
+                      <input
+                        type="text"
+                        value={emailConfig.smtpPort}
+                        onChange={(e) => setEmailConfig({ ...emailConfig, smtpPort: e.target.value })}
+                        className="w-full bg-slate-50 border border-slate-100 px-4 py-3.5 rounded-2xl text-xs font-bold focus:bg-white outline-none transition-all"
+                        placeholder="587"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Encryption</label>
+                      <div className="flex items-center justify-between h-[48px] bg-slate-50 border border-slate-100 px-4 rounded-2xl">
+                        <span className="text-xs font-black text-slate-400 uppercase tracking-widest">TLS/SSL</span>
+                        <button
+                          onClick={() => setEmailConfig({ ...emailConfig, useSsl: !emailConfig.useSsl })}
+                          className={`w-10 h-5 rounded-full transition-all relative ${emailConfig.useSsl ? 'bg-cyan-500' : 'bg-slate-200'}`}
+                        >
+                          <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${emailConfig.useSsl ? 'right-1' : 'left-1'}`}></div>
+                        </button>
                       </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Authentication Card */}
+              <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                <div className="flex items-center gap-2 mb-6">
+                  <Lock size={14} className="text-slate-400" />
+                  <span className="font-black uppercase tracking-widest text-slate-400 text-[10px]">Credential Tier</span>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Identity UID</label>
+                    <input
+                      type="text"
+                      value={emailConfig.smtpUser}
+                      onChange={(e) => setEmailConfig({ ...emailConfig, smtpUser: e.target.value })}
+                      className="w-full bg-slate-50 border border-slate-100 px-4 py-3.5 rounded-2xl text-xs font-bold focus:bg-white outline-none transition-all"
+                      placeholder="service-account"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Access Token</label>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        value={emailConfig.smtpPass}
+                        onChange={(e) => setEmailConfig({ ...emailConfig, smtpPass: e.target.value })}
+                        className="w-full bg-slate-50 border border-slate-100 px-4 py-3.5 rounded-2xl text-xs font-bold focus:bg-white outline-none transition-all pr-12"
+                        placeholder="••••••••••••"
+                      />
                       <button
-                        onClick={async () => {
-                          const userId = user.id;
-                          const updated = notificationSettings.map((s, i) =>
-                            i === idx
-                              ? {
-                                ...s,
-                                enabled: !s.enabled,
-                                userId: userId,
-                                type: s.type || s.module || 'general',
-                              }
-                              : s
-                          );
-                          setNotificationSettings(updated);
-                          // Persist the change to backend
-                          const changed = {
-                            ...updated[idx],
-                            userId: userId,
-                            type: updated[idx].type || updated[idx].module || 'general',
-                          };
-                          try {
-                            if (changed.id) {
-                              await api.updateNotificationSetting(changed.id, changed);
-                            } else {
-                              await api.createNotificationSetting(changed);
-                            }
-                          } catch (e) {
-                            // Optionally handle error
-                          }
-                        }}
-                        className={`px-3 py-1 rounded-lg ${setting.enabled ? 'bg-orange-500 text-white' : 'bg-slate-100 text-slate-600'}`}
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500"
                       >
-                        {setting.enabled ? 'Enabled' : 'Disabled'}
+                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center text-slate-400 italic">No notification settings found.</div>
-              )}
-            </div>
-          </div>
-        )}
-        {activeTab === 'email' && (
-          <div className="w-[98%] mx-auto max-w-4xl space-y-8">
-            <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
-              <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2"><Mail size={24} className="text-orange-500" /> SMTP Settings</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div><label className="block text-sm font-bold text-slate-600 mb-1">SMTP Host</label><input type="text" value={smtpSettings.host} onChange={e => setSmtpSettings({ ...smtpSettings, host: e.target.value })} className="w-full border p-2.5 rounded-xl text-sm" /></div>
-                <div><label className="block text-sm font-bold text-slate-600 mb-1">SMTP Port</label><input type="text" value={smtpSettings.port} onChange={e => setSmtpSettings({ ...smtpSettings, port: e.target.value })} className="w-full border p-2.5 rounded-xl text-sm" /></div>
-                <div><label className="block text-sm font-bold text-slate-600 mb-1">User / Email</label><input type="text" value={smtpSettings.user} onChange={e => setSmtpSettings({ ...smtpSettings, user: e.target.value })} className="w-full border p-2.5 rounded-xl text-sm" /></div>
-                <div><label className="block text-sm font-bold text-slate-600 mb-1">Password</label><input type="password" value={smtpSettings.pass} onChange={e => setSmtpSettings({ ...smtpSettings, pass: e.target.value })} className="w-full border p-2.5 rounded-xl text-sm" /></div>
-              </div>
-              <button onClick={() => alert('Settings Saved')} className="mt-6 bg-slate-900 text-white px-8 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-black transition-all"><Save size={18} /> Save SMTP Configuration</button>
-            </div>
-            <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-bold text-slate-800">Email Templates</h3>
-                <button onClick={() => { setEditingTemplate(null); setTemplateForm({ name: '', subject: '', body: '' }); setIsTemplateModalOpen(true); }} className="text-orange-600 font-bold hover:underline flex items-center gap-1 text-sm"><Plus size={16} /> New Template</button>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {emailTemplates.map(template => (
-                  <div key={template.id} className="p-4 border rounded-2xl hover:border-orange-200 transition-all cursor-pointer group flex justify-between items-center" onClick={() => { setEditingTemplate(template); setTemplateForm(template); setIsTemplateModalOpen(true); }}>
-                    <div><p className="font-bold text-slate-800">{template.name}</p><p className="text-xs text-slate-500 truncate max-w-[200px]">{template.subject}</p></div>
-                    <Edit size={16} className="text-slate-300 group-hover:text-orange-500" />
                   </div>
-                ))}
+                </div>
+              </div>
+
+              {/* Origin Card */}
+              <div className="md:col-span-2 bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                <div className="flex items-center gap-2 mb-6">
+                  <AtSign size={14} className="text-slate-400" />
+                  <span className="font-black uppercase tracking-widest text-slate-400 text-[10px]">Source Identity Inflection</span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Originator Appellation</label>
+                    <input
+                      type="text"
+                      value={emailConfig.fromName}
+                      onChange={(e) => setEmailConfig({ ...emailConfig, fromName: e.target.value })}
+                      className="w-full bg-slate-50 border border-slate-100 px-4 py-3.5 rounded-2xl text-xs font-bold focus:bg-white outline-none transition-all"
+                      placeholder="Enterprise HR Systems"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Return-Path Address</label>
+                    <input
+                      type="email"
+                      value={emailConfig.fromEmail}
+                      onChange={(e) => setEmailConfig({ ...emailConfig, fromEmail: e.target.value })}
+                      className="w-full bg-slate-50 border border-slate-100 px-4 py-3.5 rounded-2xl text-xs font-bold focus:bg-white outline-none transition-all"
+                      placeholder="no-reply@enterprise.com"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         )}
 
         {activeTab === "database" && (
-          <div className="w-[98%] mx-auto max-w-4xl">
-            <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2"><Database size={24} className="text-orange-500" /> Database Details</h2>
-            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm mb-6">
-              <div className="mb-4 flex items-center gap-3">
-                <span className={`inline-block w-3 h-3 rounded-full ${dbStatus === 'connected' ? 'bg-orange-500' : dbStatus === 'checking' ? 'bg-yellow-400' : 'bg-red-500'}`}></span>
-                <span className="font-bold text-slate-700">Status:</span>
-                <span className="text-sm font-mono">{dbStatus.charAt(0).toUpperCase() + dbStatus.slice(1)}</span>
+          <div className="w-[98%] mx-auto max-w-4xl space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            {/* Database Hero Header */}
+            <div className="relative overflow-hidden bg-slate-900 rounded-3xl p-6 text-white shadow-xl">
+              <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
+                <Database size={140} />
               </div>
-              {dbInfo === null ? (
-                <div className="text-slate-400 italic">Loading database info...</div>
-              ) : dbInfo.error ? (
-                <div className="text-red-500 font-bold">{dbInfo.error}</div>
-              ) : (
-                <>
-                  <div className="mb-2"><span className="font-bold text-slate-700">Database:</span> <span className="font-mono">{dbInfo.database}</span></div>
-                  <div className="mb-2"><span className="font-bold text-slate-700">User:</span> <span className="font-mono">{dbInfo.user}</span></div>
-                  <div className="mb-2"><span className="font-bold text-slate-700">Host:</span> <span className="font-mono">{dbInfo.host}</span></div>
-                  <div className="mb-2"><span className="font-bold text-slate-700">Port:</span> <span className="font-mono">{dbInfo.port}</span></div>
-                  <div className="mb-2"><span className="font-bold text-slate-700">Tables:</span></div>
-                  <ul className="list-disc pl-6 text-sm">
-                    {dbInfo.tables && dbInfo.tables.length > 0 ? dbInfo.tables.map((t: string) => (
-                      <li key={t} className="font-mono text-slate-700">{t}</li>
-                    )) : <li className="text-slate-400 italic">No tables found</li>}
-                  </ul>
-                </>
-              )}
+              <div className="relative z-10 flex items-center justify-between gap-6">
+                <div className="flex items-center gap-6">
+                  <div className="p-4 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 h-fit">
+                    <Database size={28} className="text-orange-400" />
+                  </div>
+                  <div>
+                    <h1 className="text-2xl font-black tracking-tight mb-1">Database Architecture</h1>
+                    <p className="text-slate-400 font-medium text-xs max-w-md">
+                      Real-time synchronization and secure relational data integrity systems.
+                    </p>
+                  </div>
+                </div>
+                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border ${dbStatus === 'connected' ? 'bg-orange-500/10 border-orange-500/20 text-orange-400' :
+                  dbStatus === 'checking' ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400' :
+                    'bg-red-500/10 border-red-500/20 text-red-400'
+                  }`}>
+                  <span className={`w-2 h-2 rounded-full ${dbStatus === 'connected' ? 'bg-orange-500 animate-pulse' : dbStatus === 'checking' ? 'bg-yellow-400' : 'bg-red-500'}`}></span>
+                  <span className="text-[10px] font-black uppercase tracking-widest">{dbStatus}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+              {/* Connection Specs Card */}
+              <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+                <div className="px-6 py-3 border-b border-slate-50 bg-slate-50/50 flex items-center gap-2">
+                  <SettingsIcon size={14} className="text-slate-400" />
+                  <span className="font-black uppercase tracking-widest text-slate-400 text-[10px]">Connection Specifications</span>
+                </div>
+                <div className="p-6">
+                  {dbInfo === null ? (
+                    <div className="flex items-center justify-center py-8 gap-3 text-slate-400">
+                      <div className="w-4 h-4 border-2 border-slate-200 border-t-orange-500 rounded-full animate-spin"></div>
+                      <span className="text-sm font-medium">Validating connection...</span>
+                    </div>
+                  ) : dbInfo.error ? (
+                    <div className="bg-red-50 border border-red-100 p-4 rounded-xl flex items-start gap-3">
+                      <X size={18} className="text-red-500 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-bold text-red-700">Authentication Failure</p>
+                        <p className="text-xs text-red-600 font-mono mt-1">{dbInfo.error}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {[
+                          { label: "Environment", value: dbInfo.database, icon: Database },
+                          { label: "Encryption", value: dbInfo.user, icon: Shield },
+                          { label: "Protocol", value: dbInfo.host, icon: WifiOff },
+                          { label: "Interface", value: dbInfo.port, icon: SettingsIcon }
+                        ].map((item, i) => (
+                          <div key={i} className="group p-4 bg-slate-50 rounded-2xl border border-slate-100/50 hover:bg-white hover:border-orange-500/30 hover:shadow-md transition-all duration-300">
+                            <item.icon size={14} className="text-slate-300 mb-2 group-hover:text-orange-500 transition-colors" />
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{item.label}</p>
+                            <p className="text-xs font-mono text-slate-800 font-bold break-all">{item.value}</p>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Directory Grid */}
+                      <div className="pt-4 border-t border-slate-100">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white font-black text-xs">
+                            {dbInfo.tables?.length || 0}
+                          </div>
+                          <div>
+                            <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Schema Directory</h3>
+                            <p className="text-[10px] text-slate-400 font-medium">Active relational collections found in {dbInfo.database}</p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                          {dbInfo.tables && dbInfo.tables.length > 0 ? dbInfo.tables.map((t: string) => (
+                            <div key={t} className="flex items-center gap-2.5 p-2 bg-white rounded-xl border border-slate-100 hover:border-orange-500/20 hover:bg-orange-50/10 transition-all group cursor-default">
+                              <div className="w-2 h-2 rounded-full bg-slate-200 group-hover:bg-orange-500 transition-colors"></div>
+                              <span className="font-mono text-[11px] text-slate-600 font-medium truncate">{t}</span>
+                            </div>
+                          )) : (
+                            <div className="col-span-full py-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                              <p className="text-xs text-slate-400 font-medium uppercase tracking-widest italic">No table definitions found</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         )}
 
         {activeTab === "copyright" && (
           <div className="w-[98%] mx-auto max-w-4xl">
-            <CopyrightPage />
+            <CopyrightPage
+              systemConfig={systemConfig}
+              setSystemConfig={handleConfigUpdate}
+              isAdmin={isAdmin}
+            />
           </div>
         )}
         {/* --- MODALS --- */}

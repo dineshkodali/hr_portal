@@ -15,6 +15,7 @@ import Attendance from './components/Attendance';
 import Payroll from './components/Payroll';
 import ActivityLogs from './components/ActivityLogs';
 import TeamManagement from './components/TeamManagement';
+import CopyrightNotice from './components/CopyrightNotice';
 import HolidayCalendar from './components/HolidayCalendar';
 import Handbook from './components/Handbook';
 import { User, ViewState, Employee, Job, Candidate, Asset, Task, LeaveRequest, AttendanceRecord, Department, Timesheet, Shift, PayrollRecord, SystemConfig, EmailTemplate, SmtpSettings, Reimbursement, Branch, NotificationSetting, ActivityLog, Group, Team, PolicyCategory, PolicyDocument, Holiday } from './types';
@@ -146,7 +147,31 @@ const App: React.FC = () => {
   const [policyCategories, refreshPolicyCategories] = useApiData<PolicyCategory[]>('policy_categories', []);
   const [policies, refreshPolicies] = useApiData<PolicyDocument[]>('policies', []);
   const [holidays, refreshHolidays] = useApiData<Holiday[]>('holidays', []);
-  const [systemConfig, refreshConfig] = useApiData<SystemConfig>('system_config', { assetCategories: [], jobTypes: [], leaveTypes: [], departments: [], designations: [], portalSettings: { allowEmployeeProfileEdit: false, allowEmployeePhotoUpload: false, allowEmployeeAddressEdit: false, allowEmployeeBankEdit: false } });
+  const [systemConfig, refreshConfig] = useApiData<SystemConfig>('system_config', {
+    assetCategories: [],
+    jobTypes: [],
+    leaveTypes: [],
+    departments: [],
+    designations: [],
+    portalSettings: {
+      allowEmployeeProfileEdit: false,
+      allowEmployeePhotoUpload: false,
+      allowEmployeeAddressEdit: false,
+      allowEmployeeBankEdit: false
+    },
+    footerSettings: {
+      companyName: 'SD Commercial',
+      copyrightNotice: 'SD Commercial Employee Management Portal\n\nCopyright (c) 2026 SD Commercial. All rights reserved.\n\nThis application and its source code are proprietary to SD Commercial. Unauthorized copying, distribution, modification, or use of any part of this software is strictly prohibited and may result in legal action.\n\nAll content, data, and intellectual property within this portal are the exclusive property of SD Commercial.',
+      privacyContent: 'Standard Privacy Policy content...',
+      termsContent: 'Standard Terms and Conditions content...',
+      securityContent: 'Standard Security Policy content...'
+    },
+    copyrightSections: [
+      { title: "Proprietary Rights", content: "All source code, UI designs, and system architecture are protected under international copyright laws." },
+      { title: "Data Protection", content: "Employee records, company data, and internal documentation are strictly confidential." },
+      { title: "Legal Inquiries", content: "For licensing, permissions, or reporting unauthorized use, please contact our legal department." }
+    ]
+  });
   const [emailTemplates, refreshTemplates] = useApiData<EmailTemplate[]>('email_templates', []);
   const [smtpSettings, refreshSmtp] = useApiData<SmtpSettings>('smtp_settings', { host: '', port: '', user: '', pass: '', fromEmail: '' });
   const [notificationSettings, refreshNotifs] = useApiData<NotificationSetting[]>('notification_settings', []);
@@ -893,6 +918,9 @@ const App: React.FC = () => {
             onRefreshLogs={refreshLogs}
           />}
           {currentView === 'email' && <EmailWorkflow onLogActivity={logActivity} />}
+          <div className="max-w-7xl mx-auto w-full">
+            <CopyrightNotice footerSettings={systemConfig.footerSettings} />
+          </div>
         </div><div className="h-6"></div></main>
       </div>
     </div>
