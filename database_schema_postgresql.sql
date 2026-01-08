@@ -710,6 +710,67 @@ CREATE TABLE IF NOT EXISTS notificationsettings (
 CREATE INDEX idx_notificationsettings_userId ON notificationsettings(userId);
 CREATE INDEX idx_notificationsettings_type ON notificationsettings(type);
 -- ============================================================================
+-- EMAILS TABLE
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS emails (
+  id VARCHAR(50) PRIMARY KEY,
+  sender VARCHAR(255) NOT NULL,
+  recipient VARCHAR(255) NOT NULL,
+  subject VARCHAR(255),
+  body TEXT,
+  status VARCHAR(20) DEFAULT 'unread', -- unread, read, sent
+  type VARCHAR(20) DEFAULT 'inbound', -- inbound, outbound
+  folder VARCHAR(20) DEFAULT 'inbox', -- inbox, sent, drafts, trash
+  has_attachments BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS email_attachments (
+  id VARCHAR(50) PRIMARY KEY,
+  email_id VARCHAR(50) REFERENCES emails(id) ON DELETE CASCADE,
+  filename VARCHAR(255) NOT NULL,
+  file_path TEXT NOT NULL,
+  file_size BIGINT,
+  mime_type VARCHAR(100),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_emails_sender ON emails(sender);
+CREATE INDEX idx_emails_recipient ON emails(recipient);
+CREATE INDEX idx_emails_type ON emails(type);
+CREATE INDEX idx_emails_folder ON emails(folder);
+CREATE INDEX idx_attachments_email_id ON email_attachments(email_id);
+
+-- ============================================================================
+-- EMAIL_RULES TABLE
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS email_rules (
+  id VARCHAR(50) PRIMARY KEY,
+  userId VARCHAR(50) REFERENCES users(id) ON DELETE CASCADE,
+  name VARCHAR(255) NOT NULL,
+  condition_type VARCHAR(50) NOT NULL, -- e.g., 'sender_domain', 'subject_contains'
+  condition_value TEXT NOT NULL,
+  action_type VARCHAR(50) NOT NULL, -- e.g., 'move_to_folder', 'auto_draft'
+  action_value VARCHAR(255),
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ============================================================================
+-- USER_OUTLOOK_TOKENS TABLE
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS user_outlook_tokens (
+  userId VARCHAR(50) PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  access_token TEXT,
+  refresh_token TEXT,
+  token_type VARCHAR(50),
+  expires_at TIMESTAMP,
+  scope TEXT,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ============================================================================
 -- GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO postgres;
 -- GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO postgres;
 -- GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO postgres;

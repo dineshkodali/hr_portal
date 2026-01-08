@@ -9,57 +9,57 @@ import { Employee, AttendanceRecord, Asset } from '../types';
  */
 
 const getApiUrl = () => {
-    // In Replit environment, use relative path or same-host API
-    // The backend API can be accessed via the current host
-    const protocol = window.location.protocol;
-    const hostname = window.location.hostname;
-    
-    // Try to detect if we're on Replit or localhost development
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-        // Local development - try both ports
-        return 'http://localhost:3001/api';
-    }
-    
-    // Replit environment - use same host for API calls
-    // This works when backend runs alongside frontend
-    return `${protocol}//${hostname}:3001/api`;
+  // In Replit environment, use relative path or same-host API
+  // The backend API can be accessed via the current host
+  const protocol = window.location.protocol;
+  const hostname = window.location.hostname;
+
+  // Try to detect if we're on Replit or localhost development
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    // Local development - try both ports
+    return 'http://localhost:3001/api';
+  }
+
+  // Replit environment - use same host for API calls
+  // This works when backend runs alongside frontend
+  return `${protocol}//${hostname}:3001/api`;
 };
 
 export const api = {
-    // Notification Settings
-    getNotificationSettings: async (userId: string) => {
-      const res = await fetch(`${getApiUrl()}/notificationsettings?userId=${encodeURIComponent(userId)}`);
-      if (!res.ok) throw new Error('Failed to fetch notification settings');
-      return res.json();
-    },
+  // Notification Settings
+  getNotificationSettings: async (userId: string) => {
+    const res = await fetch(`${getApiUrl()}/notificationsettings?userId=${encodeURIComponent(userId)}`);
+    if (!res.ok) throw new Error('Failed to fetch notification settings');
+    return res.json();
+  },
 
-    createNotificationSetting: async (data: any) => {
-      const res = await fetch(`${getApiUrl()}/notificationsettings`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) throw new Error('Failed to create notification setting');
-      return res.json();
-    },
+  createNotificationSetting: async (data: any) => {
+    const res = await fetch(`${getApiUrl()}/notificationsettings`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Failed to create notification setting');
+    return res.json();
+  },
 
-    updateNotificationSetting: async (id: string, data: any) => {
-      const res = await fetch(`${getApiUrl()}/notificationsettings/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) throw new Error('Failed to update notification setting');
-      return res.json();
-    },
+  updateNotificationSetting: async (id: string, data: any) => {
+    const res = await fetch(`${getApiUrl()}/notificationsettings/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Failed to update notification setting');
+    return res.json();
+  },
 
-    deleteNotificationSetting: async (id: string) => {
-      const res = await fetch(`${getApiUrl()}/notificationsettings/${id}`, {
-        method: 'DELETE',
-      });
-      if (!res.ok) throw new Error('Failed to delete notification setting');
-      return res.json();
-    },
+  deleteNotificationSetting: async (id: string) => {
+    const res = await fetch(`${getApiUrl()}/notificationsettings/${id}`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) throw new Error('Failed to delete notification setting');
+    return res.json();
+  },
   get: async (endpoint: string) => {
     const res = await fetch(`${getApiUrl()}/${endpoint}`);
     if (!res.ok) throw new Error(`Failed to fetch ${endpoint}`);
@@ -118,9 +118,9 @@ export const api = {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 2000);
-      const res = await fetch(`${getApiUrl()}/health`, { 
-          signal: controller.signal,
-          method: 'GET' 
+      const res = await fetch(`${getApiUrl()}/health`, {
+        signal: controller.signal,
+        method: 'GET'
       });
       clearTimeout(timeoutId);
       return res.status === 200;
@@ -194,6 +194,17 @@ export const api = {
       body: JSON.stringify(settings)
     });
     if (!res.ok) throw new Error('Failed to update security settings');
+    return res.json();
+  },
+
+  // AI Email Assistant
+  suggestEmail: async (data: { subject: string; body: string; context?: string; type?: 'reply' | 'draft' }) => {
+    const res = await fetch(`${getApiUrl()}/ai-email/suggest`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error('Failed to get AI email suggestion');
     return res.json();
   }
 };

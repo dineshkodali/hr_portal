@@ -1,12 +1,12 @@
 
 import React from 'react';
-import { 
-  LayoutDashboard, 
-  Users, 
-  CalendarCheck, 
-  DollarSign, 
-  Monitor, 
-  Settings, 
+import {
+  LayoutDashboard,
+  Users,
+  CalendarCheck,
+  DollarSign,
+  Monitor,
+  Settings,
   LogOut,
   X,
   UserPlus,
@@ -17,7 +17,8 @@ import {
   BookOpen,
   Palmtree,
   UserCircle,
-  FileBarChart
+  FileBarChart,
+  Mail
 } from 'lucide-react';
 import { ViewState, UserRole, User } from '../types';
 
@@ -33,7 +34,7 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, onClose, onLogout, userRole, user }) => {
   const isAdminOrHR = user.role === 'admin' || user.role === 'super_admin' || user.role === 'hr';
-  
+
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, minRole: 'employee' },
     { id: 'reports', label: 'Reports', icon: FileBarChart, minRole: 'employee' },
@@ -48,18 +49,19 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, on
     { id: 'files', label: 'Files', icon: FolderOpen, minRole: 'employee' },
     { id: 'payroll', label: 'Payroll', icon: DollarSign, minRole: 'employee' },
     { id: 'logs', label: 'Activity Logs', icon: History, minRole: 'hr' },
-    { 
-        id: 'settings', 
-        label: isAdminOrHR ? 'System Settings' : 'My Profile', 
-        icon: isAdminOrHR ? Settings : UserCircle, 
-        minRole: 'employee' 
+    {
+      id: 'settings',
+      label: isAdminOrHR ? 'System Settings' : 'My Profile',
+      icon: isAdminOrHR ? Settings : UserCircle,
+      minRole: 'employee'
     },
+    { id: 'email', label: 'AI Email', icon: Mail, minRole: 'employee' },
   ];
 
   const hasAccess = (item: typeof menuItems[0]) => {
-      if (user.role === 'super_admin' || user.role === 'admin') return true;
-      if (item.minRole === 'hr') return user.role === 'hr' || user.role === 'manager';
-      return true;
+    if (user.role === 'super_admin' || user.role === 'admin') return true;
+    if (item.minRole === 'hr') return user.role === 'hr' || user.role === 'manager';
+    return true;
   };
 
   const filteredItems = menuItems.filter(hasAccess);
@@ -67,13 +69,13 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, on
   return (
     <>
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/60 backdrop-blur-sm z-20 md:hidden transition-opacity"
           onClick={onClose}
         />
       )}
 
-      <aside 
+      <aside
         className={`
           fixed top-0 left-0 z-30 h-screen w-64 
           bg-slate-900 
@@ -107,7 +109,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, on
                 className={`
                   w-full flex items-center space-x-3 px-3 py-3 rounded-xl transition-all duration-200 group
                   ${currentView === item.id || (item.id === 'employees' && currentView === 'add-employee')
-                    ? 'bg-primary text-white shadow-lg shadow-teal-500/30' 
+                    ? 'bg-primary text-white shadow-lg shadow-teal-500/30'
                     : 'text-slate-400 hover:bg-slate-800 hover:text-white'}
                 `}
               >
@@ -119,7 +121,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, on
         </div>
 
         <div className="absolute bottom-0 w-full p-4 border-t border-slate-800 bg-slate-900">
-          <button 
+          <button
             onClick={onLogout}
             className="w-full flex items-center space-x-3 px-3 py-2 text-slate-400 hover:bg-slate-800 hover:text-red-400 rounded-xl transition-all duration-200 group"
           >
