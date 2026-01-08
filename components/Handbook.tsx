@@ -108,7 +108,7 @@ const Handbook: React.FC<HandbookProps> = ({
 
                 <div className="p-8">
                     {!selectedCategory ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                             {filteredCategories.map(cat => {
                                 if (!hasCategoryAccess(cat)) return null;
                                 return (
