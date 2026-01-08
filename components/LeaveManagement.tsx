@@ -41,8 +41,13 @@ const LeaveManagement: React.FC<LeaveManagementProps> = ({ user }) => {
       // Use linkedEmployeeId if available, else fallback to user.id
       const employeeId = user.linkedEmployeeId || user.id;
       await api.create('leaves', {
-        ...form,
         employeeId,
+        employeeName: user.name,
+        leaveType: form.type,
+        startDate: form.startDate,
+        endDate: form.endDate,
+        duration: Number(form.days),
+        reason: form.reason,
         status: 'Pending'
       });
       setShowForm(false);
