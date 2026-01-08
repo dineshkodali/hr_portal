@@ -310,7 +310,8 @@ app.post('/api/login', async (req, res) => {
     console.log('🔐 Row count:', securityCheck.rows.length);
 
     // PostgreSQL returns column names in lowercase unless quoted in query
-    const totpEnabled = securityCheck.rows.length > 0 && (securityCheck.rows[0].totpenabled || securityCheck.rows[0].totpEnabled);
+    const totpEnabled = securityCheck.rows.length > 0 &&
+      (securityCheck.rows[0].totpenabled === true || securityCheck.rows[0].totpEnabled === true);
 
     if (securityCheck.rows.length > 0) {
       console.log('🔐 totpEnabled value (lowercase):', securityCheck.rows[0].totpenabled);
@@ -346,6 +347,14 @@ app.post('/api/login', async (req, res) => {
       `INSERT INTO mfa_logs (id, userId, timestamp, status, loginAttempt, loginSource, ipAddress, browser, os, device) 
        VALUES ($1, $2, CURRENT_TIMESTAMP, 'success', 'Password login - No MFA', 'password', $3, $4, $5, $6)`,
       [logId, user.id, ipAddress || 'Unknown', browser || 'Unknown', os || 'Unknown', deviceType || 'Unknown']
+    );
+
+    // Log successful login to Activity Logs
+    const activityLogId = `log_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+    await pool.query(
+      `INSERT INTO logs (id, userId, userName, userRole, action, module, details, timestamp, ipAddress) 
+       VALUES ($1, $2, $3, $4, 'Login', 'Auth', 'User logged in successfully', CURRENT_TIMESTAMP, $5)`,
+      [activityLogId, user.id, user.name, user.role, ipAddress || 'Unknown']
     );
 
     res.json({
@@ -583,6 +592,17 @@ app.get('/api/:table', async (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
+    // Check if table exists in public schema to avoid crashing on missing tables
+    const tableCheck = await pool.query(
+      "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = $1)",
+      [table]
+    );
+
+    if (!tableCheck.rows[0].exists) {
+      console.warn(`Attempted to fetch non-existent table: ${table}`);
+      return res.json([]); // Return empty array for convenience
+    }
+
     let query = `SELECT * FROM ${table}`;
     const values = [];
 
@@ -592,7 +612,24 @@ app.get('/api/:table', async (req, res) => {
       values.push(req.query.folder);
     }
 
+<<<<<<< HEAD
     // query += ` ORDER BY created_at DESC`;
+=======
+    // Dynamic ordering based on available columns
+    const columnsCheck = await pool.query(
+      "SELECT column_name FROM information_schema.columns WHERE table_name = $1",
+      [table]
+    );
+    const columns = columnsCheck.rows.map(c => c.column_name);
+
+    if (columns.includes('timestamp')) {
+      query += ` ORDER BY timestamp DESC`;
+    } else if (columns.includes('created_at')) {
+      query += ` ORDER BY created_at DESC`;
+    } else if (columns.includes('createdAt')) {
+      query += ` ORDER BY "createdAt" DESC`;
+    }
+>>>>>>> 6f02fe1b74c00946b67c7887b96d832a9573059a
 
     const { rows } = await pool.query(query, values);
 
@@ -605,6 +642,7 @@ app.get('/api/:table', async (req, res) => {
     res.json(rows);
 
   } catch (err) {
+    console.error(`Error fetching table ${req.params.table}:`, err.message);
     res.status(500).json({ error: err.message });
   }
 });

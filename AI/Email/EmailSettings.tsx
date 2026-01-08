@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../../services/api';
-import { Sparkles, Mail, Link2, ExternalLink, User, Lock, Globe, Phone, MapPin, Briefcase, ChevronDown, Check, X, Shield, RefreshCw, Inbox } from 'lucide-react';
+import { Sparkles, Mail, Link2, ExternalLink, User, Lock, Globe, Phone, MapPin, Briefcase, ChevronDown, Check, X, Shield, RefreshCw, Inbox, Filter } from 'lucide-react';
+import { EmailCustomFolder, EmailRule } from '../../types';
 
 const EmailSettings: React.FC = () => {
   const [smtpStatus, setSmtpStatus] = useState<any>(null);
@@ -8,13 +9,26 @@ const EmailSettings: React.FC = () => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
 
-  // Rules State
-  const [rules, setRules] = useState([
-    { id: '1', name: 'Sort to "Work" folder', condition: 'Sender matches @microsoft.com', active: true },
-    { id: '2', name: 'Auto-Draft Replies', condition: 'Subject contains [Inquiry]', active: false }
-  ]);
+  // Folders State
+  const [customFolders, setCustomFolders] = useState<EmailCustomFolder[]>(() => {
+    const saved = localStorage.getItem('email_custom_folders');
+    return saved ? JSON.parse(saved) : [];
+  });
 
-  // Azure Config State
+  // Rules State
+  const [rules, setRules] = useState<EmailRule[]>(() => {
+    const saved = localStorage.getItem('email_sorting_rules');
+    return saved ? JSON.parse(saved) : [
+      { id: '1', name: 'Sort to "Work" folder', condition: 'Sender contains @microsoft.com', targetFolderId: 'custom-1', active: true },
+      { id: '2', name: 'Auto-Draft Replies', condition: 'Subject contains [Inquiry]', targetFolderId: 'inbox', active: false }
+    ];
+  });
+
+  const saveRules = (newRules: EmailRule[]) => {
+    setRules(newRules);
+    localStorage.setItem('email_sorting_rules', JSON.stringify(newRules));
+  };
+
   const [azureConfig, setAzureConfig] = useState({
     clientId: '',
     tenantId: '',
@@ -22,7 +36,7 @@ const EmailSettings: React.FC = () => {
   });
 
   const [isAddingRule, setIsAddingRule] = useState(false);
-  const [newRule, setNewRule] = useState({ name: '', condition: '', folder: 'Work' });
+  const [newRule, setNewRule] = useState({ name: '', condition: '', folderId: 'inbox' });
 
   useEffect(() => {
     api.get('smtp_settings')
@@ -56,19 +70,25 @@ const EmailSettings: React.FC = () => {
   };
 
   const removeRule = (id: string) => {
-    setRules(rules.filter(r => r.id !== id));
+    saveRules(rules.filter(r => r.id !== id));
+  };
+
+  const toggleRule = (id: string) => {
+    saveRules(rules.map(r => r.id === id ? { ...r, active: !r.active } : r));
   };
 
   const handleAddRule = () => {
     if (newRule.name && newRule.condition) {
-      setRules([...rules, {
+      const rule: EmailRule = {
         id: Date.now().toString(),
         name: newRule.name,
         condition: newRule.condition,
+        targetFolderId: newRule.folderId,
         active: true
-      }]);
+      };
+      saveRules([...rules, rule]);
       setIsAddingRule(false);
-      setNewRule({ name: '', condition: '', folder: 'Work' });
+      setNewRule({ name: '', condition: '', folderId: 'inbox' });
     }
   };
 
@@ -88,12 +108,18 @@ const EmailSettings: React.FC = () => {
     </div>
   );
 
-  const SelectField = ({ label, value }: any) => (
+  const SelectField = ({ label, value, options, onChange }: any) => (
     <div className="flex flex-col gap-2">
       <label className="text-sm font-semibold text-slate-700">{label}</label>
       <div className="relative">
-        <select className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all appearance-none cursor-pointer pr-10">
-          <option>{value}</option>
+        <select
+          value={value}
+          onChange={(e) => onChange?.(e.target.value)}
+          className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all appearance-none cursor-pointer pr-10"
+        >
+          {options.map((opt: any) => (
+            <option key={opt.id} value={opt.id}>{opt.label}</option>
+          ))}
         </select>
         <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
       </div>
@@ -229,7 +255,17 @@ const EmailSettings: React.FC = () => {
                     onChange={(val: string) => setNewRule({ ...newRule, condition: val })}
                     placeholder="e.g. Subject contains 'Invoice'"
                   />
-                  <SelectField label="Move to Folder" value={newRule.folder} />
+                  <SelectField
+                    label="Move to Folder"
+                    value={newRule.folderId}
+                    onChange={(val: string) => setNewRule({ ...newRule, folderId: val })}
+                    options={[
+                      { id: 'inbox', label: 'Inbox' },
+                      { id: 'archive', label: 'Archive' },
+                      { id: 'trash', label: 'Trash' },
+                      ...customFolders.map(f => ({ id: f.id, label: f.name }))
+                    ]}
+                  />
                 </div>
                 <div className="flex items-center gap-3 pt-4">
                   <button
@@ -260,9 +296,12 @@ const EmailSettings: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-lg border ${rule.active ? 'bg-green-50 text-green-600 border-green-100' : 'bg-slate-100 text-slate-400 border-slate-200'}`}>
+                  <button
+                    onClick={() => toggleRule(rule.id)}
+                    className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-lg border transition-all ${rule.active ? 'bg-green-50 text-green-600 border-green-100' : 'bg-slate-100 text-slate-400 border-slate-200'}`}
+                  >
                     {rule.active ? 'Active' : 'Inactive'}
-                  </span>
+                  </button>
                   <button onClick={() => removeRule(rule.id)} className="p-2 text-slate-400 hover:text-rose-500 transition-all"><X size={16} /></button>
                 </div>
               </div>

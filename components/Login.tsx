@@ -7,6 +7,7 @@ import { User } from '../types';
 import { Lock, Mail, ArrowRight, Loader, Shield, Key, RefreshCw } from 'lucide-react';
 import { getApiUrl } from '../src/config/database.config';
 import { collectDeviceMetadata } from '../services/deviceMetadata';
+import CopyrightNotice from './CopyrightNotice';
 
 interface LoginProps {
   onLogin: (user: User) => void;
@@ -22,7 +23,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, users = [] }) => {
   const [mfaCode, setMfaCode] = useState('');
   const [sessionToken, setSessionToken] = useState('');
   const [currentUserId, setCurrentUserId] = useState('');
-  
+
   // OTP States
   const [loginMode, setLoginMode] = useState<'password' | 'otp' | 'forgot'>('password');
   const [otpSent, setOtpSent] = useState(false);
@@ -39,15 +40,15 @@ const Login: React.FC<LoginProps> = ({ onLogin, users = [] }) => {
 
     try {
       const apiUrl = getApiUrl();
-      
+
       // Collect device metadata for logging
       const metadata = await collectDeviceMetadata('Password Login');
-      
+
       const response = await fetch(`${apiUrl}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          email, 
+        body: JSON.stringify({
+          email,
           password,
           browser: metadata.browser,
           os: metadata.os,
@@ -64,7 +65,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, users = [] }) => {
       }
 
       const data = await response.json();
-      
+
       // ✅ IF MFA IS REQUIRED, SHOW MFA VERIFICATION SCREEN
       if (data.requiresMFA) {
         setRequiresMFA(true);
@@ -96,10 +97,10 @@ const Login: React.FC<LoginProps> = ({ onLogin, users = [] }) => {
 
     try {
       const apiUrl = getApiUrl();
-      
+
       // Collect device metadata for logging
       const metadata = await collectDeviceMetadata('Login Device');
-      
+
       const response = await fetch(`${apiUrl}/auth/login/verify-mfa`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -136,7 +137,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, users = [] }) => {
 
   const fillCredentials = (role: string) => {
     setError('');
-    
+
     const candidate = users.find(u => u.role.toLowerCase().includes(role.toLowerCase()));
     if (candidate) {
       setEmail(candidate.email);
@@ -158,7 +159,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, users = [] }) => {
     try {
       const apiUrl = getApiUrl();
       const purpose = loginMode === 'forgot' ? 'password_reset' : 'login';
-      
+
       const response = await fetch(`${apiUrl}/auth/${purpose === 'password_reset' ? 'password-reset/request' : 'otp/generate'}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -195,7 +196,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, users = [] }) => {
   // OTP Verification Handler
   const handleVerifyOTP = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!otpCode || otpCode.length !== 6) {
       setError('Please enter a valid 6-digit code');
       return;
@@ -331,14 +332,14 @@ const Login: React.FC<LoginProps> = ({ onLogin, users = [] }) => {
             <h2 className="text-3xl font-bold text-gray-800 mb-2">Two-Factor Authentication</h2>
             <p className="text-gray-600">Enter the 6-digit code from your authenticator app</p>
           </div>
-          
+
           <form onSubmit={handleMFASubmit} className="p-8 pt-6 space-y-5">
             {error && (
               <div className="bg-red-50 text-red-500 p-3 rounded-lg text-sm border border-red-100 flex items-center">
                 <span className="mr-2">⚠️</span> {error}
               </div>
             )}
-            
+
             <div>
               <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Verification Code</label>
               <input
@@ -386,7 +387,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, users = [] }) => {
   // ✅ OTP LOGIN SCREEN
   if (loginMode === 'otp' || loginMode === 'forgot') {
     const isForgotPassword = loginMode === 'forgot';
-    
+
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-900 to-primary-800 p-4 font-sans">
         <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
@@ -398,13 +399,13 @@ const Login: React.FC<LoginProps> = ({ onLogin, users = [] }) => {
               {isForgotPassword ? 'Reset Password' : 'Login with OTP'}
             </h2>
             <p className="text-gray-600">
-              {otpSent 
-                ? `Enter the 6-digit code sent to ${otpEmail}` 
+              {otpSent
+                ? `Enter the 6-digit code sent to ${otpEmail}`
                 : `We'll send a verification code to your email`
               }
             </p>
           </div>
-          
+
           {!otpSent ? (
             <form onSubmit={(e) => { e.preventDefault(); handleRequestOTP(); }} className="p-8 pt-6 space-y-5">
               {error && (
@@ -412,7 +413,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, users = [] }) => {
                   <span className="mr-2">⚠️</span> {error}
                 </div>
               )}
-              
+
               <div>
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Email Address</label>
                 <div className="relative mt-1">
@@ -458,7 +459,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, users = [] }) => {
                   <span className="mr-2">⚠️</span> {error}
                 </div>
               )}
-              
+
               <div>
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Verification Code</label>
                 <input
@@ -472,8 +473,8 @@ const Login: React.FC<LoginProps> = ({ onLogin, users = [] }) => {
                 />
                 <div className="flex justify-between items-center mt-2">
                   <p className="text-xs text-gray-500">
-                    {otpExpiresIn > 0 
-                      ? `Expires in ${Math.floor(otpExpiresIn / 60)}:${(otpExpiresIn % 60).toString().padStart(2, '0')}` 
+                    {otpExpiresIn > 0
+                      ? `Expires in ${Math.floor(otpExpiresIn / 60)}:${(otpExpiresIn % 60).toString().padStart(2, '0')}`
                       : 'Code expired'
                     }
                   </p>
@@ -557,20 +558,20 @@ const Login: React.FC<LoginProps> = ({ onLogin, users = [] }) => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-900 to-primary-800 p-4 font-sans">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
         <div className="p-8 pb-6">
-            <div className="w-12 h-12 bg-accent-500 rounded-lg flex items-center justify-center mb-4 shadow-lg shadow-orange-500/30">
-                <span className="text-white font-bold text-xl">HR</span>
-            </div>
+          <div className="w-12 h-12 bg-accent-500 rounded-lg flex items-center justify-center mb-4 shadow-lg shadow-orange-500/30">
+            <span className="text-white font-bold text-xl">HR</span>
+          </div>
           <h2 className="text-3xl font-bold text-gray-800 mb-2">Welcome Back</h2>
           <p className="text-gray-500">Sign in to access your dashboard.</p>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="p-8 pt-0 space-y-5">
           {error && (
             <div className="bg-red-50 text-red-500 p-3 rounded-lg text-sm border border-red-100 flex items-center">
-                <span className="mr-2">⚠️</span> {error}
+              <span className="mr-2">⚠️</span> {error}
             </div>
           )}
-          
+
           <div>
             <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Email Address</label>
             <div className="relative mt-1">
@@ -588,14 +589,14 @@ const Login: React.FC<LoginProps> = ({ onLogin, users = [] }) => {
 
           <div>
             <div className="flex justify-between items-center">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Password</label>
-                <button 
-                  type="button"
-                  onClick={() => setLoginMode('forgot')}
-                  className="text-xs text-accent-600 hover:text-accent-700 font-medium"
-                >
-                  Forgot Password?
-                </button>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Password</label>
+              <button
+                type="button"
+                onClick={() => setLoginMode('forgot')}
+                className="text-xs text-accent-600 hover:text-accent-700 font-medium"
+              >
+                Forgot Password?
+              </button>
             </div>
             <div className="relative mt-1">
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
@@ -616,12 +617,12 @@ const Login: React.FC<LoginProps> = ({ onLogin, users = [] }) => {
             className="w-full bg-gradient-to-r from-accent-500 to-accent-600 text-white py-3 rounded-xl font-bold shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40 transform hover:-translate-y-0.5 transition-all flex items-center justify-center space-x-2 disabled:opacity-70 disabled:cursor-not-allowed"
           >
             {loading ? (
-                <Loader size={20} className="animate-spin" />
+              <Loader size={20} className="animate-spin" />
             ) : (
-                <>
-                    <span>Sign In</span>
-                    <ArrowRight size={18} />
-                </>
+              <>
+                <span>Sign In</span>
+                <ArrowRight size={18} />
+              </>
             )}
           </button>
 
@@ -646,31 +647,34 @@ const Login: React.FC<LoginProps> = ({ onLogin, users = [] }) => {
         </form>
 
         <div className="bg-gray-50 p-6 border-t border-gray-100">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-3">Quick Login (Click to Fill)</p>
-            <div className="flex gap-3">
-                <button 
-                    onClick={() => fillCredentials('admin')}
-                    disabled={loading}
-                    className="flex-1 flex items-center justify-center gap-2 p-2 rounded-lg border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors text-sm font-semibold"
-                >
-                    <div className="w-2 h-2 rounded-full bg-purple-500"></div> Admin
-                </button>
-                <button 
-                    onClick={() => fillCredentials('manager')}
-                    disabled={loading}
-                    className="flex-1 flex items-center justify-center gap-2 p-2 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors text-sm font-semibold"
-                >
-                    <div className="w-2 h-2 rounded-full bg-blue-500"></div> Manager
-                </button>
-                <button 
-                    onClick={() => fillCredentials('employee')}
-                    disabled={loading}
-                    className="flex-1 flex items-center justify-center gap-2 p-2 rounded-lg border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 transition-colors text-sm font-semibold"
-                >
-                    <div className="w-2 h-2 rounded-full bg-orange-500"></div> Employee
-                </button>
-            </div>
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-3">Quick Login (Click to Fill)</p>
+          <div className="flex gap-3">
+            <button
+              onClick={() => fillCredentials('admin')}
+              disabled={loading}
+              className="flex-1 flex items-center justify-center gap-2 p-2 rounded-lg border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors text-sm font-semibold"
+            >
+              <div className="w-2 h-2 rounded-full bg-purple-500"></div> Admin
+            </button>
+            <button
+              onClick={() => fillCredentials('manager')}
+              disabled={loading}
+              className="flex-1 flex items-center justify-center gap-2 p-2 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors text-sm font-semibold"
+            >
+              <div className="w-2 h-2 rounded-full bg-blue-500"></div> Manager
+            </button>
+            <button
+              onClick={() => fillCredentials('employee')}
+              disabled={loading}
+              className="flex-1 flex items-center justify-center gap-2 p-2 rounded-lg border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 transition-colors text-sm font-semibold"
+            >
+              <div className="w-2 h-2 rounded-full bg-orange-500"></div> Employee
+            </button>
+          </div>
         </div>
+      </div>
+      <div className="max-w-md w-full">
+        <CopyrightNotice />
       </div>
     </div>
   );

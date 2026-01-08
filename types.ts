@@ -28,6 +28,19 @@ export interface Group {
   memberIds: string[];
 }
 
+export interface CopyrightSection {
+  title: string;
+  content: string;
+}
+
+export interface FooterSettings {
+  companyName: string;
+  copyrightNotice: string;
+  privacyContent: string;
+  termsContent: string;
+  securityContent: string;
+}
+
 export interface Branch {
   id: string;
   name: string;
@@ -217,6 +230,10 @@ export interface FileItem {
   uploadedDate: string;
   category: 'Company' | 'Personal';
   ownerId?: string;
+  access?: {
+    users: string[];
+    groups: string[];
+  };
 }
 
 export type TaskStatus = 'To Do' | 'In Progress' | 'Review' | 'Done';
@@ -377,7 +394,9 @@ export interface SystemConfig {
     allowEmployeePhotoUpload: boolean;
     allowEmployeeAddressEdit: boolean;
     allowEmployeeBankEdit: boolean;
-  }
+  };
+  footerSettings?: FooterSettings;
+  copyrightSections?: CopyrightSection[];
 }
 
 export interface EmailTemplate {
@@ -395,7 +414,16 @@ export interface SmtpSettings {
   fromEmail: string;
 }
 
-export type EmailFolder = 'inbox' | 'sent' | 'drafts' | 'trash';
+export type EmailFolder = 'inbox' | 'sent' | 'drafts' | 'trash' | string;
+
+export interface EmailCustomFolder {
+  id: string;
+  name: string;
+  query: string;
+  color: string;
+  icon?: string;
+}
+
 
 export interface EmailAttachment {
   id: string;
@@ -404,7 +432,14 @@ export interface EmailAttachment {
   file_path: string;
   file_size: number;
   mime_type: string;
-  created_at: string;
+}
+
+export interface EmailRule {
+  id: string;
+  name: string;
+  condition: string;
+  targetFolderId: string;
+  active: boolean;
 }
 
 export interface Email {
@@ -415,7 +450,7 @@ export interface Email {
   body: string;
   status: 'unread' | 'read' | 'sent';
   type: 'inbound' | 'outbound';
-  folder: EmailFolder;
+  folder: string;
   has_attachments: boolean;
   attachments?: EmailAttachment[];
   created_at: string;
@@ -427,16 +462,25 @@ export interface PolicyCategory {
   name: string;
   icon: string;
   description: string;
+  access?: {
+    users: string[];
+    groups: string[];
+  };
 }
 
 export interface PolicyDocument {
   id: string;
-  categoryId: string;
+  categoryid: string;
   title: string;
   content?: string;
   fileUrl?: string;
-  lastUpdated: string;
-  version: string;
+  lastUpdated?: string;
+  updated_at?: string;
+  version: string | number;
+  access?: {
+    users: string[];
+    groups: string[];
+  };
 }
 
 export interface Holiday {
@@ -554,6 +598,8 @@ export interface HandbookProps {
   user: User;
   categories: PolicyCategory[];
   policies: PolicyDocument[];
+  users?: User[];
+  groups?: Group[];
   onAddCategory: (category: PolicyCategory) => void;
   onUpdateCategory: (category: PolicyCategory) => void;
   onDeleteCategory: (id: string) => void;
@@ -578,6 +624,7 @@ export interface SettingsProps {
   employees: Employee[];
   assets: Asset[];
   groups: Group[];
+  files?: FileItem[];
   onAddGroup: (group: Group) => void;
   onUpdateGroup: (group: Group) => void;
   onDeleteGroup: (id: string) => void;
@@ -590,6 +637,7 @@ export interface SettingsProps {
   onAddUser?: (u: User) => void;
   onDeleteUser?: (id: string) => void;
   onUpdateUser?: (u: User) => void;
+  onUpdateFile?: (file: FileItem) => void;
   systemConfig: SystemConfig;
   setSystemConfig: (config: SystemConfig) => void;
   emailTemplates: EmailTemplate[];
@@ -603,6 +651,8 @@ export interface SettingsProps {
   onViewEmployee?: (id: string) => void;
   leaves?: LeaveRequest[];
   reimbursements?: Reimbursement[];
+  logs?: ActivityLog[];
+  onRefreshLogs?: () => void;
 }
 
 export interface DepartmentsProps {

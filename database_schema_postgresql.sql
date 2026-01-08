@@ -771,6 +771,19 @@ CREATE TABLE IF NOT EXISTS user_outlook_tokens (
 );
 
 -- ============================================================================
+-- OUTLOOK_CONFIG TABLE (GLOBAL)
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS outlook_config (
+  id VARCHAR(50) PRIMARY KEY, -- 'global'
+  clientId TEXT NOT NULL,
+  tenantId TEXT NOT NULL,
+  clientSecret TEXT NOT NULL,
+  organizationName VARCHAR(255),
+  organizationId VARCHAR(100),
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ============================================================================
 -- GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO postgres;
 -- GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO postgres;
 -- GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO postgres;

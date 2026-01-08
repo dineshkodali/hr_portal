@@ -48,7 +48,6 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, on
     { id: 'assets', label: 'Assets', icon: Monitor, minRole: 'employee' },
     { id: 'files', label: 'Files', icon: FolderOpen, minRole: 'employee' },
     { id: 'payroll', label: 'Payroll', icon: DollarSign, minRole: 'employee' },
-    { id: 'logs', label: 'Activity Logs', icon: History, minRole: 'hr' },
     {
       id: 'settings',
       label: isAdminOrHR ? 'System Settings' : 'My Profile',
