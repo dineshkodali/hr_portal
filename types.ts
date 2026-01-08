@@ -14,58 +14,58 @@ export interface User {
   status?: 'Active' | 'Inactive';
   branchIds?: string[];
   accessModules?: string[];
-  address?: string; 
+  address?: string;
   password?: string;
   linkedEmployeeId?: string;
   documents?: { name: string; date: string; size: string }[];
 }
 
 export interface Group {
-    id: string;
-    name: string;
-    description: string;
-    permissions: RolePermission[];
-    memberIds: string[];
+  id: string;
+  name: string;
+  description: string;
+  permissions: RolePermission[];
+  memberIds: string[];
 }
 
 export interface Branch {
-    id: string;
-    name: string;
-    address?: string;
-    city: string;
-    state?: string;
-    country: string;
-    location?: string;
-    zipCode?: string;
-    phone?: string;
-    email?: string;
-    registrationNumber?: string;
-    currency: string;
-    managerids?: string[];
-    managerName?: string;
-    documents?: string[];
+  id: string;
+  name: string;
+  address?: string;
+  city: string;
+  state?: string;
+  country: string;
+  location?: string;
+  zipCode?: string;
+  phone?: string;
+  email?: string;
+  registrationNumber?: string;
+  currency: string;
+  managerids?: string[];
+  managerName?: string;
+  documents?: string[];
 }
 
 export interface Team {
-    id: string;
-    name: string;
-    leaderid: string;
-    leadername: string;
-    members: string[];
-    description: string;
-    projectFocus?: string;
+  id: string;
+  name: string;
+  leaderid: string;
+  leadername: string;
+  members: string[];
+  description: string;
+  projectFocus?: string;
 }
 
 export interface ActivityLog {
-    id: string;
-    userId: string;
-    userName: string;
-    userRole: string;
-    action: string;
-    module: string;
-    details: string;
-    timestamp: string;
-    branchId?: string;
+  id: string;
+  userId: string;
+  userName: string;
+  userRole: string;
+  action: string;
+  module: string;
+  details: string;
+  timestamp: string;
+  branchId?: string;
 }
 
 export interface SalaryStructure {
@@ -81,18 +81,18 @@ export interface SalaryStructure {
 }
 
 export interface BankDetails {
-    accountName: string;
-    accountNumber: string;
-    sortCode: string;
-    bankName: string;
+  accountName: string;
+  accountNumber: string;
+  sortCode: string;
+  bankName: string;
 }
 
 export interface ComplianceDetails {
-    niNumber?: string;
-    taxCode?: string;
-    shareCode?: string;
-    p45Status?: 'Submitted' | 'Pending' | 'Not Applicable';
-    p60Status?: 'Issued' | 'Pending' | 'Not Applicable';
+  niNumber?: string;
+  taxCode?: string;
+  shareCode?: string;
+  p45Status?: 'Submitted' | 'Pending' | 'Not Applicable';
+  p60Status?: 'Issued' | 'Pending' | 'Not Applicable';
 }
 
 export interface Employee {
@@ -151,7 +151,7 @@ export interface Job {
   title: string;
   department: string;
   location: string;
-  jobtype: string; 
+  jobtype: string;
   postedDate: string;
   status: 'Active' | 'Closed' | 'Draft';
   // applicants: number;
@@ -161,11 +161,11 @@ export interface Job {
 }
 
 export interface OfferDetails {
-    salary: number;
-    joiningDate: string;
-    terms: string;
-    generatedAt: string;
-    acceptedAt?: string;
+  salary: number;
+  joiningDate: string;
+  terms: string;
+  generatedAt: string;
+  acceptedAt?: string;
 }
 
 export interface Candidate {
@@ -183,7 +183,7 @@ export interface Candidate {
 export interface Asset {
   id: string;
   name: string;
-  type: string; 
+  type: string;
   serialnumber: string;
   assignedto?: string;
   purchasedate: string;
@@ -208,18 +208,18 @@ export type TaskStatus = 'To Do' | 'In Progress' | 'Review' | 'Done';
 export type TaskPriority = 'Low' | 'Medium' | 'High';
 
 export interface TaskComment {
-    id: string;
-    user: string;
-    avatar: string;
-    text: string;
-    date: string;
+  id: string;
+  user: string;
+  avatar: string;
+  text: string;
+  date: string;
 }
 
 export interface TaskHistory {
-    id: string;
-    user: string;
-    action: string;
-    date: string;
+  id: string;
+  user: string;
+  action: string;
+  date: string;
 }
 
 export interface Task {
@@ -262,93 +262,93 @@ export interface AttendanceRecord {
 }
 
 export interface Timesheet {
-    id: string;
-    employeeId: string;
-    employeeName: string;
-    date: string;
-    clockIn: string;
-    clockOut: string | null;
-    duration: number;
-    status: 'Working' | 'Pending' | 'Approved' | 'Rejected' | 'Overtime' | 'Completed';
-    description?: string;
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  date: string;
+  clockIn: string;
+  clockOut: string | null;
+  duration: number;
+  status: 'Working' | 'Pending' | 'Approved' | 'Rejected' | 'Overtime' | 'Completed';
+  description?: string;
 }
 
 export interface Shift {
-    id: string;
-    name: string;
-    startTime: string;
-    endTime: string;
-    days: string[];
-    assignedCount: number;
+  id: string;
+  name: string;
+  startTime: string;
+  endTime: string;
+  days: string[];
+  assignedCount: number;
 }
 
 export interface PayrollBreakdown {
-    hra: number;
-    conveyance: number;
-    medical: number;
-    special: number;
-    overtime: number;
-    grossEarnings: number;
-    pf: number;
-    esi: number;
-    tds: number;
-    pt: number;
-    lop: number;
-    totalDeductions: number;
-    totalReimbursements?: number;
+  hra: number;
+  conveyance: number;
+  medical: number;
+  special: number;
+  overtime: number;
+  grossEarnings: number;
+  pf: number;
+  esi: number;
+  tds: number;
+  pt: number;
+  lop: number;
+  totalDeductions: number;
+  totalReimbursements?: number;
 }
 
 export interface PayrollRecord {
-    id: string;
-    employeeId: string;
-    employeeName: string;
-    employeeAvatar: string;
-    month: string;
-    basicSalary: number;
-    allowances: number;
-    deductions: number;
-    netSalary: number;
-    status: 'Pending' | 'Paid';
-    paymentDate?: string;
-    payableDays: number;
-    workingHours?: number; 
-    lopDays?: number;
-    adhocBonus?: number;
-    adhocDeduction?: number;
-    breakdown: PayrollBreakdown;
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  employeeAvatar: string;
+  month: string;
+  basicSalary: number;
+  allowances: number;
+  deductions: number;
+  netSalary: number;
+  status: 'Pending' | 'Paid';
+  paymentDate?: string;
+  payableDays: number;
+  workingHours?: number;
+  lopDays?: number;
+  adhocBonus?: number;
+  adhocDeduction?: number;
+  breakdown: PayrollBreakdown;
 }
 
 export interface Reimbursement {
-    id: string;
-    employeeId: string;
-    employeeName: string;
-    type: 'Travel' | 'Food' | 'Medical' | 'Office Supplies' | 'Other';
-    date: string;
-    amount: number;
-    description: string;
-    status: 'Pending' | 'Approved' | 'Rejected' | 'Paid' | 'Info Requested';
-    attachment?: string;
-    adminComments?: string;
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  type: 'Travel' | 'Food' | 'Medical' | 'Office Supplies' | 'Other';
+  date: string;
+  amount: number;
+  description: string;
+  status: 'Pending' | 'Approved' | 'Rejected' | 'Paid' | 'Info Requested';
+  attachment?: string;
+  adminComments?: string;
 }
 
 export interface PayrollModificationRequest {
-    id: string;
-    employeeId: string;
-    employeeName: string;
-    type: 'Tax Code' | 'Bank Details' | 'Other';
-    description: string;
-    status: 'Pending' | 'Resolved';
-    date: string;
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  type: 'Tax Code' | 'Bank Details' | 'Other';
+  description: string;
+  status: 'Pending' | 'Resolved';
+  date: string;
 }
 
 export interface NotificationSetting {
-    id: string;
-    module: string;
-    action: string;
-    enabled: boolean;
-    description: string;
-    type?: string; // Added for backend compatibility
-    userId?: string; // Added for backend compatibility
+  id: string;
+  module: string;
+  action: string;
+  enabled: boolean;
+  description: string;
+  type?: string; // Added for backend compatibility
+  userId?: string; // Added for backend compatibility
 }
 
 export interface SystemConfig {
@@ -358,62 +358,89 @@ export interface SystemConfig {
   departments: string[];
   designations: string[];
   portalSettings: {
-      allowEmployeeProfileEdit: boolean;
-      allowEmployeePhotoUpload: boolean;
-      allowEmployeeAddressEdit: boolean;
-      allowEmployeeBankEdit: boolean;
+    allowEmployeeProfileEdit: boolean;
+    allowEmployeePhotoUpload: boolean;
+    allowEmployeeAddressEdit: boolean;
+    allowEmployeeBankEdit: boolean;
   }
 }
 
 export interface EmailTemplate {
-    id: string;
-    name: string;
-    subject: string;
-    body: string;
+  id: string;
+  name: string;
+  subject: string;
+  body: string;
 }
 
 export interface SmtpSettings {
-    host: string;
-    port: string;
-    user: string;
-    pass: string;
-    fromEmail: string;
+  host: string;
+  port: string;
+  user: string;
+  pass: string;
+  fromEmail: string;
+}
+
+export type EmailFolder = 'inbox' | 'sent' | 'drafts' | 'trash';
+
+export interface EmailAttachment {
+  id: string;
+  email_id: string;
+  filename: string;
+  file_path: string;
+  file_size: number;
+  mime_type: string;
+  created_at: string;
+}
+
+export interface Email {
+  id: string;
+  sender: string;
+  recipient: string;
+  subject: string;
+  body: string;
+  status: 'unread' | 'read' | 'sent';
+  type: 'inbound' | 'outbound';
+  folder: EmailFolder;
+  has_attachments: boolean;
+  attachments?: EmailAttachment[];
+  created_at: string;
+  updated_at: string;
 }
 
 export interface PolicyCategory {
-    id: string;
-    name: string;
-    icon: string;
-    description: string;
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
 }
 
 export interface PolicyDocument {
-    id: string;
-    categoryId: string;
-    title: string;
-    content?: string;
-    fileUrl?: string;
-    lastUpdated: string;
-    version: string;
+  id: string;
+  categoryId: string;
+  title: string;
+  content?: string;
+  fileUrl?: string;
+  lastUpdated: string;
+  version: string;
 }
 
 export interface Holiday {
-    id: string;
-    name: string;
-    date: string;
-    type: 'Public' | 'Company';
-    description: string;
+  id: string;
+  name: string;
+  date: string;
+  type: 'Public' | 'Company';
+  description: string;
 }
 
 export interface DashboardProps {
-    onNavigate: (view: ViewState) => void;
-    employees: Employee[];
-    tasks: Task[];
-    leaves: LeaveRequest[];
-    jobs: Job[];
-    selectedBranch: Branch | 'all';
-    onUpdateTask?: (task: Task) => void;
-    onDeleteTask?: (id: string) => void;
+  onNavigate: (view: ViewState) => void;
+  employees: Employee[];
+  tasks: Task[];
+  leaves: LeaveRequest[];
+  jobs: Job[];
+  selectedBranch: Branch | 'all';
+  onUpdateTask?: (task: Task) => void;
+  onDeleteTask?: (id: string) => void;
 }
 
 export interface EmployeeListProps {
@@ -427,7 +454,7 @@ export interface EmployeeListProps {
   leaves: LeaveRequest[];
   departments: Department[];
   payrollRecords: PayrollRecord[];
-  reimbursements: Reimbursement[]; 
+  reimbursements: Reimbursement[];
   systemConfig: SystemConfig;
   selectedBranch: Branch | 'all';
   onAddEmployee: () => void;
@@ -455,20 +482,20 @@ export interface EmployeeListProps {
 }
 
 export interface AIChatMessage {
-    id: string;
-    role: 'user' | 'assistant';
-    content: string;
-    timestamp: string;
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: string;
 }
 
 export interface AIChatProps {
-    user: User;
-    employees: Employee[];
-    tasks: Task[];
-    leaves: LeaveRequest[];
-    holidays: Holiday[];
-    policies: PolicyDocument[];
-    onNavigate: (view: ViewState) => void;
+  user: User;
+  employees: Employee[];
+  tasks: Task[];
+  leaves: LeaveRequest[];
+  holidays: Holiday[];
+  policies: PolicyDocument[];
+  onNavigate: (view: ViewState) => void;
 }
 
 export interface AttendanceProps {
@@ -501,66 +528,66 @@ export interface AssetManagementProps {
 }
 
 export interface TeamManagementProps {
-    teams: Team[];
-    employees: Employee[];
-    onAddTeam: (team: Team) => void;
-    onUpdateTeam: (team: Team) => void;
-    onDeleteTeam: (id: string) => void;
+  teams: Team[];
+  employees: Employee[];
+  onAddTeam: (team: Team) => void;
+  onUpdateTeam: (team: Team) => void;
+  onDeleteTeam: (id: string) => void;
 }
 
 export interface HandbookProps {
-    user: User;
-    categories: PolicyCategory[];
-    policies: PolicyDocument[];
-    onAddCategory: (category: PolicyCategory) => void;
-    onUpdateCategory: (category: PolicyCategory) => void;
-    onDeleteCategory: (id: string) => void;
-    onAddPolicy: (policy: PolicyDocument) => void;
-    onUpdatePolicy: (policy: PolicyDocument) => void;
-    onDeletePolicy: (id: string) => void;
+  user: User;
+  categories: PolicyCategory[];
+  policies: PolicyDocument[];
+  onAddCategory: (category: PolicyCategory) => void;
+  onUpdateCategory: (category: PolicyCategory) => void;
+  onDeleteCategory: (id: string) => void;
+  onAddPolicy: (policy: PolicyDocument) => void;
+  onUpdatePolicy: (policy: PolicyDocument) => void;
+  onDeletePolicy: (id: string) => void;
 }
 
 export interface HolidayCalendarProps {
-    user: User;
-    holidays: Holiday[];
-    onAddHoliday: (holiday: Holiday) => void;
-    onUpdateHoliday: (holiday: Holiday) => void;
-    onDeleteHoliday: (id: string) => void;
-    onApplyLeave?: () => void;
+  user: User;
+  holidays: Holiday[];
+  onAddHoliday: (holiday: Holiday) => void;
+  onUpdateHoliday: (holiday: Holiday) => void;
+  onDeleteHoliday: (id: string) => void;
+  onApplyLeave?: () => void;
 }
 
 export interface SettingsProps {
-    user: User;
-    users: User[];
-    branches: Branch[];
-    employees: Employee[];
-    assets: Asset[];
-    groups: Group[];
-    onAddGroup: (group: Group) => void;
-    onUpdateGroup: (group: Group) => void;
-    onDeleteGroup: (id: string) => void;
-    onAddBranch: (branch: Branch) => void;
-    onUpdateBranch: (branch: Branch) => void;
-    onDeleteBranch: (id: string) => void;
-    onUpdateEmployee?: (emp: Employee) => void;
-    onUpdateAsset?: (asset: Asset) => void;
-    onDeleteAsset?: (id: string) => void;
-    onAddUser?: (u: User) => void;
-    onDeleteUser?: (id: string) => void;
-    onUpdateUser?: (u: User) => void;
-    systemConfig: SystemConfig;
-    setSystemConfig: (config: SystemConfig) => void;
-    emailTemplates: EmailTemplate[];
-    setEmailTemplates: (templates: EmailTemplate[]) => void;
-    smtpSettings: SmtpSettings;
-    setSmtpSettings: (settings: SmtpSettings) => void;
-    notificationSettings: NotificationSetting[];
-    setNotificationSettings: (settings: NotificationSetting[]) => void;
-    onNavigate?: (view: ViewState) => void;
-    onSelectBranch?: (id: string) => void;
-    onViewEmployee?: (id: string) => void;
-    leaves?: LeaveRequest[];
-    reimbursements?: Reimbursement[];
+  user: User;
+  users: User[];
+  branches: Branch[];
+  employees: Employee[];
+  assets: Asset[];
+  groups: Group[];
+  onAddGroup: (group: Group) => void;
+  onUpdateGroup: (group: Group) => void;
+  onDeleteGroup: (id: string) => void;
+  onAddBranch: (branch: Branch) => void;
+  onUpdateBranch: (branch: Branch) => void;
+  onDeleteBranch: (id: string) => void;
+  onUpdateEmployee?: (emp: Employee) => void;
+  onUpdateAsset?: (asset: Asset) => void;
+  onDeleteAsset?: (id: string) => void;
+  onAddUser?: (u: User) => void;
+  onDeleteUser?: (id: string) => void;
+  onUpdateUser?: (u: User) => void;
+  systemConfig: SystemConfig;
+  setSystemConfig: (config: SystemConfig) => void;
+  emailTemplates: EmailTemplate[];
+  setEmailTemplates: (templates: EmailTemplate[]) => void;
+  smtpSettings: SmtpSettings;
+  setSmtpSettings: (settings: SmtpSettings) => void;
+  notificationSettings: NotificationSetting[];
+  setNotificationSettings: (settings: NotificationSetting[]) => void;
+  onNavigate?: (view: ViewState) => void;
+  onSelectBranch?: (id: string) => void;
+  onViewEmployee?: (id: string) => void;
+  leaves?: LeaveRequest[];
+  reimbursements?: Reimbursement[];
 }
 
 export interface DepartmentsProps {
@@ -573,19 +600,19 @@ export interface DepartmentsProps {
 }
 
 export interface PayrollProps {
-    user: User;
-    payrollRecords: PayrollRecord[];
-    employees: Employee[];
-    attendance: AttendanceRecord[];
-    timesheets: Timesheet[];
-    reimbursements: Reimbursement[];
-    onAddPayroll: (record: PayrollRecord) => void;
-    onUpdatePayroll: (record: PayrollRecord) => void;
-    onDeletePayroll: (id: string) => void;
-    onUpdateEmployee: (emp: Employee) => void;
-    onAddReimbursement: (reimbursement: Reimbursement) => void;
-    onUpdateReimbursement: (reimbursement: Reimbursement) => void;
-    onDeleteReimbursement: (id: string) => void;
+  user: User;
+  payrollRecords: PayrollRecord[];
+  employees: Employee[];
+  attendance: AttendanceRecord[];
+  timesheets: Timesheet[];
+  reimbursements: Reimbursement[];
+  onAddPayroll: (record: PayrollRecord) => void;
+  onUpdatePayroll: (record: PayrollRecord) => void;
+  onDeletePayroll: (id: string) => void;
+  onUpdateEmployee: (emp: Employee) => void;
+  onAddReimbursement: (reimbursement: Reimbursement) => void;
+  onUpdateReimbursement: (reimbursement: Reimbursement) => void;
+  onDeleteReimbursement: (id: string) => void;
 }
 
-export type ViewState = 'dashboard' | 'employees' | 'teams' | 'add-employee' | 'assets' | 'files' | 'tasks' | 'recruitment' | 'attendance' | 'payroll' | 'settings' | 'logs' | 'handbook' | 'holidays' | 'reports';
+export type ViewState = 'dashboard' | 'employees' | 'teams' | 'add-employee' | 'assets' | 'files' | 'tasks' | 'recruitment' | 'attendance' | 'payroll' | 'settings' | 'logs' | 'handbook' | 'holidays' | 'reports' | 'email';
