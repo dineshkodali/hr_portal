@@ -380,7 +380,16 @@ export interface SmtpSettings {
   fromEmail: string;
 }
 
-export type EmailFolder = 'inbox' | 'sent' | 'drafts' | 'trash';
+export type EmailFolder = 'inbox' | 'sent' | 'drafts' | 'trash' | string;
+
+export interface EmailCustomFolder {
+  id: string;
+  name: string;
+  query: string;
+  color: string;
+  icon?: string;
+}
+
 
 export interface EmailAttachment {
   id: string;
@@ -389,7 +398,14 @@ export interface EmailAttachment {
   file_path: string;
   file_size: number;
   mime_type: string;
-  created_at: string;
+}
+
+export interface EmailRule {
+  id: string;
+  name: string;
+  condition: string;
+  targetFolderId: string;
+  active: boolean;
 }
 
 export interface Email {
@@ -400,7 +416,7 @@ export interface Email {
   body: string;
   status: 'unread' | 'read' | 'sent';
   type: 'inbound' | 'outbound';
-  folder: EmailFolder;
+  folder: string;
   has_attachments: boolean;
   attachments?: EmailAttachment[];
   created_at: string;

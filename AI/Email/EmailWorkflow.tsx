@@ -3,11 +3,48 @@ import { Mail, Send, FileText, Trash2, Settings, Plus, Inbox, Search, Filter, Sh
 import EmailInbox from './EmailInbox';
 import EmailCompose from './EmailCompose';
 import EmailSettings from './EmailSettings';
-import { EmailFolder } from '../../types';
+import { EmailFolder, EmailCustomFolder } from '../../types';
 
 const EmailWorkflow: React.FC = () => {
   const [activeFolder, setActiveFolder] = useState<EmailFolder | 'compose' | 'settings' | 'ai-assistant'>('inbox');
   const [searchQuery, setSearchQuery] = useState('');
+  const [customFolders, setCustomFolders] = useState<EmailCustomFolder[]>(() => {
+    const saved = localStorage.getItem('email_custom_folders');
+    return saved ? JSON.parse(saved) : [
+      { id: 'custom-1', name: 'Work', query: 'microsoft', color: 'text-blue-500' },
+      { id: 'custom-2', name: 'Personal', query: 'family', color: 'text-purple-500' }
+    ];
+  });
+  const [isAddingFolder, setIsAddingFolder] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
+  const [newFolderQuery, setNewFolderQuery] = useState('');
+
+  const saveFolders = (folders: EmailCustomFolder[]) => {
+    setCustomFolders(folders);
+    localStorage.setItem('email_custom_folders', JSON.stringify(folders));
+  };
+
+  const handleAddFolder = () => {
+    if (newFolderName.trim() && newFolderQuery.trim()) {
+      const newFolder: EmailCustomFolder = {
+        id: `custom-${Date.now()}`,
+        name: newFolderName,
+        query: newFolderQuery,
+        color: 'text-slate-600'
+      };
+      saveFolders([...customFolders, newFolder]);
+      setNewFolderName('');
+      setNewFolderQuery('');
+      setIsAddingFolder(false);
+    }
+  };
+
+  const deleteFolder = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const updated = customFolders.filter(f => f.id !== id);
+    saveFolders(updated);
+    if (activeFolder === id) setActiveFolder('inbox');
+  };
 
   const menuGroups = [
     {
@@ -66,6 +103,75 @@ const EmailWorkflow: React.FC = () => {
             </div>
           </div>
         ))}
+
+        {/* CUSTOM FOLDERS */}
+        <div className="px-4 mb-8">
+          <div className="flex items-center justify-between px-4 mb-4">
+            <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">FOLDERS</h3>
+            <button
+              onClick={() => setIsAddingFolder(!isAddingFolder)}
+              className="text-orange-500 hover:text-orange-600 transition-colors"
+            >
+              <Plus size={14} strokeWidth={3} />
+            </button>
+          </div>
+
+          <div className="space-y-1">
+            {isAddingFolder && (
+              <div className="px-4 mb-4 space-y-2 animate-in slide-in-from-top-2 duration-200">
+                <input
+                  type="text"
+                  placeholder="Folder Name"
+                  value={newFolderName}
+                  onChange={(e) => setNewFolderName(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-100 rounded-lg px-3 py-1.5 text-xs outline-none focus:border-orange-500"
+                />
+                <input
+                  type="text"
+                  placeholder="Search Keyword"
+                  value={newFolderQuery}
+                  onChange={(e) => setNewFolderQuery(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-100 rounded-lg px-3 py-1.5 text-xs outline-none focus:border-orange-500"
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleAddFolder}
+                    className="flex-1 bg-orange-500 text-white text-[10px] font-bold py-1.5 rounded-lg"
+                  >
+                    Add
+                  </button>
+                  <button
+                    onClick={() => setIsAddingFolder(false)}
+                    className="flex-1 bg-slate-100 text-slate-600 text-[10px] font-bold py-1.5 rounded-lg"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {customFolders.map(folder => (
+              <button
+                key={folder.id}
+                onClick={() => setActiveFolder(folder.id)}
+                className={`w-full flex items-center justify-between group px-4 py-2.5 rounded-lg transition-all duration-200 ${activeFolder === folder.id
+                  ? 'bg-orange-50 text-orange-600'
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`w-2 h-2 rounded-full ${folder.color.replace('text', 'bg')}`} />
+                  <span className={`text-sm font-medium ${activeFolder === folder.id ? 'font-semibold' : ''}`}>{folder.name}</span>
+                </div>
+                <Trash2
+                  size={14}
+                  className="text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
+                  onClick={(e) => deleteFolder(folder.id, e)}
+                />
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* CONTENT AREA */}
@@ -103,7 +209,11 @@ const EmailWorkflow: React.FC = () => {
             ) : activeFolder === 'settings' ? (
               <EmailSettings />
             ) : (
-              <EmailInbox folder={activeFolder as EmailFolder} searchQuery={searchQuery} />
+              <EmailInbox
+                folder={activeFolder}
+                searchQuery={searchQuery}
+                customFilter={customFolders.find(f => f.id === activeFolder)?.query}
+              />
             )}
           </div>
         </div>

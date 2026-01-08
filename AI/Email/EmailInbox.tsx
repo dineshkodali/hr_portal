@@ -1,36 +1,96 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../../services/api';
 import { Mail, Send, Inbox, Clock, User, FileText, Trash2, Paperclip, MoreVertical, Star, Reply, Archive } from 'lucide-react';
-import { Email, EmailFolder } from '../../types';
+import { Email, EmailFolder, EmailRule } from '../../types';
 
 interface EmailInboxProps {
-  folder: EmailFolder;
+  folder: string;
   searchQuery: string;
+  customFilter?: string;
 }
 
-const EmailInbox: React.FC<EmailInboxProps> = ({ folder, searchQuery }) => {
+const EmailInbox: React.FC<EmailInboxProps> = ({ folder, searchQuery, customFilter }) => {
   const [emails, setEmails] = useState<Email[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
+  const [activeRules, setActiveRules] = useState<EmailRule[]>([]);
+
+  useEffect(() => {
+    const savedRules = localStorage.getItem('email_sorting_rules');
+    if (savedRules) {
+      setActiveRules(JSON.parse(savedRules));
+    }
+  }, []);
 
   useEffect(() => {
     setLoading(true);
     // Fetch emails for the specific folder
-    api.get(`emails?folder=${folder}`)
+    // If it's a custom folder, we fetch 'inbox' and filter manually
+    const targetFolder = folder.startsWith('custom-') ? 'inbox' : folder;
+
+    api.get(`emails?folder=${targetFolder}`)
       .then(data => {
         const filteredData = Array.isArray(data) ? data : [];
-        setEmails(filteredData.filter((e: Email) =>
-          e.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          e.body.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          e.sender.toLowerCase().includes(searchQuery.toLowerCase())
-        ));
+        const baseQuery = (searchQuery || '').toLowerCase();
+
+        // Find rules for this specific folder
+        const folderRules = activeRules.filter(r => r.active && r.targetFolderId === folder);
+
+        setEmails(filteredData.filter((e: Email) => {
+          // If searching globally
+          if (baseQuery) {
+            const matchesSearch = e.subject.toLowerCase().includes(baseQuery) ||
+              e.body.toLowerCase().includes(baseQuery) ||
+              e.sender.toLowerCase().includes(baseQuery);
+            if (!matchesSearch) return false;
+          }
+
+          // If it's a custom folder and no global search, apply folder-specific rules
+          if (folder.startsWith('custom-')) {
+            // Find if any rule matches this email
+            const matchesAnyRule = folderRules.length > 0 ? folderRules.some(rule => {
+              const condition = rule.condition.toLowerCase();
+              let matched = false;
+
+              const extractTerm = (prefix: string) => {
+                const part = condition.split(prefix)[1];
+                return part ? part.trim().replace(/^['"]|['"]$/g, '') : '';
+              };
+
+              if (condition.includes('subject contains') || condition.includes('subject matches')) {
+                const term = extractTerm(condition.includes('contains') ? 'contains' : 'matches');
+                matched = e.subject.toLowerCase().includes(term);
+              } else if (condition.includes('sender contains') || condition.includes('sender matches') || condition.includes('from contains')) {
+                const term = extractTerm(condition.includes('contains') ? 'contains' : (condition.includes('matches') ? 'matches' : 'from contains'));
+                matched = e.sender.toLowerCase().includes(term);
+              } else if (condition.includes('body contains')) {
+                const term = extractTerm('contains');
+                matched = e.body.toLowerCase().includes(term);
+              } else {
+                // Generic search if format is simple
+                matched = e.subject.toLowerCase().includes(condition) ||
+                  e.body.toLowerCase().includes(condition) ||
+                  e.sender.toLowerCase().includes(condition);
+              }
+              return matched;
+            }) : (customFilter ? (
+              e.subject.toLowerCase().includes(customFilter.toLowerCase()) ||
+              e.body.toLowerCase().includes(customFilter.toLowerCase()) ||
+              e.sender.toLowerCase().includes(customFilter.toLowerCase())
+            ) : false);
+
+            return matchesAnyRule;
+          }
+
+          return true; // For standard folders like inbox/sent
+        }));
         setLoading(false);
       })
       .catch(err => {
         console.error('Failed to fetch emails:', err);
         setLoading(false);
       });
-  }, [folder, searchQuery]);
+  }, [folder, searchQuery, customFilter, activeRules]);
 
   if (loading) {
     return (
