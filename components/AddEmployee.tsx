@@ -1,28 +1,30 @@
 
 import React, { useState } from 'react';
 import { ArrowLeft, Save, Upload, RefreshCw } from 'lucide-react';
-import { Employee, Branch } from '../types';
-
+import { Employee, Branch, Department } from '../types';
+import { api } from '../services/api';
 interface AddEmployeeProps {
   onBack: () => void;
   onSave: (employee: Employee) => void;
   employees: Employee[];
   branches: Branch[];
+  departments: Department[];
 }
 
-const AddEmployee: React.FC<AddEmployeeProps> = ({ onBack, onSave, employees, branches }) => {
+
+const AddEmployee: React.FC<AddEmployeeProps> = ({ onBack, onSave, employees, branches, departments }) => {
   const [formData, setFormData] = useState<Partial<Employee>>({
     name: '',
     password: '', 
     email: '',
     phone: '',
-    department: 'Engineering',
+    department: '',
     designation: '',
     joinDate: '',
     status: 'Active',
     employeeId: '',
-    location: 'New York (HQ)',
-    branchId: ''
+    // location: 'New York (HQ)',
+    branchid: ''
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -55,69 +57,115 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ onBack, onSave, employees, br
       setFormData(prev => ({ ...prev, employeeId: newId }));
   };
 
-  const handleSubmit = () => {
-    // Basic validation
-    if (!formData.name || !formData.email || !formData.employeeId || !formData.password) {
-        alert("Please fill in required fields (name, email, employeeId, password)");
-        return;
+//   const handleSubmit = () => {
+//     // Basic validation
+//     if (!formData.name || !formData.email || !formData.employeeId || !formData.password) {
+//         alert("Please fill in required fields (name, email, employeeId, password)");
+//         return;
+//     }
+
+//     // Check for duplicate ID - safely handle undefined employees
+//     if ((employees || []).some(e => e && e.employeeId === formData.employeeId)) {
+//         alert(`Employee ID ${formData.employeeId} already exists. Please generate a new one.`);
+//         return;
+//     }
+
+//     // Confirmation dialog
+//     if (!window.confirm('Are you sure you want to add this new employee? This will create both an employee record and a user account.')) {
+//         return;
+//     }
+
+//     const newEmployee: Employee = {
+//         id: '', // Will be set by parent
+//         employeeId: formData.employeeId || '',
+//         name: formData.name || '',
+//         email: formData.email || '',
+//         department: formData.department || '',
+//         designation: formData.designation || '',
+//         status: (formData.status as any) || 'Active',
+//         joinDate: formData.joinDate || new Date().toISOString().split('T')[0],
+//         avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.name || 'User')}&background=random`,
+//         phone: formData.phone,
+//         location: formData.location,
+//         branchid: formData.branchid || ''
+//     };
+
+//     // Create user record linked to employee
+//     const userPayload = {
+//         name: formData.name,
+//         email: formData.email,
+//         password: formData.password,
+//         role: 'employee',
+//         avatar: newEmployee.avatar,
+//         designation: formData.designation,
+//         branchIds: formData.branchid ? [formData.branchid] : [],
+//         accessModules: ['dashboard'],
+//         linkedEmployee: {
+//             name: newEmployee.name,
+//             email: newEmployee.email,
+//             designation: newEmployee.designation,
+//             branchid: formData.branchid || '',
+//         }
+//     };
+//     import('../services/api').then(({ api }) => {
+//       api.create('users', userPayload)
+//         .then(res => {
+//           alert('Employee and user created successfully!');
+//           onSave(newEmployee);
+//         })
+//         .catch(err => {
+//           alert('Error creating user/employee: ' + err.message);
+//         });
+//     });
+//   };
+
+const handleSubmit = async () => {
+  try {
+    if (!formData.name || !formData.email || !formData.password) {
+      alert('Required fields missing');
+      return;
     }
 
-    // Check for duplicate ID - safely handle undefined employees
-    if ((employees || []).some(e => e && e.employeeId === formData.employeeId)) {
-        alert(`Employee ID ${formData.employeeId} already exists. Please generate a new one.`);
-        return;
-    }
-
-    // Confirmation dialog
-    if (!window.confirm('Are you sure you want to add this new employee? This will create both an employee record and a user account.')) {
-        return;
-    }
-
-    const newEmployee: Employee = {
-        id: '', // Will be set by parent
-        employeeId: formData.employeeId || '',
-        name: formData.name || '',
-        email: formData.email || '',
-        department: formData.department || '',
-        designation: formData.designation || '',
-        status: (formData.status as any) || 'Active',
-        joinDate: formData.joinDate || new Date().toISOString().split('T')[0],
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.name || 'User')}&background=random`,
-        phone: formData.phone,
-        location: formData.location,
-        branchId: formData.branchId || ''
+    // 1️ CREATE EMPLOYEE FIRST
+    const employeePayload = {
+      id: `emp_${Date.now()}`,
+      employeeId: formData.employeeId,
+      name: formData.name,
+      email: formData.email,
+      department: formData.department,
+      designation: formData.designation,
+      joinDate: formData.joinDate,
+      phone: formData.phone,
+      status: formData.status,
+      branchid: formData.branchid
     };
 
-    // Create user record linked to employee
+    const employee = await api.create('employees', employeePayload);
+
+    // 2️ CREATE USER USING employee.id
     const userPayload = {
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-        role: 'employee',
-        avatar: newEmployee.avatar,
-        designation: formData.designation,
-        branchIds: formData.branchId ? [formData.branchId] : [],
-        accessModules: ['dashboard'],
-        linkedEmployee: {
-            name: newEmployee.name,
-            email: newEmployee.email,
-            designation: newEmployee.designation,
-            branchId: formData.branchId || '',
-        }
+      name: formData.name,
+      email: formData.email,
+      password: formData.password,
+      role: 'employee',
+      designation: formData.designation,
+      branchIds: [formData.branchid],
+      linkedEmployeeId: employee.id,
+      accessModules: ['dashboard']
     };
-    import('../services/api').then(({ api }) => {
-      api.create('users', userPayload)
-        .then(res => {
-          alert('Employee and user created successfully!');
-          onSave(newEmployee);
-        })
-        .catch(err => {
-          alert('Error creating user/employee: ' + err.message);
-        });
-    });
-  };
 
-  return (
+    await api.create('users', userPayload);
+
+    alert('Employee & User created successfully');
+    onBack();
+
+  } catch (err: any) {
+    alert(err.message);
+  }
+};
+  
+
+return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
@@ -237,14 +285,20 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ onBack, onSave, employees, br
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                      <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">Department <span className="text-red-500">*</span></label>
-                        <select name="department" value={formData.department} onChange={handleChange} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent-500/50 text-sm">
-                            <option>Engineering</option>
-                            <option>Marketing</option>
-                            <option>Sales</option>
-                            <option>HR</option>
-                            <option>Finance</option>
-                            <option>Operations</option>
-                        </select>
+                       <select
+                         name="department"
+                         value={formData.department}
+                         onChange={handleChange}
+                       >
+                         <option value="">Select Department</option>
+                         {(departments || []).map((dept) => (
+                           <option key={dept.id} value={dept.name}>
+                             {dept.name}
+                           </option>
+                         ))}
+                       </select>
+
+
                     </div>
                     <div className="relative">
                         <label className="block text-sm font-medium text-slate-700 mb-1">Employee ID <span className="text-red-500">*</span></label>
@@ -273,12 +327,20 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ onBack, onSave, employees, br
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">Branch <span className="text-red-500">*</span></label>
-                        <select name="branchId" value={formData.branchId} onChange={handleChange} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent-500/50 text-sm">
-                            <option value="">Select Branch</option>
-                            {(branches || []).map(branch => (
-                                <option key={branch.id} value={branch.id}>{branch.name} - {branch.city}</option>
-                            ))}
+                        <select
+                          name="branchid"
+                          value={formData.branchid}
+                          onChange={handleChange}
+                        >
+                          <option value="">Select Branch</option>
+                          {(branches || []).map((branch) => (
+                            <option key={branch.id} value={branch.id}>
+                              {branch.name} ({branch.city})
+                            </option>
+                          ))}
                         </select>
+
+
                     </div>
                 </div>
             </div>

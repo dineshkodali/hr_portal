@@ -107,7 +107,7 @@ export interface Employee {
   avatar: string;
   phone?: string;
   location?: string;
-  branchId?: string;
+  branchid?: string;
   salaryStructure?: SalaryStructure;
   bankDetails?: BankDetails;
   complianceDetails?: ComplianceDetails;

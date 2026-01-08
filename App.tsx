@@ -258,23 +258,23 @@ const App: React.FC = () => {
       };
     };
 
-  const handleAddEmployee = (emp: Employee) => {
-      const branchId = selectedBranchId !== 'all' ? selectedBranchId : branches[0]?.id;
-      const newEmp = { ...emp, id: Date.now().toString(), branchId };
+  // const handleAddEmployee = (emp: Employee) => {
+  //     const branchId = selectedBranchId !== 'all' ? selectedBranchId : branches[0]?.id;
+  //     const newEmp = { ...emp, id: Date.now().toString(), branchId };
       
-      // Fix: api.create is now implemented in services/api.ts
-      wrap(api.create('employees', newEmp), () => {
-          refreshEmployees();
-          const newUser: User = {
-              id: `u-${Date.now()}`, name: emp.name, email: emp.email, role: 'employee', avatar: emp.avatar,
-              designation: emp.designation, status: 'Active', branchIds: [branchId], linkedEmployeeId: newEmp.id,
-              accessModules: ['dashboard', 'attendance', 'payroll', 'tasks', 'files', 'assets', 'teams', 'settings']
-          };
-          api.create('users', newUser).then(refreshUsers).catch(() => {});
-          setCurrentView('employees');
-          logActivity('Create Employee', 'Workforce', `Added ${emp.name}`);
-      });
-  };
+  //     // Fix: api.create is now implemented in services/api.ts
+  //     wrap(api.create('employees', newEmp), () => {
+  //         refreshEmployees();
+  //         const newUser: User = {
+  //             id: `u-${Date.now()}`, name: emp.name, email: emp.email, role: 'employee', avatar: emp.avatar,
+  //             designation: emp.designation, status: 'Active', branchIds: [branchId], linkedEmployeeId: newEmp.id,
+  //             accessModules: ['dashboard', 'attendance', 'payroll', 'tasks', 'files', 'assets', 'teams', 'settings']
+  //         };
+  //         api.create('users', newUser).then(refreshUsers).catch(() => {});
+  //         setCurrentView('employees');
+  //         logActivity('Create Employee', 'Workforce', `Added ${emp.name}`);
+  //     });
+  // };
 
   // Fix: api.update and api.delete are now implemented in services/api.ts
   const handleUpdateEmployee = (emp: Employee) => wrap(api.update('employees', emp.id, emp), refreshEmployees);
@@ -310,7 +310,7 @@ const App: React.FC = () => {
       
       const newTimesheet: Timesheet = {
           id: tsId,
-          employeeId: user.id,
+          employeeId: user.linkedemployeeid,
           employeeName: user.name,
           date: todayStr,
           clockIn: now.toISOString(),
@@ -344,7 +344,7 @@ const App: React.FC = () => {
               } else {
                   api.create('attendance', {
                       id: `at-${Date.now()}`,
-                      employeeId: user.id,
+                      employeeId: user.linkedemployeeid,
                       employeeName: user.name,
                       employeeAvatar: user.avatar,
                       date: todayStr,
@@ -462,7 +462,7 @@ const App: React.FC = () => {
       return user.branchIds?.includes(selectedBranchId) && selectedBranchId === recordBranchId;
   };
 
-  const filteredEmployees = user?.role === 'employee' ? employees.filter(e => e.id === user.linkedemployeeid) : employees.filter(e => isRecordVisible(e.branchId));
+  const filteredEmployees = user?.role === 'employee' ? employees.filter(e => e.id === user.linkedemployeeid) : employees.filter(e => isRecordVisible(e.branchid));
   const visibleBranches = (user?.role === 'admin' || user?.role === 'super_admin') ? branches : branches.filter(b => user?.branchIds?.includes(b.id));
   const selectedBranchObject = branches.find(b => b.id === selectedBranchId) || 'all';
 
@@ -539,7 +539,16 @@ const App: React.FC = () => {
               onUpdateHoliday={h => wrap(api.update('holidays', h.id, h), refreshHolidays)}
               onDeleteHoliday={id => wrap(api.delete('holidays', id), refreshHolidays)}
             />}
-            {currentView === 'add-employee' && <AddEmployee onBack={() => setCurrentView('employees')} onSave={handleAddEmployee} employees={employees || []} />}
+            {currentView === 'add-employee' && (
+               <AddEmployee
+                 onBack={() => setCurrentView('employees')}
+                //  onSave={handleAddEmployee}
+                 employees={employees || []}
+                 branches={branches || []}
+                 departments={departments || []}
+               />
+             )}
+
             {currentView === 'teams' && <TeamManagement teams={teams || []} employees={filteredEmployees || []} onAddTeam={t => wrap(api.create('teams', t), refreshTeams)} onUpdateTeam={t => wrap(api.update('teams', t.id, t), refreshTeams)} onDeleteTeam={id => wrap(api.delete('teams', id), refreshTeams)} />}
             {currentView === 'assets' && <AssetManagement user={user} assets={assets || []} employees={filteredEmployees || []} branches={visibleBranches || []} systemConfig={systemConfig || {}} onAddAsset={a => wrap(api.create('assets', a), refreshAssets)} onUpdateAsset={a => wrap(api.update('assets', a.id, a), refreshAssets)} onDeleteAsset={id => wrap(api.delete('assets', id), refreshAssets)} />}
             {/* Fix: Added missing user prop to FileManager */}
