@@ -132,7 +132,7 @@ const ActivityLogs: React.FC<ActivityLogsProps> = ({ logs, onRefresh }) => {
         const matchesSearch =
             (log.action?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
             (log.details?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-            (log.userName?.toLowerCase() || '').includes(searchTerm.toLowerCase());
+            (log.username?.toLowerCase() || '').includes(searchTerm.toLowerCase());
         const matchesModule = moduleFilter === 'all' || log.module === moduleFilter;
         const matchesAction = actionFilter === 'all' || log.action === actionFilter;
 
@@ -407,8 +407,8 @@ const ActivityLogs: React.FC<ActivityLogsProps> = ({ logs, onRefresh }) => {
                                         </td>
                                         <td className="p-4">
                                             <div className="flex flex-col">
-                                                <span className="text-sm font-semibold text-slate-800">{log.userName || 'System'}</span>
-                                                <span className="text-xs text-slate-500 capitalize">{log.userRole || 'Automated'}</span>
+                                                <span className="text-sm font-semibold text-slate-800">{log.username}</span>
+                                                <span className="text-xs text-slate-500 capitalize">{log.userrole}</span>
                                             </div>
                                         </td>
                                         <td className="p-4">

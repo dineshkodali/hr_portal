@@ -380,44 +380,63 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-/* ============================================================================
-   SECURE USER CREATION (ADMIN/SETTINGS)
-============================================================================ */
-app.post('/api/users', async (req, res) => {
-  try {
-    const { name, email, password, role, avatar, designation, branchIds, linkedEmployee, accessModules } = req.body;
-    if (!email || !password || !role) {
-      return res.status(400).json({ error: 'Email, password, and role required' });
-    }
-    // Check if user exists
-    const exists = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
-    if (exists.rows.length) {
-      return res.status(409).json({ error: 'User already exists' });
-    }
-    // Hash password
-    const password_hash = await bcrypt.hash(password, 10);
-    // Generate user id
-    const userId = `usr_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
-    // Create linked employee if requested
-    let employeeId = null;
-    if (linkedEmployee && linkedEmployee.name && linkedEmployee.email) {
-      employeeId = `emp_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+  /* ============================================================================
+     SECURE USER CREATION (ADMIN/SETTINGS)
+  ============================================================================ */
+  app.post('/api/users', async (req, res) => {
+    try {
+      const { name, email, password, role, avatar, designation, branchIds, linkedEmployeeId, accessModules } = req.body;
+      if (!email || !password || !role) {
+        return res.status(400).json({ error: 'Email, password, and role required' });
+      }
+      // Check if user exists
+      const exists = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+      if (exists.rows.length) {
+        return res.status(409).json({ error: 'User already exists' });
+      }
+      // Hash password
+      const password_hash = await bcrypt.hash(password, 10);
+      // Generate user id
+      const userId = `usr_${Date.now()}_${Math.floor(Math.random()*10000)}`;
+      // Create linked employee if requested
+      // let employeeId = null;
+      // if (linkedEmployee && linkedEmployee.name && linkedEmployee.email) {
+      //   employeeId = `emp_${Date.now()}_${Math.floor(Math.random()*10000)}`;
+      //   await pool.query(
+      //     `INSERT INTO employees (id, name, email, designation, branchId, status, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, 'Active', NOW(), NOW())`,
+      //     [employeeId, linkedEmployee.name, linkedEmployee.email, linkedEmployee.designation || '', linkedEmployee.branchId || null]
+      //   );
+      // }
+      // const { linkedEmployeeId } = req.body;
+
+      // Insert user
       await pool.query(
-        `INSERT INTO employees (id, name, email, designation, branchId, status, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, 'Active', NOW(), NOW())`,
-        [employeeId, linkedEmployee.name, linkedEmployee.email, linkedEmployee.designation || '', linkedEmployee.branchId || null]
-      );
+        `INSERT INTO users (
+           id, name, email, password_hash, role,
+           avatar, designation, branchIds,
+           linkedEmployeeId, accessModules,
+           status, created_at, updated_at
+         )
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'Active',NOW(),NOW())`,
+        [
+          userId,
+          name,
+          email,
+          password_hash,
+          role,
+          avatar || null,
+          designation || '',
+          branchIds || [],
+          linkedEmployeeId || null,
+          accessModules || ['dashboard']
+        ]
+     );
+
+      res.status(201).json({ success: true, userId, linkedEmployeeId });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
     }
-    // Insert user
-    await pool.query(
-      `INSERT INTO users (id, name, email, password_hash, role, avatar, designation, branchIds, linkedEmployeeId, accessModules, status, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'Active', NOW(), NOW())`,
-      [userId, name, email, password_hash, role, avatar || null, designation || '', branchIds || [], employeeId, accessModules || ['dashboard']]
-    );
-    res.status(201).json({ success: true, userId, employeeId });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
+  });
 
 /* ============================================================================
    GET ALL USERS (ADMIN/SETTINGS)
