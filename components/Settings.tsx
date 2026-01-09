@@ -1,21 +1,46 @@
 import React, { useState, useEffect } from 'react';
-import {
-  User as UserIcon, Shield, Lock, Save, Bell, Plus, Users, Trash2, X,
-  Database, Mail, Check, Building, Edit, MapPin, Phone, Globe,
-  Eye, Monitor, FileText, Upload, Wallet, Server, Wifi, WifiOff, List,
-  Settings as SettingsIcon, ToggleLeft, ToggleRight, CheckCircle, AlertCircle, ArrowRight, ClipboardList, Receipt, Download, ShieldCheck, ShieldOff, Bot,
-  RotateCcw, Send, AtSign, EyeOff, Search
-} from 'lucide-react';
-import { api } from '../services/api';
-import { User, UserRole, SettingsProps, Branch, Group, SystemConfig, EmailTemplate, RolePermission, Employee, Asset, LeaveRequest, Reimbursement } from '../types';
-import { defaultNotificationSettings } from '../constants/defaultNotificationSettings';
-import { defaultFeatureToggles, FeatureToggle } from '../constants/featureToggles';
+import { User as UserIcon } from 'lucide-react';
+import { Shield } from 'lucide-react';
+import { Lock } from 'lucide-react';
+import { Save } from 'lucide-react';
+import { Bell } from 'lucide-react';
+import { Plus } from 'lucide-react';
+import { Users } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
+import { X } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
+import { List } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
+import { Bot } from 'lucide-react';
+import { Database } from 'lucide-react';
+import { Mail } from 'lucide-react';
+import { Check } from 'lucide-react';
+import { Building } from 'lucide-react';
+import { Edit } from 'lucide-react';
+import { MapPin } from 'lucide-react';
+import { Phone } from 'lucide-react';
+import { Globe } from 'lucide-react';
+import { FileText } from 'lucide-react';
+import { History } from 'lucide-react';
+import { CheckCircle } from 'lucide-react';
+import { RotateCcw } from 'lucide-react';
+import { Settings as SettingsIcon } from 'lucide-react';
+import { Send } from 'lucide-react';
+import { Server } from 'lucide-react';
+import { AtSign } from 'lucide-react';
+import { EyeOff } from 'lucide-react';
+import { Eye } from 'lucide-react';
+import { WifiOff } from 'lucide-react';
+import { Download } from 'lucide-react';
+import { Monitor } from 'lucide-react';
 import SecuritySettings from './SecuritySettings';
 import CopyrightPage from './CopyrightPage';
-import CopyrightNotice from './CopyrightNotice';
 import AIHRSettings from '../AI/AIHRAssistant/AIHRSettings';
 import ActivityLogs from './ActivityLogs';
-import { History } from 'lucide-react';
+import { api } from '../services/api';
+import { defaultNotificationSettings } from '../constants/defaultNotificationSettings';
+import { User, Group, Branch, EmailTemplate, SystemConfig, UserRole, RolePermission, SettingsProps } from '../types';
+import { defaultFeatureToggles, FeatureToggle } from '../constants/featureToggles';
 
 const Settings: React.FC<SettingsProps> = (props) => {
   const {
@@ -59,11 +84,44 @@ const Settings: React.FC<SettingsProps> = (props) => {
   const isAdmin = user.role === "admin" || user.role === "super_admin";
   const isSuperAdmin = user.role === "super_admin";
   const isEmployee = user.role === "employee";
+  const [activeTab, setActiveTab] = useState<string>(
+    isEmployee ? "profile" : "users"
+  );
 
-  // --- FEATURE TOGGLES (Super Admin Only) ---
-  const [featureToggles, setFeatureToggles] = useState<FeatureToggle[]>(defaultFeatureToggles);
 
-  // --- AI Model Selection (shared with AIHRSettings) ---
+
+
+
+
+
+  // --- FEATURE TOGGLES (Super Admin Only, system-wide) ---
+  const [featureToggles, setFeatureToggles] = useState<FeatureToggle[]>([]);
+  const [loadingToggles, setLoadingToggles] = useState(false);
+
+  // Fetch feature toggles from backend
+  useEffect(() => {
+    if (isAdmin && activeTab === "module-access") {
+      setLoadingToggles(true);
+      api.getFeatureToggles()
+        .then((toggles) => setFeatureToggles(toggles))
+        .catch(() => setFeatureToggles([]))
+        .finally(() => setLoadingToggles(false));
+    }
+  }, [isAdmin, activeTab]);
+
+  // Handle toggle change and persist to backend
+  const handleToggleFeature = async (key: string) => {
+    const toggle = featureToggles.find(f => f.key === key);
+    if (!toggle) return;
+    const newEnabled = !toggle.enabled;
+    setFeatureToggles(prev => prev.map(f => f.key === key ? { ...f, enabled: newEnabled } : f));
+    try {
+      await api.updateFeatureToggle(key, newEnabled);
+    } catch (e) {
+      // Optionally show error/toast
+      setFeatureToggles(prev => prev.map(f => f.key === key ? { ...f, enabled: toggle.enabled } : f));
+    }
+  };
   const [aiModel, setAiModel] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('aiModel') || 'default';
@@ -123,14 +181,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
       setNotificationsLocal([]);
     }
   };
-  const handleToggleFeature = (key: string) => {
-    setFeatureToggles(prev => prev.map(f => f.key === key ? { ...f, enabled: !f.enabled } : f));
-    // TODO: Optionally persist to backend
-  };
 
-  const [activeTab, setActiveTab] = useState<string>(
-    isEmployee ? "profile" : "users"
-  );
   const [usersList, setUsersList] = useState<User[]>(users);
 
   // Fetch users from backend
@@ -769,6 +820,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
           <>
 
             <SidebarItem id="users" label="Users & Roles" icon={Users} />
+            <SidebarItem id="module-access" label="Module Access" icon={List} />
             <SidebarItem id="groups" label="Permission Groups" icon={Shield} />
             <SidebarItem
               id="branches"
@@ -799,9 +851,41 @@ const Settings: React.FC<SettingsProps> = (props) => {
         )}
       </div>
 
-      {/* MAIN CONTENT AREA */}
+        {/* MAIN CONTENT AREA */}
       <div className="flex-1 overflow-y-auto bg-slate-50/50 p-6 md:p-8 flex justify-center">
 
+        {activeTab === "module-access" && isAdmin && (
+          <div className="w-full max-w-3xl mx-auto bg-white rounded-3xl border border-slate-100 shadow-sm p-8 flex flex-col items-center animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <h2 className="text-2xl font-black text-slate-900 mb-2">Module Access Management</h2>
+            <p className="text-slate-500 text-sm mb-6 text-center max-w-xl">Toggle which modules are visible to users. If a module is turned off, users will not see it in the web app.</p>
+              <div className="w-full">
+                {loadingToggles ? (
+                  <div className="text-center py-6 text-slate-400">Loading module toggles...</div>
+                ) : featureToggles.length === 0 ? (
+                  <div className="text-center py-6 text-slate-400">No module toggles found.</div>
+                ) : (
+                  featureToggles.map((mod) => (
+                    <div key={mod.key} className="flex items-center justify-between py-3 border-b border-slate-50">
+                      <div>
+                        <span className="font-bold text-slate-800">{mod.label}</span>
+                        <span className="block text-xs text-slate-400">{mod.description}</span>
+                      </div>
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={mod.enabled}
+                          onChange={() => handleToggleFeature(mod.key)}
+                          className="form-checkbox h-5 w-5 text-orange-500 rounded focus:ring-0"
+                        />
+                        <span className="ml-2 text-sm font-medium text-slate-600">{mod.enabled ? "Enabled" : "Disabled"}</span>
+                      </label>
+                    </div>
+                  ))
+                )}
+              </div>
+              <div className="text-xs text-slate-400 italic mt-4">Changes here will affect which modules are visible to users.</div>
+          </div>
+        )}
         {activeTab === "logs" && (
           <div className="w-[98%] mx-auto max-w-5xl space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
             {/* Logs Hero Header */}
@@ -1255,7 +1339,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
                     <div className="p-3 bg-slate-50/50 rounded-2xl border border-slate-100">
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Asset Allocation</p>
                       <p className="text-xl font-black text-slate-800 tracking-tighter">
-                        {assets.filter((a) => a.branchid === b.id).length}
+                        {assets.filter((a) => a.branchId === b.id).length}
                         <span className="text-[10px] text-slate-400 font-bold ml-1 tracking-normal">FOUND</span>
                       </p>
                     </div>
@@ -1270,7 +1354,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
                     <div className="flex justify-between">
                       <span>Assets:</span>{" "}
                       <span className="font-medium">
-                        {assets.filter((a) => a.branchid === b.id).length}
+                        {assets.filter((a) => a.branchId === b.id).length}
                       </span>
                     </div>
                   </div>
@@ -2305,7 +2389,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
                         <p className="text-3xl font-black text-blue-600">
                           {
                             employees.filter(
-                              (e) => e.branchId === viewBranch.id
+                              (e) => e.branchid === viewBranch.id
                             ).length
                           }
                         </p>
@@ -2343,7 +2427,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
                       <table className="w-full text-left">
                         <thead className="bg-white border-b border-slate-50 text-[10px] font-bold text-slate-400 uppercase"><tr><th className="p-4">Name</th><th className="p-4">Role</th><th className="p-4 text-right">Actions</th></tr></thead>
                         <tbody className="divide-y divide-slate-50">
-                          {employees.filter(e => e.branchId === viewBranch.id).map(emp => (
+                          {employees.filter(e => e.branchid === viewBranch.id).map(emp => (
                             <tr key={emp.id} className="hover:bg-slate-50 transition-colors">
                               <td className="p-4"><div className="flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-[10px] text-slate-600 border border-slate-200">{emp.name.split(' ').map(n => n[0]).join('')}</div><span className="font-bold text-slate-700 text-xs">{emp.name}</span></div></td>
                               <td className="p-4 text-xs font-medium text-slate-400">{emp.designation}</td>
@@ -2433,7 +2517,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {assets
-                      .filter((a) => a.branchid === viewBranch.id)
+                      .filter((a) => a.branchId === viewBranch.id)
                       .map((asset) => (
                         <div
                           key={asset.id}

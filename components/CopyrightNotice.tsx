@@ -10,7 +10,7 @@ const CopyrightNotice: React.FC<CopyrightNoticeProps> = ({ footerSettings }) => 
     const currentYear = new Date().getFullYear();
     const [popupContent, setPopupContent] = useState<{ title: string, content: string } | null>(null);
 
-    const companyName = footerSettings?.companyName || "SD Commercial";
+    const companyName = footerSettings?.companyName || "Dinesh Kodali";
     const shortName = companyName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
 
     const handleOpenPopup = (e: React.MouseEvent, title: string, content: string) => {
