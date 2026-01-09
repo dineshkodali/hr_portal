@@ -189,19 +189,27 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    if (!user) return;
-    const todayStr = getLocalTodayDate();
-    const activeTimesheet = timesheets.find(ts =>
-      (ts.employeeId === user.id || ts.employeeName === user.name) &&
-      ts.date === todayStr &&
-      ts.status === 'Working'
-    );
-    if (activeTimesheet) {
-      setCurrentSession({ start: new Date(activeTimesheet.clockIn), id: activeTimesheet.id });
-    } else {
-      setCurrentSession(null);
-    }
-  }, [user, timesheets]);
+  if (!user) return;
+
+  // 🔒 If user already clocked in locally, do NOT override
+  if (currentSession) return;
+
+  const todayStr = getLocalTodayDate();
+
+  const activeTimesheet = timesheets.find(ts =>
+    ts.employeeid === user.linkedemployeeid &&
+    ts.date === todayStr &&
+    ts.status === 'Working'
+  );
+
+  if (activeTimesheet) {
+    setCurrentSession({
+      start: new Date(activeTimesheet.clockIn),
+      id: activeTimesheet.id
+    });
+  }
+}, [user, timesheets]); // ❗ currentSession intentionally NOT added
+
 
   const handleLogin = (loggedInUser: User) => {
     console.log('✅ User logged in:', loggedInUser.email);
@@ -372,12 +380,21 @@ const App: React.FC = () => {
 
   // Clock In
   const handleClockIn = () => {
-    if (!user) {
+  if (!user) {
       alert("No user logged in");
       return;
     }
 
-    if (!serverConnected) {
+  const now = new Date();
+  const tempId = `local-${Date.now()}`;
+
+  // ✅ SET SESSION IMMEDIATELY
+  setCurrentSession({
+    start: now,
+    id: tempId
+  });
+
+  if (!serverConnected) {
       const now = new Date();
       const tsId = `ts-${Date.now()}`;
       setCurrentSession({ start: now, id: tsId });
@@ -386,14 +403,14 @@ const App: React.FC = () => {
       return;
     }
 
-      const now = new Date();
+      // const now = new Date();
       const todayStr = getLocalTodayDate();
       const tsId = Date.now().toString();
       
       const newTimesheet: Timesheet = {
           id: tsId,
-          employeeId: user.linkedemployeeid,
-          employeeName: user.name,
+          employeeid: user.linkedemployeeid,
+          employeename: user.name,
           date: todayStr,
           clockIn: now.toISOString(),
           clockOut: null,
@@ -401,11 +418,10 @@ const App: React.FC = () => {
           status: 'Working'
       };
 
-
-    console.log('📍 Clock In Attempt:', newTimesheet);
+  console.log('📍 Clock In Attempt:', newTimesheet);
     console.log('📝 Sending to /api/timesheets with fields:', Object.keys(newTimesheet));
 
-    api.create('timesheets', newTimesheet)
+   api.create('timesheets', newTimesheet)
       .then(createdTs => {
         console.log('✅ Timesheet created successfully:', createdTs);
         setCurrentSession({ start: now, id: createdTs.id || tsId });
@@ -413,7 +429,7 @@ const App: React.FC = () => {
 
         // Also update or create attendance record
         const checkIn = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        const existing = attendance.find(a => a.employeeId === user.id && a.date === todayStr);
+        const existing = attendance.find(a => a.employeeid === user.id && a.date === todayStr);
 
         if (existing) {
           api.update('attendance', existing.id, {
@@ -452,7 +468,8 @@ const App: React.FC = () => {
         });
         alert(`Failed to clock in: ${err.message}`);
       });
-  };
+};
+
 
   const handleClockOut = () => {
     if (!currentSession || !user) {
@@ -480,10 +497,10 @@ const App: React.FC = () => {
 
     const updatedTimesheet = {
       ...currentTs,
-      clockOut: now.toISOString(),
+      clockout: now.toISOString(),
       duration,
       status: duration > 540 ? 'Overtime' : 'Completed'
-    };
+    };  
 
     console.log('📍 Clock Out Attempt:', { duration, status: updatedTimesheet.status, recordId: currentSession.id });
 
@@ -495,7 +512,7 @@ const App: React.FC = () => {
 
         // Update attendance record as non-fatal operation
         const todayStr = getLocalTodayDate();
-        const record = attendance.find(a => a.employeeId === user.id && a.date === todayStr);
+        const record = attendance.find(a => a.employeeid === user.id && a.date === todayStr);
         if (record) {
           const h = Math.floor(duration / 60);
           const m = duration % 60;
@@ -759,7 +776,7 @@ const App: React.FC = () => {
             onDeleteTimesheet={id => {
               const ts = timesheets.find(t => t.id === id);
               wrap(api.delete('timesheets', id).then(res => {
-                logActivity('Delete Timesheet', 'Attendance', `Removed timesheet for ${ts?.employeeName || id}`);
+                logActivity('Delete Timesheet', 'Attendance', `Removed timesheet for ${ts?.employeename || id}`);
                 return res;
               }), refreshTimesheets);
             }}

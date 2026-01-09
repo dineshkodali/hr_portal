@@ -356,12 +356,12 @@ const Payroll: React.FC<PayrollProps> = ({
                                         <tr key={record.id} className="hover:bg-[#fcfdfe] transition-colors">
                                             <td className="px-6 py-4 flex items-center gap-3">
                                                 <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500">
-                                                    {getInitials(record.employeeName)}
+                                                    {getInitials(record.employeename)}
                                                 </div>
-                                                <span className="text-sm font-bold text-[#334155]">{record.employeeName}</span>
+                                                <span className="text-sm font-bold text-[#334155]">{record.employeename}</span>
                                             </td>
                                             <td className="px-6 py-4 text-sm text-[#64748b]">{record.month}</td>
-                                            <td className="px-6 py-4 text-sm font-bold text-[#1e293b]">${record.netSalary.toLocaleString()}</td>
+                                            <td className="px-6 py-4 text-sm font-bold text-[#1e293b]">${record.netsalary.toLocaleString()}</td>
                                             <td className="px-6 py-4">
                                                 <span className="px-4 py-1 bg-orange-50 text-orange-700 rounded-full text-[11px] font-bold border border-orange-100">
                                                     {record.status}

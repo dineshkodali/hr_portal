@@ -99,30 +99,70 @@ const Header: React.FC<HeaderProps> = ({
     return date.toLocaleDateString();
   };
 
-  useEffect(() => {
-    let interval: ReturnType<typeof setInterval>;
+  // useEffect(() => {
+  //   let interval: ReturnType<typeof setInterval>;
 
-    if (isClockedIn && sessionStartTime) {
-      // Immediate update
-      const updateTimer = () => {
-        const now = new Date();
-        const diff = Math.floor((now.getTime() - sessionStartTime.getTime()) / 1000);
-        if (diff >= 0) {
-            const hrs = Math.floor(diff / 3600);
-            const mins = Math.floor((diff % 3600) / 60);
-            const secs = diff % 60;
-            setClockTime(`${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`);
-        }
-      } // <-- close updateTimer
-    } else {
-      setClockTime('00:00:00');
-    }
+  //   if (isClockedIn && sessionStartTime) {
+  //     // Immediate update
+  //     const updateTimer = () => {
+  //       const now = new Date();
+  //       const diff = Math.floor((now.getTime() - sessionStartTime.getTime()) / 1000);
+  //       if (diff >= 0) {
+  //           const hrs = Math.floor(diff / 3600);
+  //           const mins = Math.floor((diff % 3600) / 60);
+  //           const secs = diff % 60;
+  //           setClockTime(`${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`);
+  //       }
+  //     } // <-- close updateTimer
+  //   } else {
+  //     setClockTime('00:00:00');
+  //   }
 
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isClockedIn, sessionStartTime]);
+  //   return () => {
+  //     if (interval) clearInterval(interval);
+  //   };
+  // }, [isClockedIn, sessionStartTime]);
 
+  console.log('HEADER RENDER', {
+  isClockedIn,
+  sessionStartTime
+});
+
+  
+  
+useEffect(() => {
+  if (!isClockedIn || !sessionStartTime) {
+    setClockTime('00:00:00');
+    return;
+  }
+
+  // ✅ Force Date, even if string is passed
+  const start = new Date(sessionStartTime);
+
+  const interval = setInterval(() => {
+    const now = new Date();
+    const diff = Math.floor((now.getTime() - start.getTime()) / 1000);
+
+    if (diff < 0) return;
+
+    const hrs = Math.floor(diff / 3600);
+    const mins = Math.floor((diff % 3600) / 60);
+    const secs = diff % 60;
+
+    setClockTime(
+      `${hrs.toString().padStart(2, '0')}:` +
+      `${mins.toString().padStart(2, '0')}:` +
+      `${secs.toString().padStart(2, '0')}`
+    );
+  }, 1000);
+
+  return () => clearInterval(interval);
+}, [isClockedIn, sessionStartTime]);
+
+
+
+  
+  
   return (
     <header className="h-20 bg-white/80 backdrop-blur-md shadow-sm border-b border-slate-200/50 flex items-center justify-between px-4 md:px-8 sticky top-0 z-20">
       <div className="flex items-center space-x-4">
@@ -166,19 +206,23 @@ const Header: React.FC<HeaderProps> = ({
 
       <div className="flex items-center space-x-3 md:space-x-6">
         {/* Clock In/Out Button - Visible on all screens */}
-        <button 
-            onClick={() => isClockedIn ? onClockOut() : onClockIn()}
-            className={`
-                flex items-center space-x-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all shadow-sm
-                ${isClockedIn 
-                    ? 'bg-orange-100 text-orange-700 border border-orange-200 shadow-orange-100 hover:bg-orange-200' 
-                    : 'bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200'}
-            `}
+        <button
+          onClick={() => (isClockedIn ? onClockOut() : onClockIn())}
+          className={`
+            flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-semibold transition-all
+            ${
+              isClockedIn
+                ? 'bg-orange-100 text-orange-700 border border-orange-200'
+                : 'bg-slate-100 text-slate-700 border border-slate-200'
+            }
+          `}
         >
-            {isClockedIn ? <CheckCircle size={16} /> : <Clock size={16} />}
-            <span className="hidden xs:inline">{isClockedIn ? `In: ${clockTime}` : 'Clock In'}</span>
-            <span className="xs:hidden">{isClockedIn ? clockTime : 'Clock In'}</span>
+          {isClockedIn ? <CheckCircle size={16} /> : <Clock size={16} />}
+          <span>
+            {isClockedIn ? `Clock Out • ${clockTime}` : 'Clock In'}
+          </span>
         </button>
+
 
 
         {/* Notification Bell and Dropdown (interactive) */}

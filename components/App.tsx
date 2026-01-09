@@ -193,7 +193,7 @@ const App: React.FC = () => {
       const todayStr = getLocalTodayDate();
       const tsId = `ts-${Date.now()}`;
       // Use linkedEmployeeId if present, else fallback to user.id
-      const employeeId = user.linkedEmployeeId || user.id;
+      const employeeId = user.linkedemployeeid || user.id;
       const newTimesheet: Timesheet = {
           id: tsId, employeeId, employeeName: user.name, date: todayStr,
           clockIn: now.toISOString(), clockOut: null, duration: 0, status: 'Working'
@@ -228,7 +228,7 @@ const App: React.FC = () => {
               setCurrentSession(null);
               refreshTimesheets();
               const todayStr = getLocalTodayDate();
-              const record = attendance.find(a => a.employeeId === user.id && a.date === todayStr);
+              const record = attendance.find(a => a.employeeid === user.id && a.date === todayStr);
               if(record) {
                   const h = Math.floor(duration / 60);
                   const m = duration % 60;

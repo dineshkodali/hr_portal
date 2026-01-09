@@ -281,7 +281,7 @@ export interface RolePermission {
 
 export interface AttendanceRecord {
   id: string;
-  employeeId?: string;
+  employeeid?: string;
   employeeName: string;
   employeeAvatar: string;
   date: string;
@@ -295,8 +295,8 @@ export interface AttendanceRecord {
 
 export interface Timesheet {
   id: string;
-  employeeId: string;
-  employeeName: string;
+  employeeid: string;
+  employeename: string;
   date: string;
   clockIn: string;
   clockOut: string | null;
