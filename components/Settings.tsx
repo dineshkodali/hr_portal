@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { User as UserIcon } from 'lucide-react';
 import { Shield } from 'lucide-react';
@@ -370,6 +371,116 @@ const Settings: React.FC<SettingsProps> = (props) => {
     permissions: [],
   });
   const [localGroups, setLocalGroups] = useState<Group[]>(groups);
+
+  // --- MODULE ACCESS LOGIC (with submodules) ---
+  const [moduleAccessMode, setModuleAccessMode] = useState<'user' | 'group'>('user');
+  const [selectedAccessId, setSelectedAccessId] = useState<string>('');
+  const selectedUser = moduleAccessMode === 'user' ? usersList.find(u => u.id === selectedAccessId) : undefined;
+  const selectedGroup = moduleAccessMode === 'group' ? localGroups.find(g => g.id === selectedAccessId) : undefined;
+
+  // Define submodules for each main module
+  const moduleSubmodules: Record<string, { key: string; label: string }[]> = {
+    attendance: [
+      { key: 'all_logs', label: 'All Logs' },
+      { key: 'working_now', label: 'Working Now' },
+      { key: 'absent_leave', label: 'Absent / Leave' },
+      { key: 'overtime', label: 'Overtime' },
+      { key: 'timesheets', label: 'Timesheets' },
+      { key: 'shifts', label: 'Shifts' },
+      { key: 'leaves', label: 'Leaves' },
+    ],
+    payroll: [
+      { key: 'salary', label: 'Salary' },
+      { key: 'bonuses', label: 'Bonuses' },
+      { key: 'deductions', label: 'Deductions' },
+      { key: 'payslips', label: 'Payslips' },
+    ],
+    recruitment: [
+      { key: 'applicants', label: 'Applicants' },
+      { key: 'interviews', label: 'Interviews' },
+      { key: 'offers', label: 'Offers' },
+      { key: 'onboarding', label: 'Onboarding' },
+    ],
+    tasks: [
+      { key: 'all_tasks', label: 'All Tasks' },
+      { key: 'my_tasks', label: 'My Tasks' },
+      { key: 'team_tasks', label: 'Team Tasks' },
+      { key: 'completed', label: 'Completed' },
+    ],
+    teams: [
+      { key: 'members', label: 'Members' },
+      { key: 'roles', label: 'Roles' },
+      { key: 'projects', label: 'Projects' },
+    ],
+    files: [
+      { key: 'documents', label: 'Documents' },
+      { key: 'uploads', label: 'Uploads' },
+      { key: 'downloads', label: 'Downloads' },
+    ],
+    assets: [
+      { key: 'hardware', label: 'Hardware' },
+      { key: 'software', label: 'Software' },
+      { key: 'allocation', label: 'Allocation' },
+    ],
+    notifications: [
+      { key: 'push', label: 'Push' },
+      { key: 'email', label: 'Email' },
+      { key: 'sms', label: 'SMS' },
+    ],
+    // Add more as needed
+  };
+
+  // Helper to get enabled state for submodules
+  const getSubmoduleAccessEnabled = (moduleKey: string, subKey: string) => {
+    const fullKey = `${moduleKey}:${subKey}`;
+    if (moduleAccessMode === 'user' && selectedUser) {
+      return Array.isArray(selectedUser.accessModules) && selectedUser.accessModules.includes(fullKey);
+    } else if (moduleAccessMode === 'group' && selectedGroup) {
+      return Array.isArray(selectedGroup.permissions) && selectedGroup.permissions.some(p => p.module === fullKey);
+    }
+    return false;
+  };
+  // Helper for inheritance
+  const isSubmoduleAccessInherited = (moduleKey: string, subKey: string) => {
+    if (moduleAccessMode === 'user' && selectedUser) {
+      const userGroups = localGroups.filter(g => Array.isArray(g.memberIds) && g.memberIds.includes(selectedUser.id));
+      const fullKey = `${moduleKey}:${subKey}`;
+      return userGroups.some(group => Array.isArray(group.permissions) && group.permissions.some(p => p.module === fullKey));
+    }
+    return false;
+  };
+  // Toggle submodule access
+  const handleSubmoduleAccessToggle = async (moduleKey: string, subKey: string) => {
+    const fullKey = `${moduleKey}:${subKey}`;
+    if (moduleAccessMode === 'user' && selectedUser) {
+      let newAccessModules = Array.isArray(selectedUser.accessModules) ? [...selectedUser.accessModules] : [];
+      if (newAccessModules.includes(fullKey)) {
+        newAccessModules = newAccessModules.filter(m => m !== fullKey);
+      } else {
+        newAccessModules.push(fullKey);
+      }
+      try {
+        await api.update('users', selectedUser.id, { accessModules: newAccessModules });
+        setUsersList(usersList.map(u => u.id === selectedUser.id ? { ...u, accessModules: newAccessModules } : u));
+      } catch (e) {
+        alert('Failed to update user module access');
+      }
+    } else if (moduleAccessMode === 'group' && selectedGroup) {
+      let newPermissions = Array.isArray(selectedGroup.permissions) ? [...selectedGroup.permissions] : [];
+      const idx = newPermissions.findIndex(p => p.module === fullKey);
+      if (idx >= 0) {
+        newPermissions = newPermissions.filter(p => p.module !== fullKey);
+      } else {
+        newPermissions.push({ id: `p-${Date.now()}`, module: fullKey, read: true, create: true, update: true, delete: true });
+      }
+      try {
+        await api.update('permission_groups', selectedGroup.id, { permissions: newPermissions });
+        setLocalGroups(localGroups.map(g => g.id === selectedGroup.id ? { ...g, permissions: newPermissions } : g));
+      } catch (e) {
+        alert('Failed to update group module access');
+      }
+    }
+  };
 
   const [isBranchModalOpen, setIsBranchModalOpen] = useState(false);
   const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
@@ -895,41 +1006,88 @@ const Settings: React.FC<SettingsProps> = (props) => {
                 <div>
                   <h1 className="text-2xl font-black tracking-tight mb-1">Module Access Management</h1>
                   <p className="text-slate-400 font-medium text-xs max-w-md">
-                    Toggle which modules are visible to users. If a module is turned off, users will not see it in the web app.
+                    Toggle which modules are visible to users or groups. User-level access can override group-level defaults. Sharing access is possible by assigning modules to multiple users or groups.
                   </p>
                 </div>
               </div>
             </div>
-            {/* Module Toggles Card */}
-            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-8 w-full max-w-3xl mx-auto">
+            {/* User/Group Selector */}
+            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 w-full max-w-3xl mx-auto mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
+              <div className="flex gap-2 items-center">
+                <label className="font-bold text-slate-700 text-sm">Access Level:</label>
+                <select
+                  value={moduleAccessMode}
+                  onChange={e => setModuleAccessMode(e.target.value as 'user' | 'group')}
+                  className="border border-slate-200 rounded-xl px-3 py-2 text-sm"
+                >
+                  <option value="user">User</option>
+                  <option value="group">Group</option>
+                </select>
+              </div>
+              <div className="flex gap-2 items-center w-full md:w-auto">
+                <label className="font-bold text-slate-700 text-sm">{moduleAccessMode === 'user' ? 'User:' : 'Group:'}</label>
+                <select
+                  value={selectedAccessId}
+                  onChange={e => setSelectedAccessId(e.target.value)}
+                  className="border border-slate-200 rounded-xl px-3 py-2 text-sm w-full md:w-56"
+                >
+                  <option value="">Select {moduleAccessMode === 'user' ? 'User' : 'Group'}</option>
+                  {(moduleAccessMode === 'user' ? usersList : localGroups).map(opt => (
+                    <option key={opt.id} value={opt.id}>{opt.name || opt.email}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            {/* Module Toggles Card (Compact with Submodules) */}
+            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-4 w-full max-w-3xl mx-auto">
               <div className="w-full">
                 {loadingToggles ? (
                   <div className="text-center py-6 text-slate-400">Loading module toggles...</div>
                 ) : featureToggles.length === 0 ? (
                   <div className="text-center py-6 text-slate-400">No module toggles found.</div>
+                ) : !selectedAccessId ? (
+                  <div className="text-center py-6 text-slate-400">Select a {moduleAccessMode} to manage module access.</div>
                 ) : (
-                  <div className="divide-y divide-slate-50">
-                    {featureToggles.map((mod) => (
-                      <div key={mod.key} className="flex items-center justify-between py-4">
-                        <div>
-                          <span className="font-bold text-slate-800">{mod.label}</span>
-                          <span className="block text-xs text-slate-400">{mod.description}</span>
+                  <div className="space-y-2">
+                    {featureToggles.map((mod) => {
+                      const submodules = moduleSubmodules[mod.key];
+                      return (
+                        <div key={mod.key} className="border-b border-slate-50 py-2">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-bold text-slate-800 text-sm">{mod.label}</span>
+                            <span className="text-xs text-slate-400">{mod.description}</span>
+                          </div>
+                          {submodules ? (
+                            <div className="flex flex-wrap gap-2 ml-2 mt-1">
+                              {submodules.map((sub) => {
+                                const isEnabled = getSubmoduleAccessEnabled(mod.key, sub.key);
+                                const isInherited = isSubmoduleAccessInherited(mod.key, sub.key);
+                                return (
+                                  <label key={sub.key} className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium border cursor-pointer transition-all ${isEnabled ? 'bg-orange-50 border-orange-200 text-orange-700' : 'bg-slate-50 border-slate-100 text-slate-500'} ${isInherited ? 'ring-2 ring-blue-200' : ''}`} title={isInherited ? 'Inherited from group' : ''}>
+                                    <input
+                                      type="checkbox"
+                                      checked={!!isEnabled}
+                                      onChange={() => handleSubmoduleAccessToggle(mod.key, sub.key)}
+                                      className="form-checkbox h-4 w-4 text-orange-500 rounded focus:ring-0"
+                                    />
+                                    {sub.label}
+                                    {isInherited && <span className="ml-1 text-[10px] text-blue-400 font-bold">(Inherited)</span>}
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2 ml-2 mt-1">
+                              <span className="text-xs text-slate-400">No submodules</span>
+                            </div>
+                          )}
                         </div>
-                        <label className="flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={!!mod.enabled}
-                            onChange={() => handleToggleFeature(mod.key)}
-                            className="form-checkbox h-5 w-5 text-orange-500 rounded focus:ring-0"
-                          />
-                          <span className="ml-2 text-sm font-medium text-slate-600">{mod.enabled ? "Used" : "Not Used"}</span>
-                        </label>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
-              <div className="text-xs text-slate-400 italic mt-4 text-center">Changes here will affect which modules are visible to users.</div>
+              <div className="text-xs text-slate-400 italic mt-4 text-center">Changes here will affect which submodules are visible to the selected {moduleAccessMode}.</div>
             </div>
           </div>
         )}
