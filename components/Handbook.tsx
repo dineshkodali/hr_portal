@@ -18,8 +18,8 @@ const SummaryCard: React.FC<{ title: string; count: number; icon: React.ReactNod
     </div>
 );
 
-const Handbook: React.FC<HandbookProps> = ({ 
-    user: userProp = {} as any, categories = [], policies = [], users = [], groups = [],
+const Handbook: React.FC<HandbookProps & { roles?: string[] }> = ({ 
+    user: userProp = {} as any, categories = [], policies = [], users = [], groups = [], roles = [],
     onAddCategory = (c: PolicyCategory) => {}, onUpdateCategory = (c: PolicyCategory) => {}, onDeleteCategory = (id: string) => {},
     onAddPolicy = (p: PolicyDocument) => {}, onUpdatePolicy = (p: PolicyDocument) => {}, onDeletePolicy = (id: string) => {}
 }) => {
