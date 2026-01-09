@@ -19,6 +19,7 @@ import CopyrightNotice from './components/CopyrightNotice';
 import HolidayCalendar from './components/HolidayCalendar';
 import Handbook from './components/Handbook';
 import { User, ViewState, Employee, Job, Candidate, Asset, Task, LeaveRequest, AttendanceRecord, Department, Timesheet, Shift, PayrollRecord, SystemConfig, EmailTemplate, SmtpSettings, Reimbursement, Branch, NotificationSetting, ActivityLog, Group, Team, PolicyCategory, PolicyDocument, Holiday } from './types';
+import PasswordManager from './components/PasswordManager';
 import { api } from './services/api';
 import { WifiOff, Lock } from 'lucide-react';
 
@@ -568,6 +569,7 @@ const App: React.FC = () => {
 
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50/50 p-4 sm:p-6"><div className="mx-auto" style={{ width: '90%' }}>
           {currentView === 'dashboard' && <Dashboard onNavigate={handleNavigate} employees={filteredEmployees || []} tasks={tasks || []} leaves={leaves || []} jobs={jobs || []} attendance={attendance || []} selectedBranch={selectedBranchObject || 'all'} user={user} />}
+          {currentView === 'password-manager' && <PasswordManager userId={user.id} />}
           {/* Fix: Added missing props for policies, categories and holidays to EmployeeList call */}
           {currentView === 'employees' && <EmployeeList
             user={user}

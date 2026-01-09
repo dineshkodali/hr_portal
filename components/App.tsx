@@ -14,7 +14,7 @@ import AssetManagement from './AssetManagement';
 import FileManager from './FileManager';
 import TaskBoard from './TaskBoard';
 // Fix: Changed Settings to a named import to match its definition and fix the default export error
-import { Settings } from './Settings';
+import Settings from './Settings';
 import Attendance from './Attendance';
 import Payroll from './Payroll';
 import ActivityLogs from './ActivityLogs';
@@ -23,6 +23,7 @@ import Handbook from './Handbook';
 import HolidayCalendar from './HolidayCalendar';
 import Reports from './Reports';
 import { WifiOff, Lock } from 'lucide-react';
+import PasswordManager from './PasswordManager';
 import { User, ViewState, Employee, Job, Candidate, Asset, Task, LeaveRequest, AttendanceRecord, Department, Timesheet, Shift, PayrollRecord, SystemConfig, EmailTemplate, SmtpSettings, Reimbursement, Branch, NotificationSetting, ActivityLog, Group, Team, PolicyCategory, PolicyDocument, Holiday, FileItem } from '../types';
 import { api } from '../services/api';
 
@@ -94,7 +95,7 @@ const App: React.FC = () => {
   }, []);
 
   // --- Data Hooks (REST API) ---
-    const [systemUsers, refreshUsers] = useApiData<User[]>('users', [], serverConnected);
+    const [systemUsers, refreshUsers] = useApiData<User[]>('users/list', [], serverConnected);
     const [employees, refreshEmployees] = useApiData<Employee[]>('employees', [], serverConnected);
     const [branches, refreshBranches] = useApiData<Branch[]>('branches', [], serverConnected);
     const [assets, refreshAssets] = useApiData<Asset[]>('assets', [], serverConnected);
@@ -258,7 +259,7 @@ const App: React.FC = () => {
         onAddHoliday={h => wrap(api.create('holidays', h), refreshHolidays)} onUpdateHoliday={h => wrap(api.update('holidays', h.id, h), refreshHolidays)} onDeleteHoliday={id => wrap(api.delete('holidays', id), refreshHolidays)}
       />;
       case 'add-employee': return <AddEmployee onBack={() => setCurrentView('employees')} onSave={e => wrap(api.create('employees', e), refreshEmployees)} employees={employees} branches={branches} />;
-      case 'recruitment': return <Recruitment jobs={jobs} candidates={candidates} systemConfig={systemConfig} onAddJob={j => wrap(api.create('jobs', j), refreshJobs)} onUpdateJob={j => wrap(api.update('jobs', j.id, j), refreshJobs)} onDeleteJob={id => wrap(api.delete('jobs', id), refreshJobs)} onAddCandidate={c => wrap(api.create('candidates', c), refreshCandidates)} onUpdateCandidate={c => wrap(api.update('candidates', c.id, c), refreshCandidates)} onDeleteCandidate={id => wrap(api.delete('candidates', id), refreshCandidates)} />;
+    case 'recruitment': return <Recruitment jobs={jobs} candidates={candidates} departments={departments} systemConfig={systemConfig} onAddJob={j => wrap(api.create('jobs', j), refreshJobs)} onUpdateJob={j => wrap(api.update('jobs', j.id, j), refreshJobs)} onDeleteJob={id => wrap(api.delete('jobs', id), refreshJobs)} onAddCandidate={c => wrap(api.create('candidates', c), refreshCandidates)} onUpdateCandidate={c => wrap(api.update('candidates', c.id, c), refreshCandidates)} onDeleteCandidate={id => wrap(api.delete('candidates', id), refreshCandidates)} />;
       case 'assets': return <AssetManagement user={user} assets={assets} employees={filteredEmployees} branches={branches} systemConfig={systemConfig} onAddAsset={a => wrap(api.create('assets', a), refreshAssets)} onUpdateAsset={a => wrap(api.update('assets', a.id, a), refreshAssets)} onDeleteAsset={id => wrap(api.delete('assets', id), refreshAssets)} />;
       case 'files': return <FileManager user={user} />;
             case 'tasks': return <TaskBoard tasks={tasks} employees={filteredEmployees} user={user} onAddTask={t => {
@@ -275,7 +276,9 @@ const App: React.FC = () => {
       case 'teams': return <TeamManagement teams={teams} employees={filteredEmployees} onAddTeam={t => wrap(api.create('teams', t), refreshTeams)} onUpdateTeam={t => wrap(api.update('teams', t.id, t), refreshTeams)} onDeleteTeam={id => wrap(api.delete('teams', id), refreshTeams)} />;
       case 'handbook': return <Handbook user={user} categories={policyCategories} policies={policies} users={systemUsers} groups={groups} onAddCategory={c => wrap(api.create('policy_categories', c), refreshPolicyCategories)} onUpdateCategory={c => wrap(api.update('policy_categories', c.id, c), refreshPolicyCategories)} onDeleteCategory={id => wrap(api.delete('policy_categories', id), refreshPolicyCategories)} onAddPolicy={p => wrap(api.create('policies', p), refreshPolicies)} onUpdatePolicy={p => wrap(api.update('policies', p.id, p), refreshPolicies)} onDeletePolicy={id => wrap(api.delete('policies', id), refreshPolicies)} />;
       case 'holidays': return <HolidayCalendar user={user} holidays={holidays} onAddHoliday={h => wrap(api.create('holidays', h), refreshHolidays)} onUpdateHoliday={h => wrap(api.update('holidays', h.id, h), refreshHolidays)} onDeleteHoliday={id => wrap(api.delete('holidays', id), refreshHolidays)} onApplyLeave={() => setCurrentView('attendance')} />;
-    default: return <Dashboard onNavigate={setCurrentView} employees={filteredEmployees} tasks={tasks} leaves={filteredLeaves} jobs={jobs} attendance={attendance} selectedBranch={'all'} user={user} onUpdateTask={t => wrap(api.update('tasks', t.id, t), refreshTasks)} onDeleteTask={id => wrap(api.delete('tasks', id), refreshTasks)} />;
+        case 'password-manager':
+            return <PasswordManager userId={user.id} />;
+        default: return <Dashboard onNavigate={setCurrentView} employees={filteredEmployees} tasks={tasks} leaves={filteredLeaves} jobs={jobs} attendance={attendance} selectedBranch={'all'} user={user} onUpdateTask={t => wrap(api.update('tasks', t.id, t), refreshTasks)} onDeleteTask={id => wrap(api.delete('tasks', id), refreshTasks)} />;
     }
   };
 
