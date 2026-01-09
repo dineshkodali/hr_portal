@@ -19,10 +19,13 @@ const SummaryCard: React.FC<{ title: string; count: number; icon: React.ReactNod
 );
 
 const Handbook: React.FC<HandbookProps> = ({ 
-    user = {} as any, categories = [], policies = [], users = [], groups = [],
+    user: userProp = {} as any, categories = [], policies = [], users = [], groups = [],
     onAddCategory = (c: PolicyCategory) => {}, onUpdateCategory = (c: PolicyCategory) => {}, onDeleteCategory = (id: string) => {},
     onAddPolicy = (p: PolicyDocument) => {}, onUpdatePolicy = (p: PolicyDocument) => {}, onDeletePolicy = (id: string) => {}
 }) => {
+    // Ensure user.groups is always set based on group membership
+    const userGroups = groups.filter(g => Array.isArray(g.memberIds) && g.memberIds.includes(userProp.id)).map(g => g.id);
+    const user = { ...userProp, groups: userProp.groups || userGroups };
     const isHR = user?.role === 'admin' || user?.role === 'super_admin' || user?.role === 'hr';
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -284,24 +287,25 @@ const Handbook: React.FC<HandbookProps> = ({
                                     {/* Selected Users Tags */}
                                     {accessForm.users.length > 0 && (
                                         <div className="flex flex-wrap gap-2 mb-2">
-                                            {accessForm.users.map(uid => {
-                                                const u = users.find(x => x.id === uid);
-                                                return u ? (
-                                                    <span key={u.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-sm font-semibold">
-                                                        <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                                                            {u.name.charAt(0).toUpperCase()}
-                                                        </div>
-                                                        {u.name}
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setAccessForm({ ...accessForm, users: accessForm.users.filter(id => id !== uid) })}
-                                                            className="text-blue-700 hover:text-blue-900"
-                                                        >
-                                                            <X size={14} />
-                                                        </button>
-                                                    </span>
-                                                ) : null;
-                                            })}
+                                            {[...accessForm.users]
+                                              .map(uid => users.find(x => x.id === uid))
+                                              .filter(Boolean)
+                                              .sort((a, b) => (a?.name || '').localeCompare(b?.name || ''))
+                                              .map(u => u && (
+                                                <span key={u.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-sm font-semibold">
+                                                    <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                                                        {u.name.charAt(0).toUpperCase()}
+                                                    </div>
+                                                    {u.name}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setAccessForm({ ...accessForm, users: accessForm.users.filter(id => id !== u.id) })}
+                                                        className="text-blue-700 hover:text-blue-900"
+                                                    >
+                                                        <X size={14} />
+                                                    </button>
+                                                </span>
+                                              ))}
                                         </div>
                                     )}
                                     
@@ -368,24 +372,25 @@ const Handbook: React.FC<HandbookProps> = ({
                                     {/* Selected Groups Tags */}
                                     {accessForm.groups.length > 0 && (
                                         <div className="flex flex-wrap gap-2 mb-2">
-                                            {accessForm.groups.map(gid => {
-                                                const g = groups.find(x => x.id === gid);
-                                                return g ? (
-                                                    <span key={g.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg text-sm font-semibold">
-                                                        <div className="w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center text-white">
-                                                            <Users size={12} />
-                                                        </div>
-                                                        {g.name}
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setAccessForm({ ...accessForm, groups: accessForm.groups.filter(id => id !== gid) })}
-                                                            className="text-purple-700 hover:text-purple-900"
-                                                        >
-                                                            <X size={14} />
-                                                        </button>
-                                                    </span>
-                                                ) : null;
-                                            })}
+                                            {[...accessForm.groups]
+                                              .map(gid => groups.find(x => x.id === gid))
+                                              .filter(Boolean)
+                                              .sort((a, b) => (a?.name || '').localeCompare(b?.name || ''))
+                                              .map(g => g && (
+                                                <span key={g.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg text-sm font-semibold">
+                                                    <div className="w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center text-white">
+                                                        <Users size={12} />
+                                                    </div>
+                                                    {g.name}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setAccessForm({ ...accessForm, groups: accessForm.groups.filter(id => id !== g.id) })}
+                                                        className="text-purple-700 hover:text-purple-900"
+                                                    >
+                                                        <X size={14} />
+                                                    </button>
+                                                </span>
+                                              ))}
                                         </div>
                                     )}
                                     
@@ -505,24 +510,25 @@ const Handbook: React.FC<HandbookProps> = ({
                                     {/* Selected Users Tags */}
                                     {categoryAccessForm.users.length > 0 && (
                                         <div className="flex flex-wrap gap-2 mb-2">
-                                            {categoryAccessForm.users.map(uid => {
-                                                const u = users.find(x => x.id === uid);
-                                                return u ? (
-                                                    <span key={u.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-sm font-semibold">
-                                                        <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                                                            {u.name.charAt(0).toUpperCase()}
-                                                        </div>
-                                                        {u.name}
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setCategoryAccessForm({ ...categoryAccessForm, users: categoryAccessForm.users.filter(id => id !== uid) })}
-                                                            className="text-blue-700 hover:text-blue-900"
-                                                        >
-                                                            <X size={14} />
-                                                        </button>
-                                                    </span>
-                                                ) : null;
-                                            })}
+                                            {[...categoryAccessForm.users]
+                                              .map(uid => users.find(x => x.id === uid))
+                                              .filter(Boolean)
+                                              .sort((a, b) => (a?.name || '').localeCompare(b?.name || ''))
+                                              .map(u => u && (
+                                                <span key={u.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-sm font-semibold">
+                                                    <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                                                        {u.name.charAt(0).toUpperCase()}
+                                                    </div>
+                                                    {u.name}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setCategoryAccessForm({ ...categoryAccessForm, users: categoryAccessForm.users.filter(id => id !== u.id) })}
+                                                        className="text-blue-700 hover:text-blue-900"
+                                                    >
+                                                        <X size={14} />
+                                                    </button>
+                                                </span>
+                                              ))}
                                         </div>
                                     )}
                                     
@@ -589,24 +595,25 @@ const Handbook: React.FC<HandbookProps> = ({
                                     {/* Selected Groups Tags */}
                                     {categoryAccessForm.groups.length > 0 && (
                                         <div className="flex flex-wrap gap-2 mb-2">
-                                            {categoryAccessForm.groups.map(gid => {
-                                                const g = groups.find(x => x.id === gid);
-                                                return g ? (
-                                                    <span key={g.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg text-sm font-semibold">
-                                                        <div className="w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center text-white">
-                                                            <Users size={12} />
-                                                        </div>
-                                                        {g.name}
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setCategoryAccessForm({ ...categoryAccessForm, groups: categoryAccessForm.groups.filter(id => id !== gid) })}
-                                                            className="text-purple-700 hover:text-purple-900"
-                                                        >
-                                                            <X size={14} />
-                                                        </button>
-                                                    </span>
-                                                ) : null;
-                                            })}
+                                            {[...categoryAccessForm.groups]
+                                              .map(gid => groups.find(x => x.id === gid))
+                                              .filter(Boolean)
+                                              .sort((a, b) => (a?.name || '').localeCompare(b?.name || ''))
+                                              .map(g => g && (
+                                                <span key={g.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg text-sm font-semibold">
+                                                    <div className="w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center text-white">
+                                                        <Users size={12} />
+                                                    </div>
+                                                    {g.name}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setCategoryAccessForm({ ...categoryAccessForm, groups: categoryAccessForm.groups.filter(id => id !== g.id) })}
+                                                        className="text-purple-700 hover:text-purple-900"
+                                                    >
+                                                        <X size={14} />
+                                                    </button>
+                                                </span>
+                                              ))}
                                         </div>
                                     )}
                                     
