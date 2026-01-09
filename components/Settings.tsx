@@ -99,12 +99,39 @@ const Settings: React.FC<SettingsProps> = (props) => {
   const [loadingToggles, setLoadingToggles] = useState(false);
 
   // Fetch feature toggles from backend
+  // Default modules for toggles
+  const defaultModules: FeatureToggle[] = [
+    { key: 'dashboard', label: 'Dashboard', description: 'Main business dashboard', enabled: true },
+    { key: 'reports', label: 'Reports', description: 'Analytics and reporting', enabled: true },
+    { key: 'workforce', label: 'Workforce', description: 'Employee directory and management', enabled: true },
+    { key: 'teams', label: 'Teams', description: 'Team management and assignments', enabled: true },
+    { key: 'tasks', label: 'Tasks', description: 'Project and HR task management', enabled: true },
+    { key: 'recruitment', label: 'Recruitment', description: 'Hiring and applicant tracking', enabled: true },
+    { key: 'attendance', label: 'Attendance', description: 'Attendance and timesheets', enabled: true },
+    { key: 'holidays', label: 'Holidays', description: 'Holiday calendar', enabled: true },
+    { key: 'handbook', label: 'Handbook', description: 'Employee handbook and policies', enabled: true },
+    { key: 'assets', label: 'Assets', description: 'Asset management', enabled: true },
+    { key: 'files', label: 'Files', description: 'File management', enabled: true },
+    { key: 'payroll', label: 'Payroll', description: 'Payroll and salary management', enabled: true },
+    { key: 'password_manager', label: 'Password Manager', description: 'Password vault', enabled: true },
+    { key: 'system_settings', label: 'System Settings', description: 'System configuration', enabled: true },
+    { key: 'ai_email', label: 'AI Email', description: 'AI-powered email', enabled: true },
+    { key: 'notifications', label: 'Notifications', description: 'System notifications', enabled: true },
+    { key: 'security_2fa', label: 'Security & 2FA', description: 'Security and two-factor authentication', enabled: true },
+  ];
+
   useEffect(() => {
     if (isAdmin && activeTab === "module-access") {
       setLoadingToggles(true);
       api.getFeatureToggles()
-        .then((toggles) => setFeatureToggles(toggles))
-        .catch(() => setFeatureToggles([]))
+        .then((toggles) => {
+          if (Array.isArray(toggles) && toggles.length > 0) {
+            setFeatureToggles(toggles);
+          } else {
+            setFeatureToggles(defaultModules);
+          }
+        })
+        .catch(() => setFeatureToggles(defaultModules))
         .finally(() => setLoadingToggles(false));
     }
   }, [isAdmin, activeTab]);
@@ -855,35 +882,55 @@ const Settings: React.FC<SettingsProps> = (props) => {
       <div className="flex-1 overflow-y-auto bg-slate-50/50 p-6 md:p-8 flex justify-center">
 
         {activeTab === "module-access" && isAdmin && (
-          <div className="w-full max-w-3xl mx-auto bg-white rounded-3xl border border-slate-100 shadow-sm p-8 flex flex-col items-center animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <h2 className="text-2xl font-black text-slate-900 mb-2">Module Access Management</h2>
-            <p className="text-slate-500 text-sm mb-6 text-center max-w-xl">Toggle which modules are visible to users. If a module is turned off, users will not see it in the web app.</p>
+          <div className="w-[98%] mx-auto max-w-5xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+            {/* Module Access Hero Header (like Security) */}
+            <div className="relative overflow-hidden bg-slate-900 rounded-3xl p-6 text-white shadow-xl mb-8">
+              <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
+                <List size={140} />
+              </div>
+              <div className="relative z-10 flex items-center gap-6">
+                <div className="p-4 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 h-fit">
+                  <List size={28} className="text-orange-400" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-black tracking-tight mb-1">Module Access Management</h1>
+                  <p className="text-slate-400 font-medium text-xs max-w-md">
+                    Toggle which modules are visible to users. If a module is turned off, users will not see it in the web app.
+                  </p>
+                </div>
+              </div>
+            </div>
+            {/* Module Toggles Card */}
+            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-8 w-full max-w-3xl mx-auto">
               <div className="w-full">
                 {loadingToggles ? (
                   <div className="text-center py-6 text-slate-400">Loading module toggles...</div>
                 ) : featureToggles.length === 0 ? (
                   <div className="text-center py-6 text-slate-400">No module toggles found.</div>
                 ) : (
-                  featureToggles.map((mod) => (
-                    <div key={mod.key} className="flex items-center justify-between py-3 border-b border-slate-50">
-                      <div>
-                        <span className="font-bold text-slate-800">{mod.label}</span>
-                        <span className="block text-xs text-slate-400">{mod.description}</span>
+                  <div className="divide-y divide-slate-50">
+                    {featureToggles.map((mod) => (
+                      <div key={mod.key} className="flex items-center justify-between py-4">
+                        <div>
+                          <span className="font-bold text-slate-800">{mod.label}</span>
+                          <span className="block text-xs text-slate-400">{mod.description}</span>
+                        </div>
+                        <label className="flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={mod.enabled}
+                            onChange={() => handleToggleFeature(mod.key)}
+                            className="form-checkbox h-5 w-5 text-orange-500 rounded focus:ring-0"
+                          />
+                          <span className="ml-2 text-sm font-medium text-slate-600">{mod.enabled ? "Enabled" : "Disabled"}</span>
+                        </label>
                       </div>
-                      <label className="flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={mod.enabled}
-                          onChange={() => handleToggleFeature(mod.key)}
-                          className="form-checkbox h-5 w-5 text-orange-500 rounded focus:ring-0"
-                        />
-                        <span className="ml-2 text-sm font-medium text-slate-600">{mod.enabled ? "Enabled" : "Disabled"}</span>
-                      </label>
-                    </div>
-                  ))
+                    ))}
+                  </div>
                 )}
               </div>
-              <div className="text-xs text-slate-400 italic mt-4">Changes here will affect which modules are visible to users.</div>
+              <div className="text-xs text-slate-400 italic mt-4 text-center">Changes here will affect which modules are visible to users.</div>
+            </div>
           </div>
         )}
         {activeTab === "logs" && (
