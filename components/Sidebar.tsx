@@ -18,7 +18,8 @@ import {
   Palmtree,
   UserCircle,
   FileBarChart,
-  Mail
+  Mail,
+  Lock
 } from 'lucide-react';
 import { ViewState, UserRole, User } from '../types';
 
@@ -48,6 +49,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, on
     { id: 'assets', label: 'Assets', icon: Monitor, minRole: 'employee' },
     { id: 'files', label: 'Files', icon: FolderOpen, minRole: 'employee' },
     { id: 'payroll', label: 'Payroll', icon: DollarSign, minRole: 'employee' },
+    { id: 'password-manager', label: 'Password Manager', icon: Lock, minRole: 'employee' },
     {
       id: 'settings',
       label: isAdminOrHR ? 'System Settings' : 'My Profile',

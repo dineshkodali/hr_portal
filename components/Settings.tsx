@@ -252,8 +252,8 @@ const Settings: React.FC<SettingsProps> = (props) => {
     }
 
     //  linked employee (optional)
-    if (safeForm.linkedEmployee) {
-      payload.linkedEmployee = safeForm.linkedEmployee;
+    if (safeForm.linkedEmployeeId) {
+      payload.linkedEmployeeId = safeForm.linkedEmployeeId;
     }
 
     try {
@@ -281,6 +281,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
     role: "employee",
     status: "Active",
     branchIds: [],
+    linkedEmployeeId: undefined,
   });
 
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
@@ -298,7 +299,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
     name: "",
     city: "",
     currency: "USD",
-    managerIds: [],
+    managerids: [],
   });
 
   const [viewBranch, setViewBranch] = useState<Branch | null>(null);
@@ -321,7 +322,8 @@ const Settings: React.FC<SettingsProps> = (props) => {
   const [newItem, setNewItem] = useState("");
   const [branchDocName, setBranchDocName] = useState("");
 
-  const [profileForm, setProfileForm] = useState<Partial<User>>({ name: user.name, email: user.email, phone: user.phone || '', address: user.address || '' });
+  // Removed duplicate declaration. Only keep the one with uploadedAvatarUrl below.
+  const [profileForm, setProfileForm] = useState<Partial<User> & { uploadedAvatarUrl?: string }>({ name: user.name, email: user.email, phone: user.phone || '', address: user.address || '', uploadedAvatarUrl: undefined });
   const [dbStatus, setDbStatus] = useState<'connected' | 'disconnected' | 'checking'>('disconnected');
   const [dbInfo, setDbInfo] = useState<any>(null);
 
@@ -380,7 +382,11 @@ const Settings: React.FC<SettingsProps> = (props) => {
       return;
     }
     if (onUpdateUser) {
-      onUpdateUser({ ...user, ...(profileForm as User) });
+      // Prefer uploadedAvatarUrl if present, else avatar URL
+      const avatar = (profileForm as { uploadedAvatarUrl?: string }).uploadedAvatarUrl || profileForm.avatar || user.avatar;
+      const updatedProfile = { ...user, ...(profileForm as User), avatar };
+      delete (updatedProfile as any).uploadedAvatarUrl;
+      onUpdateUser(updatedProfile);
 
       // LOG ACTIVITY
       try {
@@ -633,7 +639,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
 
   const openBranchModal = (b?: Branch) => {
     setEditingBranch(b || null);
-    setBranchForm(b || { name: "", city: "", currency: "USD", managerIds: [] });
+    setBranchForm(b || { name: "", city: "", currency: "USD", managerids: [] });
     setIsBranchModalOpen(true);
   };
 
@@ -761,9 +767,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
 
         {isAdmin && (
           <>
-            {isSuperAdmin && (
-              <SidebarItem id="features" label="Features" icon={ToggleLeft} />
-            )}
+
             <SidebarItem id="users" label="Users & Roles" icon={Users} />
             <SidebarItem id="groups" label="Permission Groups" icon={Shield} />
             <SidebarItem
@@ -797,57 +801,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
 
       {/* MAIN CONTENT AREA */}
       <div className="flex-1 overflow-y-auto bg-slate-50/50 p-6 md:p-8 flex justify-center">
-        {activeTab === 'features' && isSuperAdmin && (
-          <div className="w-[98%] mx-auto max-w-5xl space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            {/* Features Hero Header */}
-            <div className="relative overflow-hidden bg-slate-900 rounded-3xl p-6 text-white shadow-xl">
-              <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
-                <ToggleLeft size={140} />
-              </div>
-              <div className="relative z-10 flex items-center gap-6">
-                <div className="p-4 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 h-fit">
-                  <ToggleLeft size={28} className="text-orange-400" />
-                </div>
-                <div>
-                  <h1 className="text-2xl font-black tracking-tight mb-1">Module Orchestration</h1>
-                  <p className="text-slate-400 font-medium text-xs max-w-md">
-                    Toggle system-wide functional capabilities and experimental feature branches.
-                  </p>
-                </div>
-              </div>
-            </div>
 
-            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-              <div className="px-6 py-3 border-b border-slate-50 bg-slate-50/50 flex items-center gap-2">
-                <Shield size={14} className="text-slate-400" />
-                <span className="font-black uppercase tracking-widest text-slate-400 text-[10px]">Access Control Matrix</span>
-              </div>
-              <div className="p-6 space-y-4">
-                {featureToggles.map((feature) => (
-                  <div key={feature.key} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100/50 hover:bg-white hover:border-orange-500/20 transition-all group">
-                    <div>
-                      <div className="text-sm font-bold text-slate-800">{feature.label}</div>
-                      <div className="text-[10px] text-slate-400 font-medium">{feature.description}</div>
-                    </div>
-                    <button
-                      onClick={() => handleToggleFeature(feature.key)}
-                      className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${feature.enabled
-                        ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20'
-                        : 'bg-white text-slate-400 border border-slate-100 hover:border-slate-300'
-                        }`}
-                    >
-                      {feature.enabled ? 'Active' : 'Disabled'}
-                    </button>
-                  </div>
-                ))}
-                <div className="flex items-center gap-3 p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
-                  <AlertCircle size={14} className="text-blue-500" />
-                  <p className="text-[10px] text-blue-700 font-medium italic">Only high-privileged administrators can modify system orchestration toggles.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
         {activeTab === "logs" && (
           <div className="w-[98%] mx-auto max-w-5xl space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
             {/* Logs Hero Header */}
@@ -893,6 +847,36 @@ const Settings: React.FC<SettingsProps> = (props) => {
                   <div className="absolute -bottom-2 -right-2 bg-orange-500 text-white p-2 rounded-xl border-4 border-slate-900 shadow-xl">
                     <UserIcon size={14} />
                   </div>
+                  <form>
+                    <label className="block mt-2 text-[10px] font-black uppercase text-slate-400 tracking-wider">Upload Profile Image</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="block w-full text-xs mt-1"
+                      onChange={async (e) => {
+                        const file = e.target.files && e.target.files[0];
+                        if (!file) return;
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        formData.append('ownerId', user.id);
+                        formData.append('category', 'avatar');
+                        formData.append('uploadedBy', user.name);
+                        try {
+                          const res = await fetch('/api/files/upload', {
+                            method: 'POST',
+                            body: formData
+                          });
+                          if (!res.ok) throw new Error('Failed to upload image');
+                          const data = await res.json();
+                          // Use the file path as the avatar URL and update profileForm.avatar directly
+                          setProfileForm((prev) => ({ ...prev, avatar: `/${data.path.replace(/\\/g, '/')}` }));
+                        } catch (err) {
+                          alert('Image upload failed');
+                        }
+                      }}
+                    />
+                    <div className="text-[10px] text-slate-400 mt-1">Uploading a new image will override the avatar URL above for your profile.</div>
+                  </form>
                 </div>
 
                 <div className="text-center md:text-left space-y-3">
@@ -940,7 +924,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
                       { label: "Primary Phone", value: profileForm.phone, key: "phone", icon: Phone },
                       { label: "Residential Locale", value: profileForm.address, key: "address", icon: MapPin },
                       { label: "Professional Title", value: profileForm.designation, key: "designation", icon: Shield },
-                      { label: "Visual Identity (URL)", value: profileForm.avatar, key: "avatar", icon: Globe }
+                      { label: "Avatar URL (optional)", value: profileForm.avatar, key: "avatar", icon: Globe, helper: "Paste a direct image URL or use the upload below. If both are set, uploaded image takes priority." }
                     ].map((field) => (
                       <div key={field.key} className="space-y-1.5">
                         <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider flex items-center gap-2">
@@ -952,6 +936,9 @@ const Settings: React.FC<SettingsProps> = (props) => {
                           onChange={(e) => !field.disabled && setProfileForm({ ...profileForm, [field.key]: e.target.value })}
                           disabled={field.disabled || !isAdmin}
                         />
+                        {field.helper && (
+                          <div className="text-[10px] text-slate-400 mt-1">{field.helper}</div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -967,7 +954,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
                       <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Branch Assignment</label>
                       <select
                         className="w-full bg-slate-50 border border-slate-100 p-2.5 rounded-2xl text-xs font-bold focus:bg-white focus:border-orange-500/30 outline-none transition-all"
-                        value={user.branchIds?.[0] || ""}
+                        value={profileForm.branchIds?.[0] || ""}
                         disabled={!isAdmin}
                         onChange={(e) => isAdmin && setProfileForm({ ...profileForm, branchIds: [e.target.value] })}
                       >
@@ -979,9 +966,9 @@ const Settings: React.FC<SettingsProps> = (props) => {
                       <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Protocol Status</label>
                       <select
                         className="w-full bg-slate-50 border border-slate-100 p-2.5 rounded-2xl text-xs font-bold focus:bg-white focus:border-orange-500/30 outline-none transition-all"
-                        value={user.status}
+                        value={profileForm.status}
                         disabled={!isAdmin}
-                        onChange={(e) => isAdmin && setProfileForm({ ...profileForm, status: e.target.value })}
+                        onChange={(e) => isAdmin && setProfileForm({ ...profileForm, status: e.target.value as 'Active' | 'Inactive' })}
                       >
                         <option value="Active">Active</option>
                         <option value="Inactive">Inactive</option>
@@ -991,9 +978,9 @@ const Settings: React.FC<SettingsProps> = (props) => {
                       <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Privilege Tier</label>
                       <select
                         className="w-full bg-slate-50 border border-slate-100 p-2.5 rounded-2xl text-xs font-bold focus:bg-white focus:border-orange-500/30 outline-none transition-all"
-                        value={user.role}
+                        value={profileForm.role}
                         disabled={!isAdmin}
-                        onChange={(e) => isAdmin && setProfileForm({ ...profileForm, role: e.target.value })}
+                        onChange={(e) => isAdmin && setProfileForm({ ...profileForm, role: e.target.value as UserRole })}
                       >
                         {roles.map((r) => <option key={r} value={r}>{r.replace("_", " ").toUpperCase()}</option>)}
                       </select>
@@ -1558,7 +1545,12 @@ const Settings: React.FC<SettingsProps> = (props) => {
                           <button
                             onClick={() => setSystemConfig({
                               ...systemConfig,
-                              portalSettings: { ...(systemConfig.portalSettings || {}), [setting.id]: !(systemConfig.portalSettings as any)?.[setting.id] },
+                              portalSettings: {
+                                allowEmployeeProfileEdit: (setting.id === 'allowEmployeeProfileEdit' ? !(systemConfig.portalSettings as any)?.[setting.id] : (systemConfig.portalSettings as any)?.allowEmployeeProfileEdit ?? false),
+                                allowEmployeePhotoUpload: (setting.id === 'allowEmployeePhotoUpload' ? !(systemConfig.portalSettings as any)?.[setting.id] : (systemConfig.portalSettings as any)?.allowEmployeePhotoUpload ?? false),
+                                allowEmployeeAddressEdit: (setting.id === 'allowEmployeeAddressEdit' ? !(systemConfig.portalSettings as any)?.[setting.id] : (systemConfig.portalSettings as any)?.allowEmployeeAddressEdit ?? false),
+                                allowEmployeeBankEdit: (setting.id === 'allowEmployeeBankEdit' ? !(systemConfig.portalSettings as any)?.[setting.id] : (systemConfig.portalSettings as any)?.allowEmployeeBankEdit ?? false),
+                              },
                             })}
                             className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${(systemConfig.portalSettings as any)?.[setting.id]
                               ? 'bg-emerald-500 text-white shadow-md'
@@ -2057,18 +2049,15 @@ const Settings: React.FC<SettingsProps> = (props) => {
                   Linked Employee (optional)
                 </label>
                 <input
-                  value={userForm.linkedEmployee?.name || ""}
+                  value={userForm.linkedEmployeeId || ""}
                   onChange={(e) =>
                     setUserForm({
                       ...userForm,
-                      linkedEmployee: {
-                        ...(userForm.linkedEmployee || {}),
-                        name: e.target.value,
-                      },
+                      linkedEmployeeId: e.target.value,
                     })
                   }
                   className="w-full border p-2.5 rounded-xl text-sm"
-                  placeholder="Employee Name"
+                  placeholder="Employee ID"
                 />
               </div>
               <div className="flex justify-end gap-3 pt-4 border-t border-slate-50">
@@ -2570,9 +2559,9 @@ const Settings: React.FC<SettingsProps> = (props) => {
                     Zip Code
                   </label>
                   <input
-                    value={branchForm.zipcode || ""}
+                    value={branchForm.zipCode || ""}
                     onChange={(e) =>
-                      setBranchForm({ ...branchForm, zipcode: e.target.value })
+                      setBranchForm({ ...branchForm, zipCode: e.target.value })
                     }
                     className="w-full border p-2.5 rounded-xl text-sm"
                   />

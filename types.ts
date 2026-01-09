@@ -628,6 +628,9 @@ export interface SettingsProps {
   onAddGroup: (group: Group) => void;
   onUpdateGroup: (group: Group) => void;
   onDeleteGroup: (id: string) => void;
+  onAddPermissionGroup?: (group: Group) => void;
+  onUpdatePermissionGroup?: (group: Group) => void;
+  onDeletePermissionGroup?: (id: string) => void;
   onAddBranch: (branch: Branch) => void;
   onUpdateBranch: (branch: Branch) => void;
   onDeleteBranch: (id: string) => void;
@@ -680,4 +683,4 @@ export interface PayrollProps {
   onDeleteReimbursement: (id: string) => void;
 }
 
-export type ViewState = 'dashboard' | 'employees' | 'teams' | 'add-employee' | 'assets' | 'files' | 'tasks' | 'recruitment' | 'attendance' | 'payroll' | 'settings' | 'logs' | 'handbook' | 'holidays' | 'reports' | 'email';
+export type ViewState = 'dashboard' | 'employees' | 'teams' | 'add-employee' | 'assets' | 'files' | 'tasks' | 'recruitment' | 'attendance' | 'payroll' | 'settings' | 'logs' | 'handbook' | 'holidays' | 'reports' | 'email' | 'password-manager';

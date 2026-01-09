@@ -36,11 +36,15 @@ const upload = multer({ storage });
 app.post('/api/files/upload', upload.single('file'), async (req, res) => {
   try {
     const { body, file } = req;
+    if (!file) {
+      console.error('❌ Multer did not provide a file:', req);
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
     const id = `file_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
     const data = {
       id,
       name: file.originalname,
-      type: file.mimetype.split('/')[1] || 'unknown',
+      type: file.mimetype ? (file.mimetype.split('/')[1] || 'unknown') : 'unknown',
       size: file.size,
       path: file.path,
       ownerId: body.ownerId || null,
@@ -53,10 +57,16 @@ app.post('/api/files/upload', upload.single('file'), async (req, res) => {
     const keys = Object.keys(data);
     const values = Object.values(data);
     const query = `INSERT INTO files (${keys.join(',')}) VALUES (${keys.map((_, i) => `$${i + 1}`).join(',')}) RETURNING *`;
-    const { rows } = await pool.query(query, values);
-    res.status(201).json(rows[0]);
+    try {
+      const { rows } = await pool.query(query, values);
+      res.status(201).json(rows[0]);
+    } catch (dbErr) {
+      console.error('❌ DB error inserting file:', dbErr, { data });
+      res.status(500).json({ error: dbErr.message, details: dbErr, data });
+    }
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('❌ General upload error:', err);
+    res.status(500).json({ error: err.message, details: err });
   }
 });
 
