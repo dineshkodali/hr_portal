@@ -323,7 +323,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, users = [] }) => {
   // ✅ MFA VERIFICATION SCREEN
   if (requiresMFA) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-900 to-primary-800 p-4 font-sans">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary-900 to-primary-800 p-4 font-sans">
         <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
           <div className="p-8 pb-6 bg-gradient-to-r from-orange-50 to-orange-100/50">
             <div className="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center mb-4 shadow-lg shadow-orange-500/30">
@@ -380,6 +380,9 @@ const Login: React.FC<LoginProps> = ({ onLogin, users = [] }) => {
             </button>
           </form>
         </div>
+        <div className="max-w-md w-full">
+          <CopyrightNotice />
+        </div>
       </div>
     );
   }
@@ -389,7 +392,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, users = [] }) => {
     const isForgotPassword = loginMode === 'forgot';
 
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-900 to-primary-800 p-4 font-sans">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary-900 to-primary-800 p-4 font-sans">
         <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
           <div className="p-8 pb-6 bg-gradient-to-r from-blue-50 to-blue-100/50">
             <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center mb-4 shadow-lg shadow-blue-500/30">
@@ -549,13 +552,16 @@ const Login: React.FC<LoginProps> = ({ onLogin, users = [] }) => {
             </form>
           )}
         </div>
+        <div className="max-w-md w-full">
+          <CopyrightNotice />
+        </div>
       </div>
     );
   }
 
   // ✅ NORMAL LOGIN SCREEN
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-900 to-primary-800 p-4 font-sans">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary-900 to-primary-800 p-4 font-sans">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
         <div className="p-8 pb-6">
           <div className="w-12 h-12 bg-accent-500 rounded-lg flex items-center justify-center mb-4 shadow-lg shadow-orange-500/30">
@@ -681,4 +687,3 @@ const Login: React.FC<LoginProps> = ({ onLogin, users = [] }) => {
 };
 
 export default Login;
-
