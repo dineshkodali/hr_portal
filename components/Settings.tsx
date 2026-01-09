@@ -918,11 +918,11 @@ const Settings: React.FC<SettingsProps> = (props) => {
                         <label className="flex items-center cursor-pointer">
                           <input
                             type="checkbox"
-                            checked={mod.enabled}
+                            checked={!!mod.enabled}
                             onChange={() => handleToggleFeature(mod.key)}
                             className="form-checkbox h-5 w-5 text-orange-500 rounded focus:ring-0"
                           />
-                          <span className="ml-2 text-sm font-medium text-slate-600">{mod.enabled ? "Enabled" : "Disabled"}</span>
+                          <span className="ml-2 text-sm font-medium text-slate-600">{mod.enabled ? "Used" : "Not Used"}</span>
                         </label>
                       </div>
                     ))}
