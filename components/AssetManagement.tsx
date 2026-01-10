@@ -307,10 +307,6 @@ const AssetManagement: React.FC<AssetManagementProps> = ({ user, assets, employe
 const handleTransferSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
 
-  if (!window.confirm('Are you sure you want to transfer this asset to another employee?')) {
-    return;
-  }
-
   const targetEmp = employees.find(e => e.id === transferTargetEmployeeId);
   if (!transferAsset || !targetEmp) return;
 
@@ -320,13 +316,15 @@ const handleTransferSubmit = async (e: React.FormEvent) => {
     assignedTo,
     created_at,
     updated_at,
+    branchid,
+    branchId,
     ...safeAsset
   } = transferAsset as any;
 
   await onUpdateAsset({
     ...safeAsset,
     assignedto: targetEmp.name, // ✅ ONLY DB COLUMN
-    branchId: targetEmp.branchId || transferAsset.branchId,
+    branchid: targetEmp.branchid || transferAsset.branchid,
     status: 'Assigned'
   });
 
@@ -820,7 +818,7 @@ const handleAssignSubmit = async (e: React.FormEvent) => {
                     <div className="bg-orange-50 border border-orange-100 p-4 rounded-xl flex items-center justify-between mb-4">
                         <div>
                             <p className="text-xs text-orange-600 font-bold uppercase">Current Holder</p>
-                            <p className="font-semibold text-slate-800">{transferAsset.assignedto}</p>
+                            <p className="font-semibold text-slate-800">{transferAsset.assignedTo}</p>
                         </div>
                         <ArrowRight size={20} className="text-orange-400" />
                     </div>
@@ -835,7 +833,7 @@ const handleAssignSubmit = async (e: React.FormEvent) => {
                                 required
                             >
                                 <option value="">-- Select New Employee --</option>
-                                {employees.filter(e => e.status === 'Active' && e.name !== transferAsset.assignedto).map(emp => (
+                                {employees.filter(e => e.status === 'Active' && e.name !== transferAsset.assignedTo).map(emp => (
                                     <option key={emp.id} value={emp.id}>{emp.name} ({emp.department} - {emp.branchId === transferAsset.branchId ? 'Same Branch' : 'Other Branch'})</option>
                                 ))}
                             </select>
@@ -843,7 +841,7 @@ const handleAssignSubmit = async (e: React.FormEvent) => {
 
                         <div className="text-sm text-slate-500 bg-slate-50 p-3 rounded-lg border border-slate-100">
                             <p className="flex items-center"><Monitor size={14} className="mr-2"/> Transferring: <span className="font-semibold ml-1 text-slate-700">{transferAsset.name}</span></p>
-                            <p className="flex items-center mt-1"><Link size={14} className="mr-2"/> Serial: <span className="font-mono ml-1 text-slate-700">{transferAsset.serialnumber}</span></p>
+                            <p className="flex items-center mt-1"><Link size={14} className="mr-2"/> Serial: <span className="font-mono ml-1 text-slate-700">{transferAsset.serialNumber}</span></p>
                         </div>
 
                         <button type="submit" className="w-full bg-orange-500 text-white py-2.5 rounded-xl font-medium hover:bg-orange-600 transition-colors shadow-lg shadow-orange-500/30" disabled={!transferTargetEmployeeId}>

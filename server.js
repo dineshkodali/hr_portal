@@ -30,6 +30,19 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
+const normalizeDates = (row) => {
+  if (!row) return row;
+
+  const newRow = { ...row };
+
+  if (newRow.date instanceof Date) {
+    newRow.date = newRow.date.toISOString().slice(0, 10);
+  }
+
+  return newRow;
+};
+
+
 /* ============================================================================ 
    FILES UPLOAD ENDPOINT
 ============================================================================ */
@@ -645,7 +658,9 @@ app.get('/api/:table', async (req, res) => {
       return res.json(normalizedRows);
     }
 
-    res.json(rows);
+    // res.json(rows);
+    res.json(rows.map(normalizeDates));
+
 
   } catch (err) {
     console.error(`Error fetching table ${req.params.table}:`, err.message);
@@ -674,7 +689,10 @@ app.get('/api/:table/:id', async (req, res) => {
       return res.json(normalizeEmployeeRow(rows[0]));
     }
 
-    res.json(rows[0]);
+    // res.json(rows[0]);
+
+    res.json(normalizeDates(rows[0]));
+
 
   } catch (err) {
     res.status(500).json({ error: err.message });

@@ -649,13 +649,14 @@ export interface SettingsProps {
   setSmtpSettings: (settings: SmtpSettings) => void;
   notificationSettings: NotificationSetting[];
   setNotificationSettings: (settings: NotificationSetting[]) => void;
-  onNavigate?: (view: ViewState) => void;
+  // onNavigate?: (view: ViewState) => void;
   onSelectBranch?: (id: string) => void;
   onViewEmployee?: (id: string) => void;
   leaves?: LeaveRequest[];
   reimbursements?: Reimbursement[];
   logs?: ActivityLog[];
   onRefreshLogs?: () => void;
+  onNavigate?: (module: string) => void;
 }
 
 export interface DepartmentsProps {

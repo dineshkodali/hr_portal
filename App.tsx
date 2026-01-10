@@ -430,7 +430,13 @@ const App: React.FC = () => {
 
         // Also update or create attendance record
         const checkIn = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        const existing = attendance.find(a => a.employeeid === user.id && a.date === todayStr);
+        console.log("000000000",attendance);
+        
+        console.log("1111111111",checkIn, user.linkedemployeeid, todayStr);
+        
+        const existing = attendance.find(a => a.employeeid === user.linkedemployeeid && a.date === todayStr);
+        console.log("2222222222222",existing);
+        
 
         if (existing) {
           api.update('attendance', existing.id, {
@@ -496,12 +502,19 @@ const App: React.FC = () => {
       return;
     }
 
+    // const updatedTimesheet = {
+    //   ...currentTs,
+    //   clockout: now.toISOString(),
+    //   duration,
+    //   status: duration > 540 ? 'Overtime' : 'Completed'
+    // };  
+
     const updatedTimesheet = {
-      ...currentTs,
       clockout: now.toISOString(),
       duration,
       status: duration > 540 ? 'Overtime' : 'Completed'
-    };  
+    };
+
 
     console.log('📍 Clock Out Attempt:', { duration, status: updatedTimesheet.status, recordId: currentSession.id });
 
@@ -510,18 +523,25 @@ const App: React.FC = () => {
         console.log('✅ Timesheet updated: clockOut recorded, duration =', duration, 'min');
         setCurrentSession(null);
         refreshTimesheets();
+        
 
         // Update attendance record as non-fatal operation
         const todayStr = getLocalTodayDate();
-        const record = attendance.find(a => a.employeeid === user.id && a.date === todayStr);
+       console.log("333333333",user.linkedemployeeid,todayStr);
+        const record = attendance.find(a => a.employeeid === user.linkedemployeeid && a.date === todayStr);
+        console.log("444444444444",record);
+        
         if (record) {
           const h = Math.floor(duration / 60);
           const m = duration % 60;
           const attendanceUpdate = {
             ...record,
-            checkOut: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            checkout: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             workHours: `${h}h ${m}m`
           };
+
+          console.log("5555555555555",attendanceUpdate);
+          
 
           api.update('attendance', record.id, attendanceUpdate)
             .then(() => {
@@ -954,13 +974,14 @@ const App: React.FC = () => {
               logActivity('Update Notifications', 'Settings', 'Updated notification preferences');
               return res;
             }), refreshNotifs)}
-            onNavigate={handleNavigate}
+            // onNavigate={handleNavigate}
             onSelectBranch={setSelectedBranchId}
             onViewEmployee={handleViewEmployeeProfile}
             leaves={leaves || []}
             reimbursements={reimbursements || []}
             logs={logs || []}
             onRefreshLogs={refreshLogs}
+            onNavigate={setCurrentView}
           />}
           {currentView === 'email' && <EmailWorkflow onLogActivity={logActivity} />}
           <div className="max-w-7xl mx-auto w-full">

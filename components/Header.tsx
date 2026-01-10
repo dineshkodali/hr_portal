@@ -123,10 +123,10 @@ const Header: React.FC<HeaderProps> = ({
   //   };
   // }, [isClockedIn, sessionStartTime]);
 
-  console.log('HEADER RENDER', {
-  isClockedIn,
-  sessionStartTime
-});
+//   console.log('HEADER RENDER', {
+//   isClockedIn,
+//   sessionStartTime
+// });
 
   
   

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect,useMemo } from 'react';
 import {
   User as UserIcon, Shield, Lock, Save, Bell, Plus, Users, Trash2, X,
   Database, Mail, Check, Building, Edit, MapPin, Phone, Globe,
@@ -54,11 +54,16 @@ const Settings: React.FC<SettingsProps> = (props) => {
     reimbursements = [],
     logs = [],
     onRefreshLogs,
+    onNavigate,
+    
   } = props;
 
   const isAdmin = user.role === "admin" || user.role === "super_admin";
   const isSuperAdmin = user.role === "super_admin";
   const isEmployee = user.role === "employee";
+  const [isManagerModalOpen, setIsManagerModalOpen] = useState(false);
+const [managerSelection, setManagerSelection] = useState<string[]>([]);
+
 
   // --- FEATURE TOGGLES (Super Admin Only) ---
   const [featureToggles, setFeatureToggles] = useState<FeatureToggle[]>(defaultFeatureToggles);
@@ -749,6 +754,29 @@ const Settings: React.FC<SettingsProps> = (props) => {
       <span>{label}</span>
     </button>
   );
+
+  const branchPeople = useMemo(() => {
+  if (!viewBranch) return [];
+
+  const map = new Map<string, Employee>();
+
+  // 1️⃣ Normal branch employees
+  employees
+    .filter(emp => emp.branchId === viewBranch.id)
+    .forEach(emp => {
+      map.set(emp.id, emp);
+    });
+
+  // 2️⃣ Branch managers (even without branchId)
+  employees
+    .filter(emp => viewBranch.managerids?.includes(emp.id))
+    .forEach(emp => {
+      map.set(emp.id, emp);
+    });
+
+  return Array.from(map.values());
+}, [viewBranch, employees]);
+
 
   return (
     <div className="flex flex-col md:flex-row h-[calc(100vh-100px)] bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
@@ -2330,27 +2358,67 @@ const Settings: React.FC<SettingsProps> = (props) => {
               )}
 
               {branchDetailTab === 'people' && (
+                
+                
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2">
                   <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm">
                     <div className="p-4 border-b bg-white flex justify-between items-center">
                       <h4 className="text-sm font-bold text-slate-800">Managers</h4>
-                      <button className="text-[10px] font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-lg border border-blue-100 flex items-center gap-1 hover:bg-blue-100">+ Add Manager</button>
+                      <button
+                       onClick={() => {
+                         setManagerSelection(viewBranch?.managerids || []);
+                         setIsManagerModalOpen(true);
+                       }}
+                       className="text-[10px] font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-lg border border-blue-100 flex items-center gap-1 hover:bg-blue-100"
+                     >
+                       + Add Manager
+                     </button>
+
                     </div>
                     <div className="p-4 space-y-3">
                       {/* Manager list and controls go here */}
                     </div>
                     <div className="overflow-x-auto">
                       <table className="w-full text-left">
-                        <thead className="bg-white border-b border-slate-50 text-[10px] font-bold text-slate-400 uppercase"><tr><th className="p-4">Name</th><th className="p-4">Role</th><th className="p-4 text-right">Actions</th></tr></thead>
-                        <tbody className="divide-y divide-slate-50">
-                          {employees.filter(e => e.branchId === viewBranch.id).map(emp => (
-                            <tr key={emp.id} className="hover:bg-slate-50 transition-colors">
-                              <td className="p-4"><div className="flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-[10px] text-slate-600 border border-slate-200">{emp.name.split(' ').map(n => n[0]).join('')}</div><span className="font-bold text-slate-700 text-xs">{emp.name}</span></div></td>
-                              <td className="p-4 text-xs font-medium text-slate-400">{emp.designation}</td>
-                              <td className="p-4 text-right"><button onClick={() => handleAddStaffToBranch(emp.id)} className="p-1.5 text-slate-300 hover:text-red-500 transition-colors" title="Remove from Branch"><X size={16} /></button></td>
-                            </tr>
-                          ))}
-                        </tbody>
+                        <thead className="bg-white border-b border-slate-50 text-[10px] font-bold text-slate-400 uppercase"><tr><th className="p-4">Name</th><th className="p-4">Role</th>
+                        {/* <th className="p-4 text-right">Actions</th> */}
+                        </tr></thead>
+<tbody className="divide-y divide-slate-50">
+    {branchPeople.map(emp => {
+      const isManager = viewBranch.managerids?.includes(emp.id);
+
+      return (
+        <tr key={emp.id} className="hover:bg-slate-50 transition-colors">
+          <td className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold border">
+                {emp.name
+                  .split(" ")
+                  .map(n => n[0])
+                  .join("")}
+              </div>
+              <span className="font-semibold text-slate-700 text-xs">
+                {emp.name}
+              </span>
+            </div>
+          </td>
+
+          <td className="p-4 text-xs font-medium">
+            {isManager ? (
+              <span className="text-orange-600 font-bold">
+                Branch Manager
+              </span>
+            ) : (
+              <span className="text-slate-400">
+                {emp.designation || "Employee"}
+              </span>
+            )}
+          </td>
+        </tr>
+      );
+    })}
+  </tbody>
+
                       </table>
                     </div>
                   </div>
@@ -2425,11 +2493,13 @@ const Settings: React.FC<SettingsProps> = (props) => {
                 <div className="space-y-6">
                   <div className="flex justify-end">
                     <button
-                      onClick={() => setActiveTab("assets")}
-                      className="text-xs font-bold text-orange-600 hover:underline"
-                    >
-                      Go to Asset Management to Assign Assets
-                    </button>
+  onClick={() => onNavigate?.("assets")}
+  className="text-xs font-bold text-orange-600 hover:underline"
+>
+  Go to Asset Management to Assign Assets
+</button>
+
+
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {assets
@@ -2452,14 +2522,14 @@ const Settings: React.FC<SettingsProps> = (props) => {
                               </p>
                             </div>
                           </div>
-                          <button
+                          {/* <button
                             onClick={() =>
                               handleRemoveAssetFromBranch(asset.id)
                             }
                             className="p-2 text-slate-300 hover:text-red-500 transition-colors"
                           >
                             <Trash2 size={18} />
-                          </button>
+                          </button> */}
                         </div>
                       ))}
                     {assets.filter((a) => a.branchId === viewBranch.id)
@@ -2475,6 +2545,92 @@ const Settings: React.FC<SettingsProps> = (props) => {
           </div>
         </div>
       )}
+
+      {isManagerModalOpen && viewBranch && (
+  <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[70] p-4">
+    <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-black text-slate-800">
+          Assign Managers
+        </h3>
+        <button
+          onClick={() => setIsManagerModalOpen(false)}
+          className="text-slate-400 hover:text-slate-600"
+        >
+          <X size={20} />
+        </button>
+      </div>
+
+      {/* Employee checkbox list */}
+      <div className="max-h-64 overflow-y-auto space-y-2 border rounded-xl p-3 bg-slate-50">
+        {employees.map(emp => {
+          const checked = managerSelection.includes(emp.id);
+
+          return (
+            <label
+              key={emp.id}
+              className="flex items-center gap-3 p-2 rounded-lg hover:bg-white cursor-pointer"
+            >
+              <input
+                type="checkbox"
+                checked={checked}
+                onChange={() => {
+                  setManagerSelection(prev =>
+                    checked
+                      ? prev.filter(id => id !== emp.id)
+                      : [...prev, emp.id]
+                  );
+                }}
+                className="w-4 h-4 text-orange-500 rounded"
+              />
+              <div className="flex flex-col">
+                <span className="text-sm font-semibold text-slate-700">
+                  {emp.name}
+                </span>
+                <span className="text-xs text-slate-400">
+                  {emp.designation || "Employee"}
+                </span>
+              </div>
+            </label>
+          );
+        })}
+      </div>
+
+      {/* Footer */}
+      <div className="flex justify-end gap-3 mt-6">
+        <button
+          onClick={() => setIsManagerModalOpen(false)}
+          className="px-5 py-2 text-slate-500 font-bold"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={async () => {
+            // 🔥 update branch with new managerids
+            const { updated_at, ...safeBranch } = viewBranch as any;
+
+            await api.update("branches", viewBranch.id, {
+              ...safeBranch,
+              managerids: managerSelection
+            });
+
+            // update local UI
+            setViewBranch({
+              ...safeBranch,
+              managerids: managerSelection
+            });
+
+            setIsManagerModalOpen(false);
+          }}
+          className="px-6 py-2 bg-orange-500 text-white rounded-xl font-black shadow-lg hover:bg-orange-600"
+        >
+          Save Managers
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
 
       {/* Branch Add Modal */}
       {isBranchModalOpen && (
