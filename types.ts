@@ -600,6 +600,7 @@ export interface HandbookProps {
   policies: PolicyDocument[];
   users?: User[];
   groups?: Group[];
+  roles?: string[];
   onAddCategory: (category: PolicyCategory) => void;
   onUpdateCategory: (category: PolicyCategory) => void;
   onDeleteCategory: (id: string) => void;

@@ -1,21 +1,46 @@
 import React, { useState, useEffect,useMemo } from 'react';
-import {
-  User as UserIcon, Shield, Lock, Save, Bell, Plus, Users, Trash2, X,
-  Database, Mail, Check, Building, Edit, MapPin, Phone, Globe,
-  Eye, Monitor, FileText, Upload, Wallet, Server, Wifi, WifiOff, List,
-  Settings as SettingsIcon, ToggleLeft, ToggleRight, CheckCircle, AlertCircle, ArrowRight, ClipboardList, Receipt, Download, ShieldCheck, ShieldOff, Bot,
-  RotateCcw, Send, AtSign, EyeOff, Search
-} from 'lucide-react';
-import { api } from '../services/api';
-import { User, UserRole, SettingsProps, Branch, Group, SystemConfig, EmailTemplate, RolePermission, Employee, Asset, LeaveRequest, Reimbursement } from '../types';
-import { defaultNotificationSettings } from '../constants/defaultNotificationSettings';
-import { defaultFeatureToggles, FeatureToggle } from '../constants/featureToggles';
+import { User as UserIcon } from 'lucide-react';
+import { Shield } from 'lucide-react';
+import { Lock } from 'lucide-react';
+import { Save } from 'lucide-react';
+import { Bell } from 'lucide-react';
+import { Plus } from 'lucide-react';
+import { Users } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
+import { X } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
+import { List } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
+import { Bot } from 'lucide-react';
+import { Database } from 'lucide-react';
+import { Mail } from 'lucide-react';
+import { Check } from 'lucide-react';
+import { Building } from 'lucide-react';
+import { Edit } from 'lucide-react';
+import { MapPin } from 'lucide-react';
+import { Phone } from 'lucide-react';
+import { Globe } from 'lucide-react';
+import { FileText } from 'lucide-react';
+import { History } from 'lucide-react';
+import { CheckCircle } from 'lucide-react';
+import { RotateCcw } from 'lucide-react';
+import { Settings as SettingsIcon } from 'lucide-react';
+import { Send } from 'lucide-react';
+import { Server } from 'lucide-react';
+import { AtSign } from 'lucide-react';
+import { EyeOff } from 'lucide-react';
+import { Eye } from 'lucide-react';
+import { WifiOff } from 'lucide-react';
+import { Download } from 'lucide-react';
+import { Monitor } from 'lucide-react';
 import SecuritySettings from './SecuritySettings';
 import CopyrightPage from './CopyrightPage';
-import CopyrightNotice from './CopyrightNotice';
 import AIHRSettings from '../AI/AIHRAssistant/AIHRSettings';
 import ActivityLogs from './ActivityLogs';
-import { History } from 'lucide-react';
+import { api } from '../services/api';
+import { defaultNotificationSettings } from '../constants/defaultNotificationSettings';
+import { User, Group, Branch, EmailTemplate, SystemConfig, UserRole, RolePermission, SettingsProps,Employee } from '../types';
+import { defaultFeatureToggles, FeatureToggle } from '../constants/featureToggles';
 
 const Settings: React.FC<SettingsProps> = (props) => {
   const {

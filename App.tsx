@@ -161,8 +161,8 @@ const App: React.FC = () => {
       allowEmployeeBankEdit: false
     },
     footerSettings: {
-      companyName: 'SD Commercial',
-      copyrightNotice: 'SD Commercial Employee Management Portal\n\nCopyright (c) 2026 SD Commercial. All rights reserved.\n\nThis application and its source code are proprietary to SD Commercial. Unauthorized copying, distribution, modification, or use of any part of this software is strictly prohibited and may result in legal action.\n\nAll content, data, and intellectual property within this portal are the exclusive property of SD Commercial.',
+      companyName: 'Dinesh Kodali',
+      copyrightNotice: 'SD Commercial Employee Management Portal\n\nCopyright (c) Dinesh Kodali. All rights reserved.\n\nThis application and its source code are proprietary to SD Commercial. Unauthorized copying, distribution, modification, or use of any part of this software is strictly prohibited and may result in legal action.\n\nAll content, data, and intellectual property within this portal are the exclusive property of SD Commercial.',
       privacyContent: 'Standard Privacy Policy content...',
       termsContent: 'Standard Terms and Conditions content...',
       securityContent: 'Standard Security Policy content...'

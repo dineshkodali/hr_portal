@@ -113,6 +113,23 @@ export const api = {
     return res.json();
   },
 
+    // Feature Toggles (system-wide module visibility)
+    getFeatureToggles: async () => {
+      const res = await fetch(`${getApiUrl()}/feature_toggles`);
+      if (!res.ok) throw new Error('Failed to fetch feature toggles');
+      return res.json();
+    },
+
+    updateFeatureToggle: async (key: string, enabled: boolean) => {
+      const res = await fetch(`${getApiUrl()}/feature_toggles/${key}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled }),
+      });
+      if (!res.ok) throw new Error('Failed to update feature toggle');
+      return res.json();
+    },
+
   // Health Check for the PostgreSQL bridge
   checkConnection: async (): Promise<boolean> => {
     try {

@@ -83,6 +83,49 @@ app.post('/api/files/upload', upload.single('file'), async (req, res) => {
   }
 });
 
+/* ============================================================================ 
+   FEATURE TOGGLES ENDPOINTS (System-wide module visibility)
+============================================================================ */
+// Get all feature toggles
+app.get('/api/feature_toggles', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM feature_toggles ORDER BY key');
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Update a feature toggle (enable/disable)
+app.put('/api/feature_toggles/:key', async (req, res) => {
+  try {
+    const { key } = req.params;
+    const { enabled } = req.body;
+    const { rows } = await pool.query(
+      'UPDATE feature_toggles SET enabled = $1, updated_at = NOW() WHERE key = $2 RETURNING *',
+      [enabled, key]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Toggle not found' });
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Create a new feature toggle
+app.post('/api/feature_toggles', async (req, res) => {
+  try {
+    const { key, label, description, enabled } = req.body;
+    const { rows } = await pool.query(
+      'INSERT INTO feature_toggles (key, label, description, enabled, updated_at) VALUES ($1, $2, $3, $4, NOW()) RETURNING *',
+      [key, label, description, enabled ?? true]
+    );
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 /* ============================================================================
    CONFIG
 ============================================================================ */
